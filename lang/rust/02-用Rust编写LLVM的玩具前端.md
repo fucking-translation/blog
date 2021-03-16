@@ -1,4 +1,4 @@
-# 用Rust编写LLVM的玩具前端  
+# 用Rust编写LLVM的玩具编译器 
 
 #### [原文](https://blog.ulysse.io/post/a-toy-front-end-for-llvm-written-in-rust/) 
 
@@ -289,7 +289,7 @@ unsafe fn codegen_expr(context: LLVMContextRef, builder: LLVMBuilderRef, expr: E
 
 ## 变量
 
-我们将采用简单的方式并假设程序不会执行任何烦人的操作，如引用为定义的变量等。我们只将变量存储在寄存器中，并将它们存在`HashMap<String, LLVMValueRef>`中，这将会起作用因为运行该程序只有这一种方式。
+我们将采用简单的方式并假设程序不会执行任何烦人的操作，如引用未定义的变量等。我们只将变量存储在寄存器中，并将它们存在`HashMap<String, LLVMValueRef>`中，之所以有用是因为运行该程序只有这一种方式。
 
 我们扩展语言和解析器：
 
@@ -339,7 +339,7 @@ peg! parser(r#"
 "#);
 ```
 
-然后为两个新的表达式添加支持：
+然后为这两个新的表达式添加支持：
 
 ```rust
 unsafe fn codegen_expr(context: LLVMContextRef, builder: LLVMBuilderRef, names: &mut HashMap<String, LLVMValueRef>, expr: Expr) -> LLVMValueRef {
@@ -372,7 +372,7 @@ for expr in input {
 llvm::core::LLVMBuildRet(builder, return_value);
 ```
 
-瞧，让我们来一探究竟：
+现在让我们来一探究竟：
 
 ```rust
 vagrant@vagrant:/vagrant$ cat in.ex
@@ -482,7 +482,7 @@ if a {
 a
 ```
 
-上述代码产生了下面的IR：
+上述代码对应的IR如下所示：
 
 ```s
 ; ModuleID = 'example_module'
@@ -509,11 +509,11 @@ entry4:                                           ; preds = %entry3, %entry2
 }
 ```
 
-然而，我们还没有结束。目前，我们的“if”表达式始终为0，相反，如果我们执行了“then”路径，则if的求值结果为then_return，否则返回else_return。
+然而，我们还没有结束。目前，我们的“if”表达式的返回结果始终为zero(见上述`codegen_expr`函数中If分支的返回值)。而我们想要的正好与其相反，如果我们执行了“then”路径，则if的求值结果应该为then_return，否则返回else_return。
 
 你如何使用LLVM跟踪它执行了哪个分支？通过使用“Phi”节点。你给phi指令一个(block, value)对，该phi节点将会返回与先前执行的块相对应的值。
 
-我们可以这样结束if。注意，我们必须更新then_block和else_block，因为这是我们在“then/else”分支中想要的最后一个块，并且前面的then_block是“then/else”的第一个块。
+我们可以这样结束if。注意，我们必须更新then_block和else_block，因为这是我们在“then/else”分支中需要的最后一个块，并且前面的then_block是“then/else”的第一个块。
 
 ```rust
 // This is mostly the same code as before, just note the new calls to
@@ -547,7 +547,7 @@ llvm::core::LLVMAddIncoming(phi, values.as_mut_ptr(), blocks.as_mut_ptr(), 2);
 phi
 ```
 
-然后，你可以得到一个了不起的编译器：
+然后，你就得到了一个令人惊叹的编译器：
 
 ```shell
 vagrant@vagrant:/vagrant$ cat in.ex
@@ -631,4 +631,4 @@ entry14:                                          ; preds = %entry13, %entry12
 
 请注意：这些块具有以下的模式：不包含第一个条目，它们三个为一组，第一个是“then”分支，然后是“else”分支，最后是“merge”块（带有可识别的phi指令）。每一次我们遇到“if”表达式时都会在main后面附加三个新块。因为要在AST中递归查询三元组，所以块的三元组是有序的。
 
-这就是我得到的全部！希望在这一点上你可以有足够的基础来决定你的命运。
+这就是我想要分享的全部内容！希望在这一点上你可以有足够的实力来决定你的命运。
