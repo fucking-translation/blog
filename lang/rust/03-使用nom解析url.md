@@ -1,0 +1,111 @@
+# 使用 nom 解析 url
+
+#### [原文](https://blog.logrocket.com/parsing-in-rust-with-nom/) 
+
+</br>
+
+![nom](./img/parsing-rust-nom.png)
+
+</br>
+
+在本教程中，我们将演示如何使用 nom 解析器组合器库在 Rust 中编写一个非常基础的 URL 解析器。我们将包含一下内容
+
+- [什么是解析器组合器?](#什么是解析器组合器?)
+- [nom是如何工作的](#nom是如何工作的)
+- [设置nom](#设置nom)
+- [数据类型](#数据类型)
+- [nom中的错误处理](#nom中的错误处理)
+- [在Rust中写一个解析器](#在Rust中写一个解析器)
+- [解析需要授权的URL](#解析需要授权的URL)
+- [Rust解析:Host,Ip和端口](#Rust解析:Host,Ip和端口)
+- [在Rust中解析路径](#在Rust中解析路径)
+- [查询和片段](#查询和片段)
+- [在Rust中使用nom解析:最终的测试](#在Rust中使用nom解析:最终的测试)
+
+## 什么是解析器组合器?
+
+解析器组合器是高阶函数，可以接受多个解析器作为输入，并返回一个新的解析器作为输出。
+
+这种方式让你可以为简单的任务(如：解析某个字符串或数字)构建解析器，并使用组合器函数将它们组合成一个递归下降(recursive descent)的解析器。
+
+组合解析的好处包括可测试性，可维护性和可读性。每个部件都非常小且具有自我隔离性，从而使整个解析器由模块化组件构成。
+
+如果你对这个概念不熟悉，我强烈推荐你阅读 Bodil Stokke 的[用 Rust 学习解析器组合器](./01-用Rust学习解析器组合器.md)。
+
+## nom是如何工作的
+
+[nom](https://github.com/Geal/nom) 是使用 Rust 编写的解析器组合器库，它可以让你创建安全的解析器，而不会占用内存或影响性能。它依靠 Rust 强大的类型系统和内存安全来生成既正确又高效的解析器，并使用函数，宏和特征来抽象出容易出错的管道。
+
+为了演示 `nom` 是如何工作的，我们将创建一个基础的 URL 解析器。我们不会完整的实现 [URL 规范](https://url.spec.whatwg.org/)；这将远远超出此代码示例的范围。相反，我们将采用一些捷径。
+
+最终的目标是能够将合法的 URL (如：[https://www.zupzup.org/about/?someVal=5&anotherVal=hello#anchor](https://www.zupzup.org/about/?someVal=5&anotherVal=hello#anchor) 和 [http://user:pw@127.0.0.1:8080](http://user:pw@127.0.0.1:8080)) 解析成相关的结构，并在解析过程中为非法的 URL 返回一个有用的错误。
+
+而且，由于可测试性被认为是解析器组合器的一大优势，我们将对大多数组件进行测试，以了解其具体的优势。
+
+让我们开始吧！
+
+## 设置nom
+
+为了进行下面的一系列操作，你需要安装最新的 Rust 版本 (1.44+)。
+
+首先，创建一个新的 Rust 项目:
+
+```console
+cargo new --lib rust-nom-example
+cd rust-nom-example
+```
+
+然后，编辑`Cargo.toml`文件并添加你需要的依赖：
+
+```toml
+[dependencies]
+nom = "6.0"
+```
+
+是的，我们需要的是最新版本的`nom`库(在撰写本文时是 6.0)。
+
+## 数据类型
+
+编写解析器时，通常先定义输出结构以了解你需要哪些部分是很有意义的。
+
+在这里，我们正在解析一个 URL，因此，让我们给它定义一个结构：
+
+```rust
+#[derive(Debug, PartialEq, Eq)]
+pub struct URI<'a> {
+    scheme: Scheme,
+    authority: Option<Authority<'a>>,
+    host: Host,
+    port: Option<u16>,
+    path: Option<Vec<&'a str>>,
+    query: Option<QueryParams<'a>>,
+    fragment: Option<&'a str>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Scheme {
+    HTTP,
+    HTTPS,
+}
+
+pub type Authority<'a> = (&'a str, Option<&'a str>);
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Host {
+    HOST(String),
+    IP([u8; 4]),
+}
+
+pub type QueryParam<'a> = (&'a str, &'a str);
+pub type QueryParams<'a> = Vec<QueryParam<'a>>;
+```
+
+让我们逐行进行说明。
+
+这些字段是根据它们在常规 URI 中出现的顺序进行排列的。首先，我们有规则。在这里，我们将 URI 的前缀限制为`http://`和`https://`，但是请注意，这里还有很多其它的可选方案。
+
+接下来是`授权`部分，它由用户名和可选密码组成，通常是完全可选的。
+
+主机可以是 IP，(在我们的示例中仅为 IPv4)，也可以是主机字符串，如：`example.org`，后面跟一个可选的端口，端口仅是个数字：如：`localhost:8080`。
+
+在端口之后是路径。
