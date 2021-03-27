@@ -15,10 +15,10 @@
 - [设置nom](#设置nom)
 - [数据类型](#数据类型)
 - [nom中的错误处理](#nom中的错误处理)
-- [在Rust中写一个解析器](#在Rust中写一个解析器)
-- [解析需要授权的URL](#解析需要授权的URL)
+- [使用Rust写一个解析器](#使用Rust写一个解析器)
+- [解析待授权的URL](#解析待授权的URL)
 - [Rust解析:Host,Ip和端口](#Rust解析:Host,Ip和端口)
-- [在Rust中解析路径](#在Rust中解析路径)
+- [使用Rust解析路径](#使用Rust解析路径)
 - [查询和片段](#查询和片段)
 - [在Rust中使用nom解析:最终的测试](#在Rust中使用nom解析:最终的测试)
 
@@ -147,3 +147,643 @@ type IResult<I, O, E = (I, ErrorKind)> = Result<(I, O), Err<E>>;
 ```rust
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
 ```
+
+除了它带有`VerboseError`之外，本质上是相同的。这意味着我们可以使用 nom 的上下文组合器，它允许我们在任何解析器中隐式地添加错误上下文。
+
+nom 的官方文档包含这些选项，但是错误处理并不是最直观的方法。
+
+为了看到它的实际效果，让我们为该 scheme 创建第一个解析器。
+
+## 使用Rust写一个解析器
+
+为了解析 URL 的scheme，我们想要匹配`http://`和`https://`，除此之外没有别的了。由于我们使用的是功能强大的解析器组合器库，因此我们不需要手动编写底层的解析器。`nom` 已经帮我们覆盖了。
+
+[解析器组合器宏清单](https://github.com/fucking-translation/tutorial/Rust/nom/选择nom组合器.md)讲述了在某些用例中如何使用 nom 中的解析器组合器。
+
+我们将会使用`tag_no_case`解析器和`alt`组合器来做基础的说明：“每个小写(输入)应该是`http://`或`https://`” 。在本教程中，我们将只使用常规函数，但请注意，nom 中的许多解析器和组合器也可以作为宏使用。
+
+在 Rust 中使用 nom 如下所示：
+
+```rust
+fn scheme(input: &str) -> Res<&str, Scheme> {
+    context(
+        "scheme",
+        alt((tag_no_case("HTTP://"), tag_no_case("HTTPS://"))),
+    )(input)
+    .map(|(next_input, res)| (next_input, res.into()))
+}
+```
+
+如你所示：我们使用`context`组合器封装了实际的解析器并在其中添加了`scheme`上下文，因此，此处触发的任何错误都将在结果中标记为`scheme`。
+
+一旦将解析器和组合器组装成了整个解析器，便使用输入字符串来调用它，这是我们唯一的输入参数。然后我们对结果进行`map` - 如上所述，它由剩余的输入和解析的输出组成，并通过实现前面提到的`.into()`特征将我们解析后的 scheme 转换成`Scheme`枚举。
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nom::{
+        error::{ErrorKind, VerboseError, VerboseErrorKind},
+        Err as NomErr,
+    };
+
+    #[test]
+    fn test_scheme() {
+        assert_eq!(scheme("https://yay"), Ok(("yay", Scheme::HTTPS)));
+        assert_eq!(scheme("http://yay"), Ok(("yay", Scheme::HTTP)));
+        assert_eq!(
+            scheme("bla://yay"),
+            Err(NomErr::Error(VerboseError {
+                errors: vec![
+                    ("bla://yay", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                    ("bla://yay", VerboseErrorKind::Nom(ErrorKind::Alt)),
+                    ("bla://yay", VerboseErrorKind::Context("scheme")),
+                ]
+            }))
+        );
+    }
+}
+```
+
+如你所见，在成功的情况下，我们取回已解析`Scheme`枚举和剩余待解析的字符串(`yay`)。另外，如果有错误，我们将列举出已触发的错误以及定义的上下文列表(`scheme`)。
+
+在本例中，两次`tag`调用都失败了，因此，`alt`组合器也失败了，因为它无法产生单个值。
+
+那不是很难。在上面我们基本上只是解析了一个常量的字符串，让我们通过解析`authority`部分来尝试更高级的内容。
+
+## 解析待授权的URL
+
+如果我们还记得我们在之前的 URI 的结构，尤其是 authority 部分，我们会看到我们正在寻找一个完全可选的结构。如果它存在，则需要一个用户名和一个可选的密码。
+
+这是我们使用的类型别名：
+
+```rust
+pub type Authority<'a> = (&'a str, Option<&'a str>);
+```
+
+我们该怎么办呢？在 URL 中，它看起来像：
+
+[https://username:password@example.org](https://username:password@example.org)
+
+`:password`是可选的，但是在任何情况下，它都会以`@`作为结尾，所以我们可以通过使用`terminated`解析器开始。这给了我们一个字符串，该字符串是通过终止另一个字符串得到的。
+
+在`authority`部分中，我们看到`:`作为一个分隔符。根据文档，我们可以使用`separated_pair`组合器，它通过分割一个字符串给我们提供了两个值。但是我们如何处理实际的文本呢？这里有几种选项，一种是使用`alphanumeric1`解析器。它生成了一个至少包含一个字符的字母数字字符串。
+
+为了简单起见，我们不必担心可以在 URL 的不同部分使用哪些字符。这与编写和构造解析器无关，只会使所有的内容变得更长且更不方便。出于我们的目的，我们假设 URL 的大部分都可以由字母数字组成，有时候还包含连字符和点 - 根据 [URL 标准](https://url.spec.whatwg.org/#url-code-points)，这当然是错误的。
+
+让我们来看看组合后的`authority`解析器：
+
+```rust
+fn authority(input: &str) -> Res<&str, (&str, Option<&str>)> {
+    context(
+        "authority",
+        terminated(
+            separated_pair(alphanumeric1, opt(tag(":")), opt(alphanumeric1)),
+            tag("@"),
+        ),
+    )(input)
+}
+```
+
+我们通过运行一些测试用例来检验它是否工作：
+
+```rust
+#[test]
+fn test_authority() {
+    assert_eq!(
+        authority("username:password@zupzup.org"),
+        Ok(("zupzup.org", ("username", Some("password"))))
+    );
+    assert_eq!(
+        authority("username@zupzup.org"),
+        Ok(("zupzup.org", ("username", None)))
+    );
+    assert_eq!(
+        authority("zupzup.org"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (".org", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                ("zupzup.org", VerboseErrorKind::Context("authority")),
+            ]
+        }))
+    );
+    assert_eq!(
+        authority(":zupzup.org"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (
+                    ":zupzup.org",
+                    VerboseErrorKind::Nom(ErrorKind::AlphaNumeric)
+                ),
+                (":zupzup.org", VerboseErrorKind::Context("authority")),
+            ]
+        }))
+    );
+    assert_eq!(
+        authority("username:passwordzupzup.org"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (".org", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                (
+                    "username:passwordzupzup.org",
+                    VerboseErrorKind::Context("authority")
+                ),
+            ]
+        }))
+    );
+    assert_eq!(
+        authority("@zupzup.org"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (
+                    "@zupzup.org",
+                    VerboseErrorKind::Nom(ErrorKind::AlphaNumeric)
+                ),
+                ("@zupzup.org", VerboseErrorKind::Context("authority")),
+            ]
+        }))
+    )
+}
+```
+
+看起来很不错！对于各种情况，我们都有与之对应的测试用例，缺少密码，缺少`@`以及其他几种错误的情况。
+
+让我们继续来到 `host` 部分。
+
+## Rust解析:Host,Ip和端口
+
+因为 host 部分可以包含 主机字符串或者 IP，这一步将会有点复杂。更糟的是，在结尾还有一个可选的`:port`。
+
+为了尽可能保持简单，我们只支持 IPv4 的 IP。我们将从 host 开始。让我们看一下它的实现并逐行进行说明。
+
+```rust
+fn host(input: &str) -> Res<&str, Host> {
+    context(
+        "host",
+        alt((
+            tuple((many1(terminated(alphanumerichyphen1, tag("."))), alpha1)),
+            tuple((many_m_n(1, 1, alphanumerichyphen1), take(0 as usize))),
+        )),
+    )(input)
+    .map(|(next_input, mut res)| {
+        if !res.1.is_empty() {
+            res.0.push(res.1);
+        }
+        (next_input, Host::HOST(res.0.join(".")))
+    })
+}
+```
+
+首先你注意到这里有两个选项(`alt`)。在这两种情况下，都有一个元组，并包含了一个解析器链。
+
+在第一种情况下，我们想要一个或多个(`many1`)字母数字字符串，包含一个连字符，被一个`.`终结并以顶级域名 (alpha1) 结尾。
+
+`alphanumerichyphen1`解析器看起来像：
+
+```rust
+fn alphanumerichyphen1<T>(i: T) -> Res<T, T>
+where
+    T: InputTakeAtPosition,
+    <T as InputTakeAtPosition>::Item: AsChar,
+{
+    i.split_at_position1_complete(
+        |item| {
+            let char_item = item.as_char();
+            !(char_item == '-') && !char_item.is_alphanum()
+        },
+        ErrorKind::AlphaNumeric,
+    )
+}
+```
+
+这有点复杂，但基本上是 nom 中`alphanumeric1`解析器带有`-`的复制版本。我不知道它是否是最好的方式，但是它确实有用。
+
+在任何情况下，主机部分都有第二个选项，它是一个字符串，如：`localhost`。
+
+为什么我们要用将1和1传给`many_m_n`解析器这种看起来很无用的方式来表示呢？这里的问题是，在`alt`组合器中，所有的选项都必须返回相同的类型 - 在这里，它是一个字符串向量和另一个字符串的元组。
+
+我们也在`map`函数中看到，如果元组的第二部分不为空(顶级域名)，则将其添加到元组的第一部分。最后，我们构建了一个 HOST 枚举，将字符串部分与一个`.`相连，并创建了一个原始的主机字符串。
+
+让我们来看一些测试用例：
+
+```rust
+#[test]
+fn test_host() {
+    assert_eq!(
+        host("localhost:8080"),
+        Ok((":8080", Host::HOST("localhost".to_string())))
+    );
+    assert_eq!(
+        host("example.org:8080"),
+        Ok((":8080", Host::HOST("example.org".to_string())))
+    );
+    assert_eq!(
+        host("some-subsite.example.org:8080"),
+        Ok((":8080", Host::HOST("some-subsite.example.org".to_string())))
+    );
+    assert_eq!(
+        host("example.123"),
+        Ok((".123", Host::HOST("example".to_string())))
+    );
+    assert_eq!(
+        host("$$$.com"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                ("$$$.com", VerboseErrorKind::Nom(ErrorKind::AlphaNumeric)),
+                ("$$$.com", VerboseErrorKind::Nom(ErrorKind::ManyMN)),
+                ("$$$.com", VerboseErrorKind::Nom(ErrorKind::Alt)),
+                ("$$$.com", VerboseErrorKind::Context("host")),
+            ]
+        }))
+    );
+    assert_eq!(
+        host(".com"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (".com", VerboseErrorKind::Nom(ErrorKind::AlphaNumeric)),
+                (".com", VerboseErrorKind::Nom(ErrorKind::ManyMN)),
+                (".com", VerboseErrorKind::Nom(ErrorKind::Alt)),
+                (".com", VerboseErrorKind::Context("host")),
+            ]
+        }))
+    );
+}
+```
+
+让我们来到 主机是 IP 的情况。首先，我们需要能够解析 IPv4 的 IP 中每一个的部分(如：127.0.0.1)：
+
+```rust
+fn ip_num(input: &str) -> Res<&str, u8> {
+    context("ip number", n_to_m_digits(1, 3))(input).and_then(|(next_input, result)| {
+        match result.parse::<u8>() {
+            Ok(n) => Ok((next_input, n)),
+            Err(_) => Err(NomErr::Error(VerboseError { errors: vec![] })),
+        }
+    })
+}
+
+fn n_to_m_digits<'a>(n: usize, m: usize) -> impl FnMut(&'a str) -> Res<&str, String> {
+    move |input| {
+        many_m_n(n, m, one_of("0123456789"))(input)
+            .map(|(next_input, result)| (next_input, result.into_iter().collect()))
+    }
+}
+```
+
+为了获取每一个数字，我们尝试使用`n_to_m_digits`解析器来寻找一到三个连续的数字并将他们转换成 `u8`。
+
+通过这种方式，我们可以查看如何将完整的 IP 解析成`u8`数组：
+
+```rust
+fn ip(input: &str) -> Res<&str, Host> {
+    context(
+        "ip",
+        tuple((count(terminated(ip_num, tag(".")), 3), ip_num)),
+    )(input)
+    .map(|(next_input, res)| {
+        let mut result: [u8; 4] = [0, 0, 0, 0];
+        res.0
+            .into_iter()
+            .enumerate()
+            .for_each(|(i, v)| result[i] = v);
+        result[3] = res.1;
+        (next_input, Host::IP(result))
+    })
+}
+```
+
+在这里，我们要查找的查好是3个后面跟`.`的`ip_num`，然后是另一个`ip_num`。在映射函数中，我们将这些独立的结果拼接，从而将`u8`数组转换成`Host::IP`枚举。
+
+再一次，我们将写一些测试用例来确保它是正常工作的：
+
+```rust
+#[test]
+fn test_ipv4() {
+    assert_eq!(
+        ip("192.168.0.1:8080"),
+        Ok((":8080", Host::IP([192, 168, 0, 1])))
+    );
+    assert_eq!(ip("0.0.0.0:8080"), Ok((":8080", Host::IP([0, 0, 0, 0]))));
+    assert_eq!(
+        ip("1924.168.0.1:8080"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                ("4.168.0.1:8080", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                ("1924.168.0.1:8080", VerboseErrorKind::Nom(ErrorKind::Count)),
+                ("1924.168.0.1:8080", VerboseErrorKind::Context("ip")),
+            ]
+        }))
+    );
+    assert_eq!(
+        ip("192.168.0000.144:8080"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                ("0.144:8080", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                (
+                    "192.168.0000.144:8080",
+                    VerboseErrorKind::Nom(ErrorKind::Count)
+                ),
+                ("192.168.0000.144:8080", VerboseErrorKind::Context("ip")),
+            ]
+        }))
+    );
+    assert_eq!(
+        ip("192.168.0.1444:8080"),
+        Ok(("4:8080", Host::IP([192, 168, 0, 144])))
+    );
+    assert_eq!(
+        ip("192.168.0:8080"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (":8080", VerboseErrorKind::Nom(ErrorKind::Tag)),
+                ("192.168.0:8080", VerboseErrorKind::Nom(ErrorKind::Count)),
+                ("192.168.0:8080", VerboseErrorKind::Context("ip")),
+            ]
+        }))
+    );
+    assert_eq!(
+        ip("999.168.0.0:8080"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                ("999.168.0.0:8080", VerboseErrorKind::Nom(ErrorKind::Count)),
+                ("999.168.0.0:8080", VerboseErrorKind::Context("ip")),
+            ]
+        }))
+    );
+}
+```
+
+将它们放置在一起，我们需要另一个可以同时解析 IP 和 host 的解析器，并返回一个`Host`：
+
+```rust
+fn ip_or_host(input: &str) -> Res<&str, Host> {
+    context("ip or host", alt((ip, host)))(input)
+}
+```
+
+## 使用Rust解析路径
+
+下一步是解决路径问题。在此，我们再次假设该路径中的字符串只能包含带有连字符和点的字母数字字符串，并使用以下帮助程序进行解析：
+
+```rust
+fn url_code_points<T>(i: T) -> Res<T, T>
+where
+    T: InputTakeAtPosition,
+    <T as InputTakeAtPosition>::Item: AsChar,
+{
+    i.split_at_position1_complete(
+        |item| {
+            let char_item = item.as_char();
+            !(char_item == '-') && !char_item.is_alphanum() && !(char_item == '.')
+            // ... actual ascii code points and url encoding...: https://infra.spec.whatwg.org/#ascii-code-point
+        },
+        ErrorKind::AlphaNumeric,
+    )
+}
+```
+
+为了解析`path`，我们希望可以将由`/`分隔的字符串解析成字符串向量：
+
+```rust
+fn path(input: &str) -> Res<&str, Vec<&str>> {
+    context(
+        "path",
+        tuple((
+            tag("/"),
+            many0(terminated(url_code_points, tag("/"))),
+            opt(url_code_points),
+        )),
+    )(input)
+    .map(|(next_input, res)| {
+        let mut path: Vec<&str> = res.1.iter().map(|p| p.to_owned()).collect();
+        if let Some(last) = res.2 {
+            path.push(last);
+        }
+        (next_input, path)
+    })
+}
+```
+
+我们总是由`/`开始。这已经是一个合法的路径了，但是我们仍然可以有`0`个或更多个(`many0`)由`/`分隔的字符串，后面跟一个最终的可选的字符串(如：`index.php`)。
+
+在映射中，我们检查元组的第三部分(最后一部分)是否存在，如果存在，则将其添加到路径向量中。
+
+让我们为路径也写一点测试用例：
+
+```rust
+#[test]
+fn test_path() {
+    assert_eq!(path("/a/b/c?d"), Ok(("?d", vec!["a", "b", "c"])));
+    assert_eq!(path("/a/b/c/?d"), Ok(("?d", vec!["a", "b", "c"])));
+    assert_eq!(path("/a/b-c-d/c/?d"), Ok(("?d", vec!["a", "b-c-d", "c"])));
+    assert_eq!(path("/a/1234/c/?d"), Ok(("?d", vec!["a", "1234", "c"])));
+    assert_eq!(
+        path("/a/1234/c.txt?d"),
+        Ok(("?d", vec!["a", "1234", "c.txt"]))
+    );
+}
+```
+
+看起来不错！我们获取到了路径中的不同部分以及剩余的字符串，并且它们都被添加到了字符串向量中了。
+
+让我们通过解析 query 和 URL 部分的 fragment 来增强功能。
+
+## 查询和片段
+
+查询主要是由键值对组成：第一个键前面跟一个`?`，其余的查询由`&`进行分隔。再一次，我们将自己限制为有限的`url_code_points`。
+
+```rust
+fn query_params(input: &str) -> Res<&str, QueryParams> {
+    context(
+        "query params",
+        tuple((
+            tag("?"),
+            url_code_points,
+            tag("="),
+            url_code_points,
+            many0(tuple((
+                tag("&"),
+                url_code_points,
+                tag("="),
+                url_code_points,
+            ))),
+        )),
+    )(input)
+    .map(|(next_input, res)| {
+        let mut qps = Vec::new();
+        qps.push((res.1, res.3));
+        for qp in res.4 {
+            qps.push((qp.1, qp.3));
+        }
+        (next_input, qps)
+    })
+}
+```
+
+实际上这相当不错，因为解析器是非常直观(intuitive)且可读性的。我们解析`?`后面的第一个键值对的元组，使用`=`分隔，然后同样的操作执行`0`或多次，它们是以`&`而不是`?`开头。
+
+然后，在映射中，我们简单的将所有的键值对放在向量中，然后就有了我们在文章的开头定义的结构。
+
+```rust
+pub type QueryParam<'a> = (&'a str, &'a str);
+pub type QueryParams<'a> = Vec<QueryParam<'a>>;
+```
+
+这里有一组基础的测试用例：
+
+```rust
+#[test]
+fn test_query_params() {
+    assert_eq!(
+        query_params("?bla=5&blub=val#yay"),
+        Ok(("#yay", vec![("bla", "5"), ("blub", "val")]))
+    );
+
+    assert_eq!(
+        query_params("?bla-blub=arr-arr#yay"),
+        Ok(("#yay", vec![("bla-blub", "arr-arr"),]))
+    );
+}
+```
+
+最后一部分是 fragment，它其实就是一个`#`后面跟一个字符串：
+
+```rust
+fn fragment(input: &str) -> Res<&str, &str> {
+    context("fragment", tuple((tag("#"), url_code_points)))(input)
+        .map(|(next_input, res)| (next_input, res.1))
+}
+```
+
+在介绍了所有这些复杂的解析器之后，为了达到良好的效果，让我们编写一些完整性检查测试：
+
+```rust
+#[test]
+fn test_fragment() {
+    assert_eq!(fragment("#bla"), Ok(("", "bla")));
+    assert_eq!(fragment("#bla-blub"), Ok(("", "bla-blub")));
+}
+```
+
+## 在Rust中使用nom解析:最终的测试
+
+让我们将它们都放在最顶层的 URI 解析器函数中：
+
+```rust
+pub fn uri(input: &str) -> Res<&str, URI> {
+    context(
+        "uri",
+        tuple((
+            scheme,
+            opt(authority),
+            ip_or_host,
+            opt(port),
+            opt(path),
+            opt(query_params),
+            opt(fragment),
+        )),
+    )(input)
+    .map(|(next_input, res)| {
+        let (scheme, authority, host, port, path, query, fragment) = res;
+        (
+            next_input,
+            URI {
+                scheme,
+                authority,
+                host,
+                port,
+                path,
+                query,
+                fragment,
+            },
+        )
+    })
+}
+```
+
+我们有一个强制的(mandatory)`scheme`，后面跟一个可选的`authority`，然后再跟一个强制的`ip 或 host`。最后后面跟可选的`port`，`path`，`query 参数`，和一个`fragment`。
+
+在映射中，剩下的唯一一件事就是将解析后的元素构成成我们的`URI`结构。
+
+在这一点上，你可以看到整个结构的美观性和模块化。如果 uri 函数是你的起点，那么你可以从头到尾查看每个单独的解析器，以了解整个过程在做什么。
+
+当然，我们也需要对`uri`解析器进行一些测试：
+
+```rust
+#[test]
+fn test_uri() {
+    assert_eq!(
+        uri("https://www.zupzup.org/about/"),
+        Ok((
+            "",
+            URI {
+                scheme: Scheme::HTTPS,
+                authority: None,
+                host: Host::HOST("www.zupzup.org".to_string()),
+                port: None,
+                path: Some(vec!["about"]),
+                query: None,
+                fragment: None
+            }
+        ))
+    );
+
+    assert_eq!(
+        uri("http://localhost"),
+        Ok((
+            "",
+            URI {
+                scheme: Scheme::HTTP,
+                authority: None,
+                host: Host::HOST("localhost".to_string()),
+                port: None,
+                path: None,
+                query: None,
+                fragment: None
+            }
+        ))
+    );
+
+    assert_eq!(
+        uri("https://www.zupzup.org:443/about/?someVal=5#anchor"),
+        Ok((
+            "",
+            URI {
+                scheme: Scheme::HTTPS,
+                authority: None,
+                host: Host::HOST("www.zupzup.org".to_string()),
+                port: Some(443),
+                path: Some(vec!["about"]),
+                query: Some(vec![("someVal", "5")]),
+                fragment: Some("anchor")
+            }
+        ))
+    );
+
+    assert_eq!(
+        uri("http://user:pw@127.0.0.1:8080"),
+        Ok((
+            "",
+            URI {
+                scheme: Scheme::HTTP,
+                authority: Some(("user", Some("pw"))),
+                host: Host::IP([127, 0, 0, 1]),
+                port: Some(8080),
+                path: None,
+                query: None,
+                fragment: None
+            }
+        ))
+    );
+}
+```
+
+它没问题！你可以在 [Github](https://github.com/zupzup/rust-nom-parsing)找到完整的代码。
+
+## 结论
+
+真是太好了！我希望本文能够使你对 Rust 中的解析器特别是解析器组合器感到兴奋。
+
+`nom`库解析速度特别快，是很多生产级别的库和系统的基础。除此之外，它还提供了出色的 API 和文档。
+
+Rust 生态系统还提供了更多的解析选项，如：[combine](https://github.com/Marwes/combine)和 [pest](https://github.com/pest-parser/pest)。
