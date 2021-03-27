@@ -338,7 +338,7 @@ fn host(input: &str) -> Res<&str, Host> {
 
 在第一种情况下，我们想要一个或多个(`many1`)字母数字字符串，包含一个连字符，被一个`.`终结并以顶级域名 (alpha1) 结尾。
 
-`alphanumerichyphen1`解析器看起来像：
+`alphanumerichyphen1`解析器如下所示：
 
 ```rust
 fn alphanumerichyphen1<T>(i: T) -> Res<T, T>
