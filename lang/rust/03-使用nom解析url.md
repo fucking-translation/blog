@@ -521,6 +521,55 @@ fn ip_or_host(input: &str) -> Res<&str, Host> {
 }
 ```
 
+最后，让我们来解析端口(原文遗漏)：
+
+```rust
+fn port(input: &str) -> Res<&str, u16> {
+    context(
+        "port",
+        tuple((
+            tag(":"),
+            n_to_m_digits(1, 5)
+        )),
+    )(input)
+        .and_then(|(next_input, result)| {
+            let port = result.1.parse::<u16>();
+            match port {
+                Ok(port) => Ok((next_input, port)),
+                Err(e) => Err(NomErr::Error(VerboseError { errors: vec![ (input, VerboseErrorKind::Nom(ErrorKind::Digit))] }))
+            }
+        })
+}
+```
+
+并使用一些测试用例保证它是可以正常工作的：
+
+```rust
+#[test]
+fn test_port() {
+    assert_eq!(port(":0"), Ok(("", 0u16)));
+    assert_eq!(port(":65535"), Ok(("", 65535u16)));
+    assert_eq!(
+        port(":65536"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                (":65536", VerboseErrorKind::Nom(ErrorKind::Digit))
+            ]
+        })));
+    assert_eq!(
+        port(":a"),
+        Err(NomErr::Error(VerboseError {
+            errors: vec![
+                ("a", VerboseErrorKind::Nom(ErrorKind::OneOf)),
+                ("a", VerboseErrorKind::Nom(ErrorKind::ManyMN)),
+                (":a", VerboseErrorKind::Context("port"))
+            ]
+        })));
+}
+```
+
+还不错，一切正常！
+
 ## 使用Rust解析路径
 
 下一步是解决路径问题。在此，我们再次假设该路径中的字符串只能包含带有连字符和点的字母数字字符串，并使用以下帮助程序进行解析：
