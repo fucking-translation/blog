@@ -20,3 +20,6 @@
 
 ## Async 和 await
 
+Rust 已经采用 async/await 语法定义异步代码块和函数。
+
+`async` 关键字定义了异步代码块和函数。
