@@ -835,4 +835,4 @@ fn test_uri() {
 
 `nom`库解析速度特别快，是很多生产级别的库和系统的基础。除此之外，它还提供了出色的 API 和文档。
 
-Rust 生态系统还提供了更多的解析选项，如：[combine](https://github.com/Marwes/combine)和 [pest](https://github.com/pest-parser/pest)。
+Rust 生态系统还提供了更多的解析选项，如：[combine](https://github.com/Marwes/combine) 和 [pest](https://github.com/pest-parser/pest)。
