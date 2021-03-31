@@ -8,6 +8,7 @@
 - [x] [使用nom解析url](./lang/rust/03-使用nom解析url.md)
 - [x] [Rust中异步编程实用介绍](./lang/rust/04-Rust中异步编程实用介绍.md)
 - [ ] [tokio内幕-自底向上理解Rust的IO框架](./lang/rust/05-tokio内幕-自底向上理解Rust的IO框架.md)
+- [x] [「转」Rust 中的 Arenas](https://github.com/RustMagazine/rust_magazine_2021)
 
 ## 推荐阅读
 
