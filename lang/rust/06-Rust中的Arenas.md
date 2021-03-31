@@ -1,6 +1,6 @@
 # [「转」](https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md) Rust 中的 Arenas
 
-> 转载：[Rust 中的 Arenas](https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md)  
+> 转载：[RustMagazine 2021 期刊](https://github.com/RustMagazine/rust_magazine_2021) -> [Rust 中的 Arenas](https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md)  
 
 # Rust 中的 Arenas 内存池
 
