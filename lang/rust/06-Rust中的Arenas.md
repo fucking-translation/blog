@@ -119,7 +119,7 @@ struct Arena<'arena> {
 }
 ```
 
-[elsa::FrozenVec](https://docs.rs/elsa/1.4.0/elsa/vec/struct.FrozenVec.html)是类似于 `Vec` 的仅支持追加内容的抽象，可让你调用`push` 而不需要传入可变的引用，这是只使用 `safe` 的一个实现。
+[elsa::FrozenVec](https://docs.rs/elsa/1.4.0/elsa/vec/struct.FrozenVec.html) 是类似于 `Vec` 的仅支持追加内容的抽象，可让你调用`push` 而不需要传入可变的引用，这是只使用 `safe` 的一个实现。
 
 每个 `Person <'arena>` 都有一个他们关注的人的列表，但也跟踪他们关注的人：
 
