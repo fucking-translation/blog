@@ -246,7 +246,7 @@ epoll_wait(3, 0x7f2a11c36000, 1024, -1) = ...
 
 ## 最后的思考
 
-学习 Tokio的源码，Mio 以及 futures确实有助于巩固我对 Tokio 的理解，并通过理解具体的实现来验证我的抽象策略。这种方法在仅学习抽象层的狭隘使用案例时非常危险，我们必须意识到具体的示例仅是助于理解的一般用例，在阅读了源码之后再学习 Tokio 的教程，我有一些马后炮的意见：Tokio 非常合理，应该很容易理解与上手。
+学习 Tokio的源码，Mio 以及 futures 确实有助于巩固我对 Tokio 的理解，并通过理解具体的实现来验证我的抽象策略。这种方法在仅学习抽象层的狭隘使用案例时非常危险，我们必须意识到具体的示例仅是助于理解的一般用例，在阅读了源码之后再学习 Tokio 的教程，我有一些马后炮的意见：Tokio 非常合理，应该很容易理解与上手。
 
 我仍有一些问题待日后研究：
 
@@ -254,7 +254,7 @@ epoll_wait(3, 0x7f2a11c36000, 1024, -1) = ...
 
 - Tokio 是否支持以任何方式在多线程中运行事件循环，而不是依靠寻找机会将工作分担给工作线程以最大程度地利用处理器内核。
 
-2017-12-19 更新：这里有 [Reddit thread on r/rust](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/) 在讨论本文。Mio 的作者 Carl Lerche 在[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfw5n1/)和[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfwc1m/) 贴了些信息量很大的留言。除了回应上述问题，他也指出[FuturesUnordered](https://docs.rs/futures/0.1.17/futures/stream/struct.FuturesUnordered.html) 提供了一种组合 future 的方式，以便对相关的子 future 进行轮询，从而避免了像`join_all()`那样对每个 future 进行轮询，且需要权衡其他分配。同样，Tokio 的未来版本将从`mio::Registration`方案迁移到通知任务，这可以简化前面描述的某些步骤。
+2017-12-19 更新：这里有 [Reddit thread on r/rust](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/) 在讨论本文。Mio 的作者 Carl Lerche 在[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfw5n1/)和[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfwc1m/) 贴了些信息量很大的留言。除了回应上述问题，他也指出 [FuturesUnordered](https://docs.rs/futures/0.1.17/futures/stream/struct.FuturesUnordered.html) 提供了一种组合 future 的方式，以便对相关的子 future 进行轮询，从而避免了像`join_all()`那样对每个 future 进行轮询，且需要权衡其他分配。同样，Tokio 的未来版本将从`mio::Registration`方案迁移到通知任务，这可以简化前面描述的某些步骤。
 
 2017-12-21更新：看起来 Hacker News 也在讨论[这篇文章](https://news.ycombinator.com/item?id=15972593)。
 
