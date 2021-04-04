@@ -153,3 +153,109 @@ impl Notify for MySetReadiness {
 就像 Mio 封装了`std::net`结构(如：`UdpSocket`，`TcpListener`，`TcpStream`)以自定义功能一样，Tokio 也使用组合和装饰来提供这些类型的 Tokio的 感知版本。例如：Tokio 的`UdpSocket`看起来像这样：
 
 ![udpsocket](./img/udpsocket.svg)
+
+Tokio 版本的这些 I/O 源类型提供的构造函数都需要一个指向事件循环的句柄([tokio_core::reactor::Handle](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Handle.html))。在初始化的时候，这些类型将会将它们的套接字注册到事件循环的 Mio 轮询中，以接收`edge-triggered`(一种 epoll 事件的触发方式)事件及其新分配的偶数数字的 token(下面会提及)。当底层 I/O 操作回传`WouldBlock`时，这些类型可以很方便地通知当前的任务来接收读/写就绪状态。
+
+Tokio 在 Mio 上注册了很多 `Evented` 的类型，键入特定的 token：
+
+- Token 0 (`TOKEN_MESSAGES`) 被用于 tokio 内部的消息队列，它提供了移除 I/O 来源，接收读写就绪通知的定时任务，配置超时时间，在事件循环的上下文中运行任意(arbitrary)闭包。这可以安全地与其他线程的事件循环进行通信。举个例子：[Remote::spawn()](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Remote.html#method.spawn) 通过消息系统将 future 传入事件循环中。
+
+  消息系统被实现为 [futures::sync::mpsc](https://docs.rs/futures/0.1.17/futures/sync/mpsc/index.html) 流。作为一个 [futures::stream::Stream](https://docs.rs/futures/0.1.17/futures/stream/trait.Stream.html) (与 future 很像，但是它产生一系列的值而不是单个值)，使用上面提到的`MySetReadiness`方案执行此消息队列的处理，其中`Registration`是以`TOKEN_MESSAGES`令牌进行注册的。当接收到`TOKEN_MESSAGES`事件，他们会被分发给`consume_queue()`方法来进行处理(源码：[enum Message](https://github.com/tokio-rs/tokio-core/blob/0.1.10/src/reactor/mod.rs#L133)，[consume_queue()](https://github.com/tokio-rs/tokio-core/blob/0.1.10/src/reactor/mod.rs#L403))。
+
+- Token 1 (`TOKEN_FUTURE`) 被用来通知主任务需要被轮询。这发生在主任务关联的通知被发布的时候(换句话说就是 future 或者其中的子 future 被传递给`Core::run()`，而不是通过`spawn()`运行在不同任务上的 future)。它同样使用一个`MySetReadiness`方案将 future 的通知转换成了 Mio 的事件。在一个 future 运行在主任务之前返回`Async::NotReady`，并以其所选的方式在稍后发布通知。当接收到`TOKEN_FUTURE`事件后，Tokio 事件循环将会重新轮询主任务。
+
+- 大于 1 的偶数 Token (TOKEN_START + key * 2) 被用来表明 I/O 来源上的就绪状态的变更。key 是指与`Core::inner::io_dispatch Slab<ScheduledIo>`相关联的`Slab` key。当对应的 Tokio 源类型初始化时，Mio I/O 源类型(`UdpSocket`，`TcpListener`，`TcpStream`)使用此 token 自动进行注册。
+
+- 大于 1 的奇数 Token (TOKEN_START + key * 2 + 1) 被用来表明一个已创建的任务(以及相关的 future)需要被轮询。key 是与`Core::inner::task_dispatch Slab<ScheduledTask>`相关联的`Slab` key。和`TOKEN_MESSAGES`与`TOKEN_FUTURE`事件相同，这里也使用了`MySetReadiness`方案。
+
+## Tokio 事件循环
+
+Tokio，尤其是[tokio_core::reactor::Core](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Core.html)，提供了一个管理 future 和任务的事件循环，来驱动 future 的完成，它同样还提供了与 Mio 的接口，因此 I/O 事件将会导致正确的任务被通知到。使用事件循环设置使用 [Core::new()](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Core.html#method.new) 初始化 `Core` 以及 使用单个 future 调用[Core::run()](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Core.html#method.run)。事件循环将会在返回之前驱动提供的 future 完成。对于服务端应用，这个 future 更像是长期存活。它确实可能是这样，举个例子：使用一个`TcpListener`来一直接收新的连接，每个连接都会被自己的 future 进行处理，这些 future 运行在由[Handle.spawn()](https://docs.rs/tokio-core/0.1.10/tokio_core/reactor/struct.Handle.html#method.spawn)创建的独立任务中。
+
+下面的流程图概述了 Tokio 事件循环的基本步骤：
+
+![tokio-event-loop](./img/tokio-event-loop.svg)
+
+## 当数据抵达套接字时发生了什么？
+
+了解 Tokio 的一个有用的练习是检查当数据到达套接字时在事件循环中发生的步骤。我惊讶的发现这个过程最终分为两个部分，分别在事件循环内的各自迭代中，进行独立的 epoll 事务。第一部分负责当套接字读就绪(即 Mio 事件带着比 1 大的偶数 token 或者主任务的`TOKEN_FUTURE`)时，通过发送通知给对套接字感兴趣的任务。第二部分通过轮询任务及与其关联的 future 来处理通知(即 Mio 事件带着比 1 大的奇数 token)。我们来考虑以下情景：一个创建的 future 通过上层的 Tokio 事件循环 从 Linux 系统中的`UdpSocket`上读取数据，假设之前对 future 的轮询导致`recv_from()`返回了一个`WouldBlock`错误。
+
+![recv-sequence-1](./img/recv-sequence-1.svg)
+
+Tokio 事件轮询调用`mio::Poll::poll()`，该方法转而(在  Linux上 )调用`epoll_wait()`，进而阻塞某个监控中的文件修饰符发生了就绪状态变更的事件。当这些发生时，`epoll_wait()`返回一个`epoll_event`结构的数组，用来描述发生了什么事，这些结构通过 Mio 转换成`mio::Events`并返回给 Tokio(在 Linux 中，这个转换是零开销的，因为`mio::Events`只是`epoll_event`数组的一个元组结构)。在我们的例子中，假定数组中只有一个事件表明套接字已经读就绪。因为事件的 token 是大于 1 的偶数，因此 Tokio 将其解释为一个 I/O 事件，并在`Slab<ScheduledIo>`的相关元素中查找详细信息，该元素包含有关对这个套接字的读写就绪感兴趣的任务信息。然后，Tokio 通知读任务通过`MySetReadiness`调用 Mio 的`set_readiness()`。Mio 通过将事件详细信息添加到就绪队列，并将单个 0x01 字节写入就绪管道来处理这个非系统事件。
+
+![recv-sequence-2](./img/recv-sequence-2.svg)
+
+在 Tokio 的事件轮询来到下一个迭代后，它再一次轮询 Mio，Mio 则调用`epoll_wait()`，这时，该函数将会返回一个发生在 Mio 就绪管道上的读就绪事件。Mio 读取之前写入管道的 0x01 字节，并从就绪队列中取出最先的非系统事件的详细信息，并将该事件返回给 Tokio。因为事件的 Token 是大于 1 的奇数，Tokio 将其解释为任务通知事件，并在`Slab<ScheduledIo>`的相关元素中查找详细信息，该元素包含从`spawn()`返回的任务最初的`Spawn`对象。Tokio 通过 [poll_future_notify()](https://docs.rs/futures/0.1.17/futures/executor/struct.Spawn.html#method.poll_future_notify) 轮询任务及其相关的 future。future 可能会在之后读取套接字上的数据知道它收到一个`WouldBlock`错误。
+
+与其他异步 I/O 事件相比，这两种设计管道读写的迭代方式可能会增加一点开销。在单线程程序中，使用`strace`查看线程通过管道和它自己交流是很奇怪的：
+
+```c
+pipe2([4, 5], O_NONBLOCK|O_CLOEXEC) = 0
+...
+epoll_wait(3, [{EPOLLIN|EPOLLOUT, {u32=14, u64=14}}], 1024, -1) = 1
+write(5, "\1", 1) = 1
+epoll_wait(3, [{EPOLLIN, {u32=4294967295, u64=18446744073709551615}}], 1024, 0) = 1
+read(4, "\1", 128) = 1
+read(4, 0x7ffce1140f58, 128) = -1 EAGAIN (Resource temporarily unavailable)
+recvfrom(12, "hello\n", 1024, 0, {sa_family=AF_INET, sin_port=htons(43106), sin_addr=inet_addr("127.0.0.1")}, [16]) = 6
+recvfrom(12, 0x7f576621c800, 1024, 0, 0x7ffce1140070, 0x7ffce114011c) = -1 EAGAIN (Resource temporarily unavailable)
+epoll_wait(3, [], 1024, 0) = 0
+epoll_wait(3, 0x7f5765b24000, 1024, -1) = -1 EINTR (Interrupted system call)
+```
+
+Mio 使用这种管道的方式来支持可能从其他线程调用`set_readiness()`的一般情况，也许在强制事件的公平调度以及维护 future 与 I/O 之间的间接层方面也会有一些好处。
+
+## 收获：组合 future 和 衍生 future
+
+当我第一次学习 Tokio 时，我写了一个小程序监听来自不同 UDP 套接字上的数据。我创建了 10 个 读取套接字的 future 实例，它们每一个都监听不同的端口。我天真的使用[join_all()](https://docs.rs/futures/0.1.17/futures/future/fn.join_all.html) 将它们组合成一个 future，并将其传入`Core::run()`，然后惊讶的发现当单个数据包抵达时，每个 future 都在被轮询。同样让人惊讶的是`tokio_core::net::UdpSocket::recv_from()`已足够聪明，在先前的 Mio 轮询中，可以避免在未标记已就绪的套接字上实际调用操作系统的`recv_from()`。以下的`strace`反应出在 future 的`poll()`中的调试`println!()`，大致如下：
+
+```c
+epoll_wait(3, [{EPOLLIN|EPOLLOUT, {u32=14, u64=14}}], 1024, -1) = 1
+write(5, "\1", 1) = 1
+epoll_wait(3, [{EPOLLIN, {u32=4294967295, u64=18446744073709551615}}], 1024, 0) = 1
+read(4, "\1", 128) = 1
+read(4, 0x7ffc183129d8, 128) = -1 EAGAIN (Resource temporarily unavailable)
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+recvfrom(12, "hello\n", 1024, 0, {sa_family=AF_INET, sin_port=htons(43106), sin_addr=inet_addr("127.0.0.1")}, [16]) = 6
+getsockname(12, {sa_family=AF_INET, sin_port=htons(2006), sin_addr=inet_addr("127.0.0.1")}, [16]) = 0
+write(1, "recv 6 bytes from 127.0.0.1:43106 at 127.0.0.1:2006\n", 52) = 52
+recvfrom(12, 0x7f2a11c1c400, 1024, 0, 0x7ffc18312ba0, 0x7ffc18312c4c) = -1 EAGAIN (Resource temporarily unavailable)
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+write(1, "UdpServer::poll()...\n", 21) = 21
+epoll_wait(3, [], 1024, 0) = 0
+epoll_wait(3, 0x7f2a11c36000, 1024, -1) = ...
+```
+
+因为 Tokio 和 futures 的内部机制对我来说有些模糊 (opaque)，我想我希望后台发生一些魔法规则只会轮询需要的 future。当然，在对 Tokio 有了更好的了解之后，很明显我的程序正在使用这样的 future。
+
+![futures-join](./img/futures-join.svg)
+
+这实际上可以正常工作，但不是最佳选择 - 特别是在你有很多套接字的情况下。因为通知是在任务级别发生的，因此在上面任何绿色框中排列的任何通知都将导致通知主要任务。它将轮询它的 `FromAll` future，使得所有的子 future 都将接受轮询。我真正需要的是一个主 future，它可以使用`Handle::spawn()`来启动封装在各自任务中的 future，这样的安排大致如下所示：
+
+![futures-spawn](./img/futures-spawn.svg)
+
+当任何 future 安排通知时，只有 future 特定的任务会被通知到，并且只有该 future 会被轮询(回想一下，当`tokio_core::net::UdpSocket::recv_from()`从它的底层`mio::net::UdpSocket::recv_from()`调用中接收到`WouldBlock`时，“安排通知”会自动发生)。future 的组合器是用来描述协议流的强大工具，否则将在手动状态机中实现该协议流，但是了解你的设计可能需要在何处支持独立且并行执行的任务，这一点很重要。
+
+## 最后的思考
+
+学习 Tokio的源码，Mio 以及 futures确实有助于巩固我对 Tokio 的理解，并通过理解具体的实现来验证我的抽象策略。这种方法在仅学习抽象层的狭隘使用案例时非常危险，我们必须意识到具体的示例仅是助于理解的一般用例，在阅读了源码之后再学习 Tokio 的教程，我有一些马后炮的意见：Tokio 非常合理，应该很容易理解与上手。
+
+我仍有一些问题待日后研究：
+
+- Tokio 是否能够处理边缘触发的饥饿问题？我想将来可以通过限制单个`poll()`中的读写次数来处理它。当达到极限时， future 可以在明确通知当前任务后提前返回，而不是依赖于 Tokio 的 I/O 源类型的隐式“定时`WouldBlock`”的行为，从而使其他任务及 future 有机会取得进展。
+
+- Tokio 是否支持以任何方式在多线程中运行事件循环，而不是依靠寻找机会将工作分担给工作线程以最大程度地利用处理器内核。
+
+2017-12-19 更新：这里有 [Reddit thread on r/rust](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/) 在讨论本文。Mio 的作者 Carl Lerche 在[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfw5n1/)和[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfwc1m/) 贴了些信息量很大的留言。除了回应上述问题，他也指出[FuturesUnordered](https://docs.rs/futures/0.1.17/futures/stream/struct.FuturesUnordered.html) 提供了一种组合 future 的方式，以便对相关的子 future 进行轮询，从而避免了像`join_all()`那样对每个 future 进行轮询，且需要权衡其他分配。同样，Tokio 的未来版本将从`mio::Registration`方案迁移到通知任务，这可以简化前面描述的某些步骤。
+
+2017-12-21：看起来 Hacker News 也在讨论[这篇文章](https://news.ycombinator.com/item?id=15972593)。
+
+2018-01-26：我为 Tokio 的示例代码创建了一个[Github仓库]( https://github.com/simmons/tokio-aio-examples)。
