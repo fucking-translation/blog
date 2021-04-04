@@ -1,4 +1,4 @@
-# tokio 内幕：自底向上的理解 Rust 的异步 I/O 框架
+# Tokio 内幕：自底向上的理解 Rust 的异步 I/O 框架
 
 [原文](https://cafbit.com/post/tokio_internals/)
 
