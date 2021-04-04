@@ -256,6 +256,6 @@ epoll_wait(3, 0x7f2a11c36000, 1024, -1) = ...
 
 2017-12-19 更新：这里有 [Reddit thread on r/rust](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/) 在讨论本文。Mio 的作者 Carl Lerche 在[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfw5n1/)和[这里](https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfwc1m/) 贴了些信息量很大的留言。除了回应上述问题，他也指出[FuturesUnordered](https://docs.rs/futures/0.1.17/futures/stream/struct.FuturesUnordered.html) 提供了一种组合 future 的方式，以便对相关的子 future 进行轮询，从而避免了像`join_all()`那样对每个 future 进行轮询，且需要权衡其他分配。同样，Tokio 的未来版本将从`mio::Registration`方案迁移到通知任务，这可以简化前面描述的某些步骤。
 
-2017-12-21：看起来 Hacker News 也在讨论[这篇文章](https://news.ycombinator.com/item?id=15972593)。
+2017-12-21更新：看起来 Hacker News 也在讨论[这篇文章](https://news.ycombinator.com/item?id=15972593)。
 
-2018-01-26：我为 Tokio 的示例代码创建了一个[Github仓库]( https://github.com/simmons/tokio-aio-examples)。
+2018-01-26更新：我为 Tokio 的示例代码创建了一个[Github仓库]( https://github.com/simmons/tokio-aio-examples)。
