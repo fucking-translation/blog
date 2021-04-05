@@ -373,7 +373,7 @@ fn main() {
 - 当创建 future 时，对其进行轮询
 - 实现`Waker`以便我们可以知道何时再次轮询 future
 
-下面是一个基础好的执行器。它有两个向量(`need_poll`和`sleeping`)对 future 进行跟踪。调用`spawn`将一个 future 添加到`need_poll`。
+下面是一个基础的执行器。它使用两个向量(`need_poll`和`sleeping`)对 future 进行跟踪。调用`spawn`将一个 future 添加到`need_poll`中。
 
 与其直接使用`WrappedFuture`，不如使用`Arc/Mutex`对其进行封装，以便可以在线程之间共享 future。我们声明一个别名(`SharedFuture`)，以减少噪音。
 
