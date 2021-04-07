@@ -86,24 +86,24 @@ b.other.set(Some(a));
 
 和 `bumpalo` 不同的是，`typed-arena` 当 `arena` 本身超出范围时，就会使用析构函数。
 
-> 你或许想知道，析构函数在引用数据上的安全性–毕竟，无论哪一个变量被第二次销毁，析构函数都会读到悬挂的引用。 我们将在文章的后面对此进行介绍，但这与 `drop` 检查有关，特别是如果尝试自引用时，则 arena 元素 本身允许的唯一显式析构函数将是带有适当标记类型的析构函数。
+> 你或许想知道，析构函数在引用数据上的安全性–毕竟，无论哪一个变量被第二次销毁，析构函数都会读到悬挂的引用。我们将在文章的后面对此进行介绍，但这与 `drop` 检查有关，特别是如果尝试自引用时，则 arena 元素本身允许的唯一显式析构函数将是带有适当标记类型的析构函数。
 
 ## 实现一个支持自引用的 arena
 
 写自引用代码是很有趣的，因为 Rust 非常警惕自我参照数据。 但是 `areana` 可以让你清楚地将“我不在乎此对象”和“可以删除此对象”阶段分开，以允许自引用和循环类型出现。
 
-> 人们很少需要实现自己的 arena，Bumpalo和Typedarena涵盖了大多数使用场景，实在没办法的话不妨先在 crates.io上 找一下。 但是，如果你的确需要直接实现的话，或者对具体的生命周期细节感兴趣，那么本节适合你。
+> 人们很少需要实现自己的 arena，Bumpalo 和 Typedarena 涵盖了大多数使用场景，实在没办法的话不妨先在 crates.io 上 找一下。 但是，如果你的确需要直接实现的话，或者对具体的生命周期细节感兴趣，那么本节适合你。
 
-在以下规则中实现输入条目为Entry的竞技场Arena的关键：
+实现带有 Entry 类型的 Arena 的关键是以下几种规则：
 
-- `Arena` 和 `Entry` 都应具有生命周期参数：`Arena <'arena>` 和 `Entry <'arena>`
-- `Arena` 方法都应将 `Arena <'arena>` 接收为 `＆'arena` 自身，即其自身类型为`＆'arena Arena <'arena>`
-- `Entry`几乎应该始终以 `＆'arena Entry <'arena>` 的形式传递（为此创建别名非常有用）
-- 使用内部可变性； `Arena`上的 `＆mut self` 将使所有代码停止编译。 如果使用 `unsafe`的可变性，请确保 `RefCell <Entry <'arena >>`  具有 [PhantomData](https://doc.rust-lang.org/std/marker/struct.PhantomData.html) 。
+- `Arena`和`Entry`都应具有生命周期参数：`Arena <'arena>`和`Entry <'arena>`
+- `Arena`方法都应将`Arena <'arena>`作为`＆'arena self`，即`self`的类型为`＆'arena Arena <'arena>`
+- `Entry`几乎应该始终以`＆'arena Entry <'arena>`的形式传递（为此创建别名非常有用）
+- 使用内部可变性；`Arena`上的`＆mut self`将使所有代码停止编译。如果使用`unsafe`的可变性，请确保 `RefCell<Entry<'arena>>`  具有 [PhantomData](https://doc.rust-lang.org/std/marker/struct.PhantomData.html) 。
 
-从生命周期的角度来看基本上就是这样，剩下的全部就是确定所需的 API 。 掌握了以上规则，只要确保定义区域与所需的保证一起使用，就不必了解底层生命周期的状况。
+从生命周期的角度来看基本上就是这样，剩下的全部就是确定所需的 API。掌握了以上规则，只要确保定义区域与所需的保证一起使用，就不必了解底层生命周期的状况。
 
-让我们看一个 实现，然后剖析其工作原理。 
+让我们看一个实现，然后剖析其工作原理。 
 
 ### 实现
 
