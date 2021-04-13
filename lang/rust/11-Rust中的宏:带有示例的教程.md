@@ -439,3 +439,79 @@ fn main() {
 
 ### 属性式宏
 
+属性式宏可以让你创建一个依附于某一项的自定义属性，并允许你操作该项。它还可以携带参数。
+
+```rust
+#[some_attribute_macro(some_argument)]
+fn perform_task(){
+// some code
+}
+```
+
+在上面的代码中，`some_attribute_macros`是一个属性宏，它操作`perform_task`函数。
+
+为了写一个属性式宏，使用`cargo new macro-demo --lib`创建一个项目。一旦项目就绪，更新`Cargo.toml`来告诉项目将要创建一个过程宏。
+
+```toml
+# Cargo.toml
+[lib]
+proc-macro = true
+```
+
+现在我们开始尝试编写过程宏。
+
+过程宏是一个接收`TokenStream`作为输入，并返回另一个`TokenStream`的函数。为了编写一个过程宏，我们需要编写一个解析器解析`TokenStream`。Rust 社区有一个非常棒的库：[syn](https://github.com/dtolnay/syn)，用来解析`TokenStream`。
+
+[syn](https://github.com/dtolnay/syn) 为 Rust 语法提供了现成的解析器用来解析`TokenStream`。你也可以通过组合 [syn](https://github.com/dtolnay/syn) 提供的更加底层的解析器来解析你的语法。
+
+在`Cargo.toml`中添加`syn`和`quote`：
+
+```toml
+# Cargo.toml
+[dependencies]
+syn = {version="1.0.57",features=["full","fold"]}
+quote = "1.0.8"
+```
+
+现在我们可以使用编译器为编写过程宏而提供`proc_macro`库在`lib.rs`中编写属性式宏。一个过程宏库不能导出过程宏以外的其他任何东西，并且在 crate 中定义的过程宏不能在该 crate 中使用。
+
+```rust
+// lib.rs
+extern crate proc_macro;
+use proc_macro::{TokenStream};
+use quote::{quote};
+
+// using proc_macro_attribute to declare an attribute like procedural macro
+#[proc_macro_attribute]
+// _metadata is argument provided to macro call and _input is code to which attribute like macro attaches
+pub fn my_custom_attribute(_metadata: TokenStream, _input: TokenStream) -> TokenStream {
+    // returing a simple TokenStream for Struct
+    TokenStream::from(quote!{struct H{}})
+}
+```
+
+为了测试我们添加的宏，通过创建一个名为`tests`的文件夹并在其中添加`attribute_macro.rs`文件来创建一个集成测试。在这个文件中，我们测试我们的属性式宏。
+
+```rust
+// tests/attribute_macro.rs
+
+use macro_demo::*;
+
+// macro converts struct S to struct H
+#[my_custom_attribute]
+struct S{}
+
+#[test]
+fn test_macro(){
+// due to macro we have struct H in scope
+    let demo=H{};
+}
+```
+
+使用`cargo test`命令运行上面的测试代码。
+
+既然我们理解了过程宏的基本概念，让我们使用`syn`来操作并解析更高级的`TokenStream`。
+
+为了学习`syn`是如何解析并操作`TokenStream`的，我们以`syn`的[Github仓库](https://github.com/dtolnay/syn/blob/master/examples/trace-var/trace-var/src/lib.rs) 的一个示例为例。这个示例创建了一个在值变更时跟踪变量的 Rust 宏。
+
+首先，
