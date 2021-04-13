@@ -11,6 +11,7 @@
 - [x] [「转」Rust 中的 Arenas](./lang/rust/06-Rust中的Arenas.md)
 - [x] [「转」图解 Rust 所有权与生命周期](./lang/rust/08-图解Rust所有权与生命周期.md)
 - [x] [Rust 异步执行器](./lang/rust/09-Rust异步执行器.md)
+- [x] [Rust 中的宏：带有示例的教程](./lang/rust/11-Rust中的宏:带有示例的教程.md)
 
 ## 推荐阅读
 
