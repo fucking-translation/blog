@@ -514,4 +514,263 @@ fn test_macro(){
 
 为了学习`syn`是如何解析并操作`TokenStream`的，我们以`syn`的[Github仓库](https://github.com/dtolnay/syn/blob/master/examples/trace-var/trace-var/src/lib.rs) 的一个示例为例。这个示例创建了一个在值变更时跟踪变量的 Rust 宏。
 
-首先，
+首先，我们需要弄清楚宏是如何操作它依附的代码的。
+
+```rust
+#[trace_vars(a)]
+fn do_something(){
+  let a=9;
+  a=6;
+  a=0;
+}
+```
+
+`trace_vars`宏传入它需要跟踪的变量名，并且一旦传入的变量`a`的值发生改变，就会注入了一条打印语句。它跟踪了输入变量的值。
+
+首先，解析属性式宏依附的代码。`syn`为 Rust 函数语法提供了一个内置的解析器。`ItemFn`将会解析函数，并且当语法是非法时抛出一个错误。
+
+```rust
+#[proc_macro_attribute]
+pub fn trace_vars(_metadata: TokenStream, input: TokenStream) -> TokenStream {
+// parsing rust function to easy to use struct
+    let input_fn = parse_macro_input!(input as ItemFn);
+    TokenStream::from(quote!{fn dummy(){}})
+}
+```
+
+既然我们有了已解析的输入，让我们转到元数据。对于元数据，没有内置的解析器会起作用，因此我们需要使用`syn`的`parse`模块编写我们自己的解析器。
+
+```rust
+#[trace_vars(a,c,b)] // we need to parse a "," seperated list of tokens
+// code
+```
+
+为了让`syn`起作用，我们需要实现`syn`提供的`Parse`特征。`Punctuated`被用来创建一个以`,`分隔的`Ident`的向量。
+
+```rust
+struct Args{
+    vars:HashSet<Ident>
+}
+
+impl Parse for Args{
+    fn parse(input: ParseStream) -> Result<Self> {
+        // parses a,b,c, or a,b,c where a,b and c are Indent
+        let vars = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
+        Ok(Args {
+            vars: vars.into_iter().collect(),
+        })
+    }
+}
+```
+
+一旦我们实现了`Parse`特征，我们就可以使用`parse_macro_input`宏来解析元数据了。
+
+```rust
+#[proc_macro_attribute]
+pub fn trace_vars(metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let input_fn = parse_macro_input!(input as ItemFn);
+// using newly created struct Args
+    let args= parse_macro_input!(metadata as Args);
+    TokenStream::from(quote!{fn dummy(){}})
+}
+```
+
+现在，当变量的值变更时，我们将修改`input_fn`以添加`println!`。为了添加这个功能，我们需要过滤出赋值语句，并在该行之后插入一条打印语句。
+
+```rust
+impl Args {
+    fn should_print_expr(&self, e: &Expr) -> bool {
+        match *e {
+            Expr::Path(ref e) => {
+ // variable shouldn't start wiht ::
+                if e.path.leading_colon.is_some() {
+                    false
+// should be a single variable like `x=8` not n::x=0 
+                } else if e.path.segments.len() != 1 {
+                    false
+                } else {
+// get the first part
+                    let first = e.path.segments.first().unwrap();
+// check if the variable name is in the Args.vars hashset
+                    self.vars.contains(&first.ident) && first.arguments.is_empty()
+                }
+            }
+            _ => false,
+        }
+    }
+
+// used for checking if to print let i=0 etc or not
+    fn should_print_pat(&self, p: &Pat) -> bool {
+        match p {
+// check if variable name is present in set
+            Pat::Ident(ref p) => self.vars.contains(&p.ident),
+            _ => false,
+        }
+    }
+
+// manipulate tree to insert print statement
+    fn assign_and_print(&mut self, left: Expr, op: &dyn ToTokens, right: Expr) -> Expr {
+ // recurive call on right of the assigment statement
+        let right = fold::fold_expr(self, right);
+// returning manipulated sub-tree
+        parse_quote!({
+            #left #op #right;
+            println!(concat!(stringify!(#left), " = {:?}"), #left);
+        })
+    }
+
+// manipulating let statement
+    fn let_and_print(&mut self, local: Local) -> Stmt {
+        let Local { pat, init, .. } = local;
+        let init = self.fold_expr(*init.unwrap().1);
+// get the variable name of assigned variable
+        let ident = match pat {
+            Pat::Ident(ref p) => &p.ident,
+            _ => unreachable!(),
+        };
+// new sub tree
+        parse_quote! {
+            let #pat = {
+                #[allow(unused_mut)]
+                let #pat = #init;
+                println!(concat!(stringify!(#ident), " = {:?}"), #ident);
+                #ident
+            };
+        }
+    }
+}
+```
+
+在上面的示例中，`quote`宏用于模版化并编写 Rust。`#`用来插入变量的值。
+
+现在我们将会对`input_fn`进行深度优先搜索 (DFS) 并插入一条打印语句。`syn`提供了一个`Fold`特征，它可以为任何`Item`实现 DFS。我们只需要修改与我们要操作的标记类型相对应的特征方法。
+
+```rust
+impl Fold for Args {
+    fn fold_expr(&mut self, e: Expr) -> Expr {
+        match e {
+// for changing assignment like a=5
+            Expr::Assign(e) => {
+// check should print
+                if self.should_print_expr(&e.left) {
+                    self.assign_and_print(*e.left, &e.eq_token, *e.right)
+                } else {
+// continue with default travesal using default methods
+                    Expr::Assign(fold::fold_expr_assign(self, e))
+                }
+            }
+// for changing assigment and operation like a+=1
+            Expr::AssignOp(e) => {
+// check should print
+                if self.should_print_expr(&e.left) {
+                    self.assign_and_print(*e.left, &e.op, *e.right)
+                } else {
+// continue with default behaviour
+                    Expr::AssignOp(fold::fold_expr_assign_op(self, e))
+                }
+            }
+// continue with default behaviour for rest of expressions
+            _ => fold::fold_expr(self, e),
+        }
+    }
+
+// for let statements like let d=9
+    fn fold_stmt(&mut self, s: Stmt) -> Stmt {
+        match s {
+            Stmt::Local(s) => {
+                if s.init.is_some() && self.should_print_pat(&s.pat) {
+                    self.let_and_print(s)
+                } else {
+                    Stmt::Local(fold::fold_local(self, s))
+                }
+            }
+            _ => fold::fold_stmt(self, s),
+        }
+    }
+}
+```
+
+`Fold`特征用于对`Item`进行 DFS。它可以让你对不同的 token 类型执行不同的行为。
+
+现在我们可以使用`fold_item_fn`在解析的代码中注入打印语句。
+
+```rust
+#[proc_macro_attribute]
+pub fn trace_var(args: TokenStream, input: TokenStream) -> TokenStream {
+// parse the input
+    let input = parse_macro_input!(input as ItemFn);
+// parse the arguments
+    let mut args = parse_macro_input!(args as Args);
+// create the ouput
+    let output = args.fold_item_fn(input);
+// return the TokenStream
+    TokenStream::from(quote!(#output))
+}
+```
+ 
+这个代码示例来自 [syn examples](https://github.com/dtolnay/syn/blob/master/examples/trace-var/trace-var/src/lib.rs)，这是一个非常出色的学习过程宏的资源。
+
+### 自定义派生宏
+
+在 Rust 中自定义派生宏可以自动实现特征。这些宏让你可以通过使用`#[derive(Trait)]`来实现该特征。
+
+`syn`对派生宏有出色的支持。
+
+```rust
+#[derive(Trait)]
+struct MyStruct{}
+```
+
+为了在 Rust 中编写自定义派生宏，我们可以使用`DeriveInput`来解析输入以派生宏。我们也可以使用`proc_macro_derive`宏来自定义派生宏。
+
+```rust
+#[proc_macro_derive(Trait)]
+pub fn derive_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let name = input.ident;
+
+    let expanded = quote! {
+        impl Trait for #name {
+            fn print(&self) -> usize {
+                println!("{}","hello from #name")
+           }
+        }
+    };
+
+    proc_macro::TokenStream::from(expanded)
+}
+```
+
+使用`syn`可以编写更多高级的派生宏。可以在 [syn examples](https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs)中查看本示例。
+
+### 函数式宏
+
+函数式宏和声明式宏很像，因为它们都通过`!`进行调用并且看起来都很像函数调用。它们对括号内的代码进行操作。
+
+在 Rust 中，这是如何编写函数式宏的示例：
+
+```rust
+#[proc_macro]
+pub fn a_proc_macro(_input: TokenStream) -> TokenStream {
+    TokenStream::from(quote!(
+            fn anwser()->i32{
+                5
+            }
+))
+}
+```
+
+函数式宏不是在运行时执行的，而是在编译时执行的。它们可以用在 Rust 代码中的每一处地方。函数式宏同样接收一个`TokenStream`并返回一个`TokenStream`。
+
+
+使用过程宏的好处包括：
+
+- 使用`span`更好的进行错误处理
+- 更好的控制输出
+- 社区提供的`syn`和`quote`
+- 比声明式宏更强大
+
+## 结论
+
+在 Rust 宏教程中，我们涉及了 Rust 中宏的所有基础概念，定义了声明式宏和过程宏，并学习了如何通过使用各种语法以及社区提供的类库来编写这两种类型的宏。我们还介绍了使用每一种 Rust 宏的优势。
