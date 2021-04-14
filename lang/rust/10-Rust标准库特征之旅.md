@@ -932,7 +932,7 @@ fn main() {
 }
 ```
 
-Hopefully the examples above show that the relationship between subtraits and supertraits can be complex. Before introducing a mental model that neatly encapsulates all of that complexity let's quickly review and establish the mental model we use for understanding trait bounds on generic types:
+希望上面的例子可以表明，子特征和超特征之间的关系可以很复杂。在介绍将所有复杂性巧妙封装在一起的的心智模型 (mental model) 之前，让我们快速回顾并建立用于理解泛型类型的特征边界的心智模型：
 
 ```rust
 fn function<T: Clone>(t: T) {
@@ -940,15 +940,15 @@ fn function<T: Clone>(t: T) {
 }
 ```
 
-Without knowing anything about the impl of this function we could reasonably guess that `t.clone()` gets called at some point because when a generic type is bounded by a trait that strongly implies it has a dependency on the trait. The mental model for understanding the relationship between generic types and their trait bounds is a simple and intuitive one: generic types _depend on_ their trait bounds.
+在不知道此函数的实现的情况下，我们可以合理地猜测在某个时刻调用了`t.clone()`，因为当范型类型被特征限制的时候，它强烈的暗示它对该特征具有依赖性。心智模型对于理解泛型类型以及它们的特征边界来说是一种简单且直观的方式：泛型类型_依赖于_它们的特征边界。
 
-Now let's look the trait declaration for `Copy`:
+现在让我们看下`Copy`特征的定义：
 
 ```rust
 trait Copy: Clone {}
 ```
 
-The syntax above looks very similar to the syntax for applying a trait bound on a generic type and yet `Copy` doesn't depend on `Clone` at all. The mental model we developed earlier doesn't help us here. In my opinion, the most simple and elegant mental model for understanding the relationship between subtraits and supertraits is: subtraits _refine_ their supertraits.
+上面的语法看起来与将特征边界应用于范定类型非常相似，The syntax above looks very similar to the syntax for applying a trait bound on a generic type and yet `Copy` doesn't depend on `Clone` at all. The mental model we developed earlier doesn't help us here. In my opinion, the most simple and elegant mental model for understanding the relationship between subtraits and supertraits is: subtraits _refine_ their supertraits.
 
 "Refinement" is intentionally kept somewhat vague because it can mean different things in different contexts:
 - a subtrait might make its supertrait's methods' impls more specialized, faster, use less memory, e.g. `Copy: Clone`
