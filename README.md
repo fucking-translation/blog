@@ -15,6 +15,8 @@
 
 ## 推荐阅读
 
+- [潘少的技术博客](https://strikefreedom.top/)
+
 ### rust
 
 - [从 mio 到 coroutine](https://hexilee.me/2018/12/17/rust-async-io/)
