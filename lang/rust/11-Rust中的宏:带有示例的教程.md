@@ -2,8 +2,6 @@
 
 [原文](https://blog.logrocket.com/macros-in-rust-a-tutorial-with-examples/)
 
-</br>
-
 ![macro in rust](./img/macro_in_rust.webp)
 
 </br>
