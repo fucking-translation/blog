@@ -12,6 +12,7 @@
 - [x] [「转」图解 Rust 所有权与生命周期](./lang/rust/08-图解Rust所有权与生命周期.md)
 - [x] [Rust 异步执行器](./lang/rust/09-Rust异步执行器.md)
 - [x] [Rust 中的宏：带有示例的教程](./lang/rust/11-Rust中的宏:带有示例的教程.md)
+- [x] [libp2p 教程：使用 Rust 构建 p2p 应用](./lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)
 
 ## 推荐阅读
 
