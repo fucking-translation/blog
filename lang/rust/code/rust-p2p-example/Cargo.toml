@@ -1,0 +1,16 @@
+[package]
+name = "rust-p2p-example"
+version = "0.1.0"
+authors = ["iamazy <1448588084@qq.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libp2p = { version = "0.31", features = ["tcp-tokio", "mdns-tokio"] }
+tokio = { version = "0.3", features = ["io-util", "io-std", "stream", "macros", "rt", "rt-multi-thread", "fs", "time", "sync"] }
+serde = {version = "=1.0", features = ["derive"] }
+serde_json = "1.0"
+once_cell = "1.5"
+log = "0.4"
+pretty_env_logger = "0.4"

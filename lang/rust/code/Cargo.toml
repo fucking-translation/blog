@@ -1,0 +1,4 @@
+[workspace]
+members = [
+    "rust-p2p-example"
+]
