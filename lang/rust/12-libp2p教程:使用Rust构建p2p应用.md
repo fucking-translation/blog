@@ -77,7 +77,7 @@ static TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("recipes"));
 
 然后，我们使用`once_cell::Lazy`来懒加载一些东西。首要的是，我们使用它来生成密钥对，并从公钥中派生所谓的 (so-called) `PeerId`。我们还创建了一个`Topic`，它是`libp2p`中另一个关键的概念。
 
-这是什么意思呢？简而言之，在整个 p2p 网络中，`PeerId`是一个特定成员的唯一的标志符。我们从密钥对中派成它以确保它的唯一性。而且这个密钥对可以让我们与网络中其他的成员进行安全通信，确保没有人可以冒充 (impersonate) 我们。
+这是什么意思呢？简而言之，在整个 p2p 网络中，`PeerId`是一个特定成员的唯一的标志符。我们从密钥对中派生它以确保它的唯一性。而且这个密钥对可以让我们与网络中其他的成员进行安全通信，确保没有人可以冒充 (impersonate) 我们。
 
 另一方面，`Topic`是 Floodsub 中的概念，它实现了`libp2p`中的 [pub/sub](https://github.com/libp2p/specs/tree/master/pubsub) 接口。`Topic`是一种我们可以订阅并发送消息的组件 - 举个例子，只监听 `pub/sub` 网络中流量的子集。
 
@@ -150,7 +150,7 @@ async fn main() {
 
 我们初始化日志并创建了一个异步`channel`来与应用的其他部分进行通信。稍后，我们将使用此`channel`将来自`libp2p`网络栈的响应发送回我们的应用程序以进行处理。
 
-另外，我们为[Noise](https://noiseprotocol.org/)加密协议创建了一些授权密钥，这些密钥将用于保护网络中的流量。为了达到这个目的，我们创建了一个新的密钥对，然后使用`into_authentic`函数通过身份密钥对其进行签名。
+另外，我们为 [Noise](https://noiseprotocol.org/) 加密协议创建了一些授权密钥，这些密钥将用于保护网络中的流量。为了达到这个目的，我们创建了一个新的密钥对，然后使用`into_authentic`函数通过身份密钥对其进行签名。
 
 下一步很重要并涉及`libp2p`的核心概念：创建所谓的`Transport`：
 
@@ -168,13 +168,13 @@ transport 是一个面向连接的与其他成员进行通信的网络协议蔟�
 
 我们将使用`NoiseConfig::xx`的握手模式，这是唯一一个可以与其他`libp2p`应用交互的选项。
 
-`libp2p`的好处是，我们可以编写一个 Rust 客户端，另一个编写 JavaScript 客户端，只要在两个语言版本的库中都实现了(相同的)协议，它们仍然可以轻松地进行通信。
+`libp2p`的好处是，我们可以编写一个 Rust 客户端，另一个编写 JavaScript 客户端，只要在两个语言版本的库中都实现了(相同的)协议，它们就可以轻松地进行通信。
 
 最后，我们还对 transport 进行[多路复用](https://docs.libp2p.io/concepts/stream-multiplexing/)，它可以让我们在相同的 transport 上复用多个 substream 或者连接。
 
 理论性的东西有点多！但是所有这些都可以在 [libp2p 文档](https://docs.libp2p.io/)中找到。这只是创建 p2p transport 众多方法中的其中一种。
 
-下一个概念是`NetworkBehaviour`。这是实际上是`libp2p`中定义网络和所有成员逻辑的部分 - 举个例子，当接收到事件应该做什么以及应该发送什么事件。
+下一个概念是`NetworkBehaviour`。这实际上是`libp2p`中定义网络和所有成员逻辑的部分 - 举个例子，当接收到事件应该做什么以及应该发送什么事件。
 
 ```rust
 let mut behaviour = RecipeBehaviour {
