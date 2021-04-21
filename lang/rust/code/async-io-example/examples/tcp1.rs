@@ -56,10 +56,7 @@ fn main() -> Result<(), Error> {
                                 Ok(_) => {
                                     println!("server wrote");
                                 }
-                                Err(ref err) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                                    println!("");
-                                    continue
-                                },
+                                Err(ref err) if err.kind() == std::io::ErrorKind::WouldBlock => continue,
                                 err => {
                                     err?;
                                 }
