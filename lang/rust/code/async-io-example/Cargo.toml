@@ -7,5 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mio = "0.7"
+mio = { version = "0.7", features = ["net", "os-poll"]}
 failure = "0.1"
+
+[dev-dependencies]
+env_logger = "0.8"
