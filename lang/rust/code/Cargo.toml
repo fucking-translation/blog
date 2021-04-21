@@ -1,4 +1,5 @@
 [workspace]
 members = [
-    "rust-p2p-example"
+    "rust-p2p-example",
+    "async-io-example"
 ]
