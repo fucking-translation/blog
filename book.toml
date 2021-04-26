@@ -1,0 +1,6 @@
+[book]
+authors = ["iamazy"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Blog Translation"
