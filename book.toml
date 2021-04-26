@@ -4,3 +4,8 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Blog Translation"
+
+[output.html]
+# additional-css = ["ferris.css", "theme/2018-edition.css"]
+# additional-js = ["ferris.js"]
+git-repository-url = "https://github.com/fucking-translation/blog"
