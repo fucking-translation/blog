@@ -3,16 +3,16 @@
 
 ### rust
 
-- [ ] [用Rust学习解析器组合器](./lang/rust/01-用Rust学习解析器组合器.md)
-- [x] [用Rust编写LLVM的玩具前端](./lang/rust/02-用Rust编写LLVM的玩具前端.md)
-- [x] [使用nom解析url](./lang/rust/03-使用nom解析url.md)
-- [x] [Rust中异步编程实用介绍](./lang/rust/04-Rust中异步编程实用介绍.md)
-- [x] [Tokio内幕-自底向上理解Rust的IO框架](./lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.md)
-- [x] [「转」Rust 中的 Arenas](./lang/rust/06-Rust中的Arenas.md)
-- [x] [「转」图解 Rust 所有权与生命周期](./lang/rust/08-图解Rust所有权与生命周期.md)
-- [x] [Rust 异步执行器](./lang/rust/09-Rust异步执行器.md)
-- [x] [Rust 中的宏：带有示例的教程](./lang/rust/11-Rust中的宏:带有示例的教程.md)
-- [x] [libp2p 教程：使用 Rust 构建 p2p 应用](./lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)
+- [ ] [用Rust学习解析器组合器](./src/lang/rust/01-用Rust学习解析器组合器.md)
+- [x] [用Rust编写LLVM的玩具前端](./src/lang/rust/02-用Rust编写LLVM的玩具前端.md)
+- [x] [使用nom解析url](./src/lang/rust/03-使用nom解析url.md)
+- [x] [Rust中异步编程实用介绍](./src/lang/rust/04-Rust中异步编程实用介绍.md)
+- [x] [Tokio内幕-自底向上理解Rust的IO框架](./src/lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.md)
+- [x] [「转」Rust 中的 Arenas](./src/lang/rust/06-Rust中的Arenas.md)
+- [x] [「转」图解 Rust 所有权与生命周期](./src/lang/rust/08-图解Rust所有权与生命周期.md)
+- [x] [Rust 异步执行器](./src/lang/rust/09-Rust异步执行器.md)
+- [x] [Rust 中的宏：带有示例的教程](./src/lang/rust/11-Rust中的宏:带有示例的教程.md)
+- [x] [libp2p 教程：使用 Rust 构建 p2p 应用](./src/lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)
 
 ## 推荐阅读
 
