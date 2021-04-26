@@ -1,8 +1,6 @@
-# Rust 异步 I/O：从 mio 到 coroutine
+# 「转」Rust 异步 I/O：从 mio 到 coroutine
 
-[原文](https://hexilee.me/2018/12/17/rust-async-io/)
-
-</br>
+> 转载：[Rust 异步 I/O：从 mio 到 coroutine](https://hexilee.me/2018/12/17/rust-async-io/)
 
 ## 目录
 
