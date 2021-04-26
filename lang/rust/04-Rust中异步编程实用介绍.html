@@ -1,0 +1,608 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust 中异步编程实用介绍 - Blog Translation</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        <link rel="icon" href="../../favicon.svg">
+        
+        
+        <link rel="shortcut icon" href="../../favicon.png">
+        
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+        
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../../highlight.css">
+        <link rel="stylesheet" href="../../tomorrow-night.css">
+        <link rel="stylesheet" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item expanded "><a href="../../lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item expanded "><a href="../../lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item expanded "><a href="../../lang/rust/04-Rust中异步编程实用介绍.html" class="active"><strong aria-hidden="true">4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item expanded "><a href="../../lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item expanded "><a href="../../lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">6.</strong> Rust 中的 Arenas</a></li><li class="chapter-item expanded "><a href="../../lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">7.</strong> Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item expanded "><a href="../../lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">8.</strong> 图解 Rust 所有权与生命周期</a></li><li class="chapter-item expanded "><a href="../../lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">9.</strong> Rust 异步执行器</a></li><li class="chapter-item expanded "><a href="../../lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">10.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item expanded "><a href="../../lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">11.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item expanded "><a href="../../lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">12.</strong> Rust 的 Pin 与 Unpin</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Blog Translation</h1>
+
+                    <div class="right-buttons">
+                        
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-中异步编程实用介绍"><a class="header" href="#rust-中异步编程实用介绍">Rust 中异步编程实用介绍</a></h1>
+<p><a href="http://jamesmcm.github.io/blog/2020/05/06/a-practical-introduction-to-async-programming-in-rust/">原文</a></p>
+<blockquote>
+<p>在本文中，我们将探讨一个使用 Tokio 运行时在 Rust 中进行异步编程的简短示例，展示了不同的执行场景。这篇文章主要是针对异步编程的初学者的。</p>
+</blockquote>
+<p>这个示例的代码可以在 <a href="https://github.com/jamesmcm/async-rust-example">Github</a> 中获取，也可以使用基于<code>async-std</code>运行时的分支(由 <a href="https://github.com/BartMassey">@BartMassey</a> 贡献)。</p>
+<h2 id="什么是异步编程"><a class="header" href="#什么是异步编程">什么是异步编程</a></h2>
+<p>异步编程可以让你在等待 I/O 操作(通常是网络请求或响应)结果的同时，即使在单个 OS 线程中，也可以继续执行计算。</p>
+<p>这是通过使用异步运行时来实现的，该运行时将异步任务(即：<a href="https://en.wikipedia.org/wiki/Green_threads">绿色线程</a>)分配给实际的 OS 线程。</p>
+<p>与 OS 线程不同，创建绿色线程并不昂贵，因此我们不必担心是否达到了硬件限制。而 OS 线程需要维护自己的堆栈，因此在处理多个线程时会占用大量内存。在 Linux 中你可以使用<code>cat /proc/sys/kernel/threads-max</code>命令来查看每个进程的线程数限制，我的是 127162。</p>
+<p>例如，如果我们需要一个单独的 OS 线程来处理 Web 服务器上的每个请求，这将是一个重大的问题，这是 <a href="https://en.wikipedia.org/wiki/C10k_problem">C10k 问题</a>的根源 - 如何处理 Web 服务器上的 10000 个连接。</p>
+<p>早期的 Web 服务器确实为每个请求分配了独立的 OS 线程，以便并行处理每个请求。但是这会造成这些线程花费了大量的时间来等待网络响应，而不是做其他的计算。</p>
+<h2 id="async-和-await"><a class="header" href="#async-和-await">Async 和 await</a></h2>
+<p>Rust 已经采用 async/await 语法定义异步代码块和函数。</p>
+<p><code>async</code>关键字定义了异步代码块和函数。它被指定返回了一个<code>Future</code> - 一个需要在其他地方<code>.await</code>以触发任务执行(注意延迟执行)，并等待可用的返回的值。</p>
+<p><code>.await</code>关键字(必须被用于<code>async</code>代码块/函数中)用于异步等待异步任务的完成并获取返回值。请注意，虽然在<code>Future</code>准备好之前任务本身无法进行，但是实际的 OS 线程却可以在运行时分配其他的任务，因此 (OS 线程)可以继续工作。</p>
+<p>高效的任务正在通知运行时，这时它可能会导致执行另一个任务(最终，另一个任务也将等待某个事件，如果此任务中的<code>Future</code>准备就绪，则该任务可以继续执行) - 这是<a href="https://en.wikipedia.org/wiki/Cooperative_multitasking">多任务协作</a>的实现。</p>
+<p>这种语法非常优雅，它使我们可以编写异步程序，该程序的结构类似于简单的同步程序。</p>
+<h2 id="我们应该什么时候使用异步"><a class="header" href="#我们应该什么时候使用异步">我们应该什么时候使用异步？</a></h2>
+<p>当线程原本只是在等待 I/O 操作(例如：发出网络请求或响应，对磁盘的读写以及等待用户的输入)时，异步编程将会很有用。</p>
+<p>如果你始终都在计算并且没有等待 I/O 操作，异步编程其实用处不大，即使这些计算可以并行运行(如在光线跟踪器中)，它对你的帮助也十分有限。在这种情况下，最好直接在 OS 线程上并行执行计算(利用 CPU 中的多个内核)，如在<code>rayon</code>库中使用并行迭代器(如果你想要进行线程级别的控制，则可以使用<code>crossbeam</code>和<code>threadpool</code>库)。然而，请记住 Amdahl 定律，即算法优化改进可能会比专注于并行化产生更好的回报。</p>
+<p>如果在等待 I/O 操作的同时没有其他任务可做，那它也没有用。例如，在上一篇<a href="http://jamesmcm.github.io/blog/2020/04/19/data-engineering-with-rust-and-aws-lambda/#en">博客</a>中，当我们向 AWS Secrets Manager 请求数据库连接凭证时，<code>Rusoto</code>实际上返回的是一个<code>RusotoFuture</code>对象，但是在这种情况下，我们对 Lambda 函数的一次调用对应于一次请求 - 等待数据库凭证到达起见无需完成任何工作。因此我们可以仅使用同步编程(幸运的是，<code>RusotoFuture</code>提供了<code>.sync()</code>函数来做到这一点)。</p>
+<h2 id="示例"><a class="header" href="#示例">示例</a></h2>
+<p>在此示例中，我们将模拟三个非常慢的网络请求，包括三个阶段：</p>
+<ul>
+<li>连接 - 2秒的异步延迟</li>
+<li>等待响应 - 8秒的异步延迟(延迟在服务端)</li>
+<li>计算 - 4秒的同步延迟(如：它必须阻塞当前的 OS 线程去做计算)。</li>
+</ul>
+<p>我们将使用 <a href="https://tokio.rs">Tokio</a> 作为本例中的异步运行时，因为它是目前 Rust 中最流行的异步框架。其他的异步框架如<code>async-std</code>运行时 - 基于<code>async-std</code>的本示例代码可以在 <a href="https://github.com/jamesmcm/async-rust-example/tree/async-std">Github仓库的 async-std 分支</a>上获取(由 <a href="https://github.com/BartMassey">@BartMassey</a>贡献)。</p>
+<p>请注意，两者都使用<code>futures</code>库，因此你可以在切换异步运行时的同时(whilst)保留大部分相同的 API。</p>
+<h2 id="server"><a class="header" href="#server">Server</a></h2>
+<p>本示例的 server 代码改编自 <a href="https://tokio.rs/docs/getting-started/echo/">tokio教程</a>。它在延迟 8 秒后，打印接收到的字节。</p>
+<p>完整的改编代码如下：</p>
+<pre><pre class="playground"><code class="language-rust">use futures::stream::StreamExt;
+use tokio::net::TcpListener;
+
+#[tokio::main]
+async fn main() {
+    let addr = &quot;127.0.0.1:6142&quot;;
+    let mut listener = TcpListener::bind(addr).await.unwrap();
+
+    let server = {
+        async move {
+            let mut incoming = listener.incoming();
+            while let Some(conn) = incoming.next().await {
+                match conn {
+                    Err(e) =&gt; eprintln!(&quot;accept failed = {:?}&quot;, e),
+                    Ok(mut sock) =&gt; {
+                        tokio::spawn(async move {
+                            let (mut reader, mut writer) = sock.split();
+                            tokio::time::delay_for(tokio::time::Duration::from_secs(8)).await;
+                            match tokio::io::copy(&amp;mut reader, &amp;mut writer).await {
+                                Ok(amt) =&gt; {
+                                    println!(&quot;wrote {} bytes&quot;, amt);
+                                }
+                                Err(err) =&gt; {
+                                    eprintln!(&quot;IO error {:?}&quot;, err);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    };
+    println!(&quot;Server running on localhost:6142&quot;);
+    server.await;
+}
+</code></pre></pre>
+<h2 id="同步请求"><a class="header" href="#同步请求">同步请求</a></h2>
+<p>在同步的情况下，我们只需依次运行每个请求即可。因此我们预测完成 3 个任务的总执行时间为<code>3 * ( 2 + 8 + 4) = 42</code>秒。</p>
+<p>我们可以用一张图对这种情况进行可视化：</p>
+<p><img src="./img/synchronous.svg" alt="synchronous" /></p>
+<p>我们实现这个仅需使用标准库：</p>
+<pre><pre class="playground"><code class="language-rust">use std::io::prelude::*;
+use std::net::TcpStream;
+use std::thread::sleep;
+use std::time::Instant;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let now = Instant::now();
+
+    task(&quot;task1&quot;, now.clone())?;
+    task(&quot;task2&quot;, now.clone())?;
+    task(&quot;task3&quot;, now.clone())?;
+    Ok(())
+}
+
+fn task(label: &amp;str, now: std::time::Instant) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    // Simulate network delay using thread sleep for 2 seconds
+    println!(
+        &quot;OS Thread {:?} - {} started: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed(),
+    );
+    sleep(std::time::Duration::from_secs(2));
+
+    // Write to server - server will echo this back to us with 8 second delay
+    let mut stream = TcpStream::connect(&quot;127.0.0.1:6142&quot;)?;
+    stream.write_all(label.as_bytes())?;
+    println!(
+        &quot;OS Thread {:?} - {} written: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed()
+    );
+
+    // Read 5 chars we expect (to avoid dealing with EOF, etc.)
+    let mut buffer = [0; 5];
+    stream.read_exact(&amp;mut buffer)?;
+    stream.shutdown(std::net::Shutdown::Both)?;
+    println!(
+        &quot;OS Thread {:?} - {} read: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed()
+    );
+
+    // Simulate computation work by sleeping actual thread for 4 seconds
+    sleep(std::time::Duration::from_secs(4));
+    println!(
+        &quot;OS Thread {:?} - {} finished: {:?}&quot;,
+        std::thread::current().id(),
+        std::str::from_utf8(&amp;buffer)?,
+        now.elapsed()
+    );
+    Ok(())
+}
+</code></pre></pre>
+<p>运行这段代码：</p>
+<pre><code class="language-console">$ cargo run --release --bin server
+$ cargo run --release --bin client_synchronous
+</code></pre>
+<pre><code class="language-console">OS Thread ThreadId(1) - task1 started: 578ns
+OS Thread ThreadId(1) - task1 written: 2.000346788s
+OS Thread ThreadId(1) - task1 read: 10.002177173s
+OS Thread ThreadId(1) - task1 finished: 14.002328699s
+OS Thread ThreadId(1) - task2 started: 14.002387112s
+OS Thread ThreadId(1) - task2 written: 16.002673602s
+OS Thread ThreadId(1) - task2 read: 24.006071003s
+OS Thread ThreadId(1) - task2 finished: 28.006204147s
+OS Thread ThreadId(1) - task3 started: 28.006263855s
+OS Thread ThreadId(1) - task3 written: 30.00652763s
+OS Thread ThreadId(1) - task3 read: 38.008234993s
+OS Thread ThreadId(1) - task3 finished: 42.008389223s
+</code></pre>
+<p>准确给出了我们上面计算的 42 秒总执行时间。</p>
+<h2 id="同步请求-tokio"><a class="header" href="#同步请求-tokio">同步请求 (Tokio)</a></h2>
+<p>请注意，在使用 Tokio 时(有时是无意间)，可以从异步函数中获取同步行为。用 Tokio 实现上述功能：</p>
+<pre><pre class="playground"><code class="language-rust">use futures::stream::StreamExt;
+use std::error::Error;
+use std::thread::sleep;
+use std::time::Instant;
+use tokio::join;
+use tokio::net::TcpStream;
+use tokio::prelude::*;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+    let now = Instant::now();
+
+    // Synchronous
+    task(&quot;task1&quot;, now.clone()).await?;
+    task(&quot;task2&quot;, now.clone()).await?;
+    task(&quot;task3&quot;, now.clone()).await?;
+    Ok(())
+}
+
+async fn task(label: &amp;str, now: std::time::Instant) -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+    // Simulate network delay using Tokio async delay for 2 seconds
+    println!(
+        &quot;OS Thread {:?} - {} started: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed(),
+    );
+    tokio::time::delay_for(tokio::time::Duration::from_secs(2)).await;
+
+    // Write to server - server will echo this back to us with 8 second delay
+    let mut stream = TcpStream::connect(&quot;127.0.0.1:6142&quot;).await?;
+    stream.write_all(label.as_bytes()).await?;
+    println!(
+        &quot;OS Thread {:?} - {} written: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed()
+    );
+
+    // Read 5 chars we expect (to avoid dealing with EOF, etc.)
+    let mut buffer = [0; 5];
+    stream.read_exact(&amp;mut buffer).await?;
+    stream.shutdown(std::net::Shutdown::Both)?;
+    println!(
+        &quot;OS Thread {:?} - {} read: {:?}&quot;,
+        std::thread::current().id(),
+        label,
+        now.elapsed()
+    );
+
+    // Simulate computation work by sleeping actual thread for 4 seconds
+    sleep(std::time::Duration::from_secs(4));
+    println!(
+        &quot;OS Thread {:?} - {} finished: {:?}&quot;,
+        std::thread::current().id(),
+        std::str::from_utf8(&amp;buffer)?,
+        now.elapsed()
+    );
+    Ok(())
+}
+</code></pre></pre>
+<p>运行这段代码，产生的输出和之前一样：</p>
+<pre><code class="language-console">$ cargo run --release --bin client_async
+</code></pre>
+<pre><code class="language-console">OS Thread ThreadId(1) - task1 started: 333ns
+OS Thread ThreadId(1) - task1 written: 2.001476012s
+OS Thread ThreadId(1) - task1 read: 10.003284491s
+OS Thread ThreadId(1) - task1 finished: 14.003404307s
+OS Thread ThreadId(1) - task2 started: 14.003476979s
+OS Thread ThreadId(1) - task2 written: 16.005013941s
+OS Thread ThreadId(1) - task2 read: 24.005471439s
+OS Thread ThreadId(1) - task2 finished: 28.005575307s
+OS Thread ThreadId(1) - task3 started: 28.005615372s
+OS Thread ThreadId(1) - task3 written: 30.007082377s
+OS Thread ThreadId(1) - task3 read: 38.009223127s
+OS Thread ThreadId(1) - task3 finished: 42.009349576s
+</code></pre>
+<p>这是因为串行任务的等待(<code>.await</code>)造成了同步。主函数是异步的，但是使用<code>.await</code>会使它在继续之前等待<code>Future</code>的结果。在这方面，主函数与其他异步函数之间没有什么区别。当时没有任何其他的任务可以产生执行结果，因此任务的执行实际上还是同步的。</p>
+<p>请注意，在上面的实现中是不需要<code>Send + Sync</code>的(因为它运行在单个 OS 线程中)，但是在下一个示例中，我们将会需要它们。这也是为什么我们会 clone <code>now</code> 而不是在<code>task()</code>中对其进行借用(我们也可以将其封装在<code>Arc</code>中)。</p>
+<p>在下面的示例中，我们将使用同样的<code>async fn task()</code>定义，在此将其忽略。</p>
+<h2 id="异步请求一个-os-线程"><a class="header" href="#异步请求一个-os-线程">异步请求(一个 OS 线程)</a></h2>
+<p>在异步中单个 OS 线程的场景下，我们同时开始等待步骤(连接并获取服务端的响应)。然而，最终的计算步骤仍然需要在每个任务中依次执行完成。因此我们预期总执行时间是<code>8 + 2 + (3 * 4) = 22</code>秒。</p>
+<p>对应的图表如下所示：</p>
+<p><img src="./img/asynchronous_single.svg" alt="asynchronous_single" /></p>
+<p>像之前一样使用相同的<code>async fn task()</code>定义：</p>
+<pre><pre class="playground"><code class="language-rust">use futures::stream::futures_unordered::FuturesUnordered;
+use futures::stream::StreamExt;
+use std::error::Error;
+use std::thread::sleep;
+use std::time::Instant;
+use tokio::net::TcpStream;
+use tokio::prelude::*;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+    let now = Instant::now();
+
+    // Asynchronous single-thread
+    let mut futs = FuturesUnordered::new();
+
+    futs.push(task(&quot;task1&quot;, now.clone()));
+    futs.push(task(&quot;task2&quot;, now.clone()));
+    futs.push(task(&quot;task3&quot;, now.clone()));
+
+    while let Some(_handled) = futs.next().await {}
+    Ok(())
+}
+</code></pre></pre>
+<p>运行这段代码，总执行时间是 22 秒：</p>
+<pre><code class="language-console">OS Thread ThreadId(1) - task1 started: 3.994µs
+OS Thread ThreadId(1) - task2 started: 21.174µs
+OS Thread ThreadId(1) - task3 started: 25.511µs
+OS Thread ThreadId(1) - task3 written: 2.002221984s
+OS Thread ThreadId(1) - task2 written: 2.002406898s
+OS Thread ThreadId(1) - task1 written: 2.002483563s
+OS Thread ThreadId(1) - task3 read: 10.003326999s
+OS Thread ThreadId(1) - task3 finished: 14.003478669s
+OS Thread ThreadId(1) - task2 read: 14.00365763s
+OS Thread ThreadId(1) - task2 finished: 18.00379238s
+OS Thread ThreadId(1) - task1 read: 18.003951713s
+OS Thread ThreadId(1) - task1 finished: 22.004094444s
+</code></pre>
+<p>在本示例中，我们使用<code>FuturesUnordered</code>集合以便我们可以重复等待不同的 Future。然而，我们不会使用<code>tokio::spawn()</code>因此它只能运行在单个 OS 线程中(因为我们不允许创建更多的 OS 线程)。</p>
+<p>请注意，在这里我们可以使用<code>join!</code>宏而不必分配一个<code>FuturesUnordered</code>，我们将在之后的示例中这么做。然而，它仅对数量很少的 Future 具有实用性。</p>
+<p>我们也可以通过设置主函数上的属性参数来强制 Tokio 只能使用一个线程。</p>
+<pre><pre class="playground"><code class="language-rust">#[tokio::main(core_threads = 1, max_threads = 1)]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+...
+}
+</code></pre></pre>
+<h2 id="异步请求多个-os-线程"><a class="header" href="#异步请求多个-os-线程">异步请求(多个 OS 线程)</a></h2>
+<p>在跨多个 OS 线程的异步请求中，我们可以同时进行每一步(并在 OS 线程可以在任务等待的时候去完成其他的任务)。这就意味着我们可以在不同的 OS 线程中并行的进行最终的计算。</p>
+<p><img src="./img/asynchronous_multi.svg" alt="asynchronous_multi" /></p>
+<p>因此我们预测 3 次请求的总执行时间为<code>2 + 8 + 4 = 14</code>秒。这是我们能够实现的最好的方案 - 与完成单个请求的用时一样。</p>
+<p>请注意，这需要我们跨进程发送的类型是<code>线程安全</code>的，也就是说需要实现<code>Send</code>或<code>Sync</code> - 就像我们直接使用 OS 线程一样。</p>
+<p>它的实现和之前的示例很像，但是不是直接等待 Future 的返回，我们对任务进行<code>tokio::spawn</code>并等待它们的处理。这允许 tokio 可以在不同的的 OS 线程中执行它们。</p>
+<pre><pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+    let now = Instant::now();
+
+    let mut futs = FuturesUnordered::new();
+    futs.push(tokio::spawn(task(&quot;task1&quot;, now.clone())));
+    futs.push(tokio::spawn(task(&quot;task2&quot;, now.clone())));
+    futs.push(tokio::spawn(task(&quot;task3&quot;, now.clone())));
+    while let Some(_handled) = futs.next().await {}
+    Ok(())
+}
+</code></pre></pre>
+<p>然后我们会观察到 14 秒的执行时间(请注意我们并不关心执行顺序)：</p>
+<pre><code class="language-console">OS Thread ThreadId(2) - task1 started: 17.055µs
+OS Thread ThreadId(3) - task2 started: 30.227µs
+OS Thread ThreadId(2) - task3 started: 32.513µs
+OS Thread ThreadId(2) - task3 written: 2.001499145s
+OS Thread ThreadId(3) - task1 written: 2.00153689s
+OS Thread ThreadId(5) - task2 written: 2.001721878s
+OS Thread ThreadId(3) - task3 read: 10.003403756s
+OS Thread ThreadId(2) - task1 read: 10.003501s
+OS Thread ThreadId(5) - task2 read: 10.003417328s
+OS Thread ThreadId(3) - task3 finished: 14.003584085s
+OS Thread ThreadId(2) - task1 finished: 14.003664981s
+OS Thread ThreadId(5) - task2 finished: 14.003698375s
+</code></pre>
+<p>不同的 OS 线程 ID 证明了任务确实是在 OS 中不同的线程中执行的。</p>
+<p>为了本文内容更加完整，这里有一个使用<code>join!</code>宏的相同实现，而不是分配一个<code>FuturesUnordered</code>：</p>
+<pre><pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn Error + Send + Sync&gt;&gt; {
+    let now = Instant::now();
+    // Asynchronous multi-threaded
+
+    match join!(
+        tokio::spawn(task(&quot;task1&quot;, now.clone())),
+        tokio::spawn(task(&quot;task2&quot;, now.clone())),
+        tokio::spawn(task(&quot;task3&quot;, now.clone()))
+    ) {
+        (x, y, z) =&gt; {
+            (x.ok(), y.ok(), z.ok())
+        }
+    };
+    Ok(())
+}
+</code></pre></pre>
+<p>这样可以节省<code>FuturesUnordered</code>的分配，但是处理返回的结果元组(尤其是对于很多的Future来说)，可能会很笨拙。</p>
+<h3 id="它和-os-线程并行有什么区别呢"><a class="header" href="#它和-os-线程并行有什么区别呢">它和 OS 线程并行有什么区别呢？</a></h3>
+<p>在一些同步的场景中，你可以直接使用 OS 线程来实现相同的事情，例如之前提到的<a href="https://crates.io/crates/rayon">rayon</a>库。</p>
+<p>然而，这种情况下每个请求都会需要一个自己的 OS 线程，如果我们必须处理 10000 个并行请求，很可能会达到系统的线程限制。</p>
+<p>也就是说，执行图如下所示：</p>
+<p><img src="./img/synchronous_multios.svg" alt="synchronous_multios" /></p>
+<p>请注意，OS 线程可能会花费大量的时间来等待 I/O 操作，而无法启动其他任务。</p>
+<p>我们可以使用 rayon 修改我们在上面的第一个同步示例：</p>
+<pre><pre class="playground"><code class="language-rust">use rayon::prelude::*;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let now = Instant::now();
+
+    [&quot;task1&quot;, &quot;task2&quot;, &quot;task3&quot;]
+        .par_iter()
+        .map(|x| task(x, now.clone()))
+        .collect::&lt;Result&lt;Vec&lt;_&gt;, _&gt;&gt;()?;
+    Ok(())
+}
+</code></pre></pre>
+<p>而且它在预期的 14 秒内结束了(请注意这里每个任务都单独分配了一个 OS 线程)。</p>
+<pre><code class="language-console">OS Thread ThreadId(3) - task1 started: 280.871µs
+OS Thread ThreadId(6) - task2 started: 281.03µs
+OS Thread ThreadId(7) - task3 started: 283.838µs
+OS Thread ThreadId(6) - task2 written: 2.000605562s
+OS Thread ThreadId(7) - task3 written: 2.000619598s
+OS Thread ThreadId(3) - task1 written: 2.000679853s
+OS Thread ThreadId(3) - task1 read: 10.002321036s
+OS Thread ThreadId(6) - task2 read: 10.00233185s
+OS Thread ThreadId(7) - task3 read: 10.002384653s
+OS Thread ThreadId(3) - task1 finished: 14.002447762s
+OS Thread ThreadId(6) - task2 finished: 14.002540969s
+OS Thread ThreadId(7) - task3 finished: 14.002589621s
+</code></pre>
+<p>然而，由于一个任务对应了一个 OS 线程，当处理大量的任务时可能会无法充分利用资源。</p>
+<p>而在异步的情况下，我们在(同步的)计算步骤中只需要额外的线程即可。这意味着我们可以使用固定大小的 OS 线程池，并仍然可以在计算步骤的并行化中受益，同时还可以保证系统资源的充分利用(即我们可以限制 OS 线程的最大数量，但是依然可以处理新的请求)。</p>
+<h2 id="结论"><a class="header" href="#结论">结论</a></h2>
+<p>我希望这篇文章可以帮助你更好的理解在 Rust 中何时以及如何去使用异步编程。</p>
+<p>优雅的<code>async/await</code>语法允许进行简单明了的异步编程。但是，如果你之前没有接触过异步编程，可能需要花一点时间来适应这种方式。</p>
+<p>上述的示例也展示了并发和并行之间的区别。在异步单个 OS 线程中，我们并发的处理任务，但是这不是并行执行的(因为我们只有一个 OS 线程)。</p>
+<h2 id="当前的限制"><a class="header" href="#当前的限制">当前的限制</a></h2>
+<p>请注意，现在你还不能在 <a href="https://rust-lang.github.io/async-book/07_workarounds/06_async_in_traits.html">trait 中使用异步函数</a>，并且你也不能创建<a href="https://boats.gitlab.io/blog/post/poll-drop/">异步的解构</a>。如果你希望结构在销毁时发出网络请求，但是不希望这么做的同时阻塞 OS 线程，这时就会出现问题 - 你无法使用<code>.await</code>因为<code>drop()</code>(来自 From) 不是异步的。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../../lang/rust/03-使用nom解析url.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../../lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../../lang/rust/03-使用nom解析url.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../../lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

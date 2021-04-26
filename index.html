@@ -1,0 +1,307 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>用 Rust 学习解析器组合器 - Blog Translation</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        <link rel="icon" href="favicon.svg">
+        
+        
+        <link rel="shortcut icon" href="favicon.png">
+        
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        
+        <link rel="stylesheet" href="css/print.css" media="print">
+        
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item expanded "><a href="lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item expanded "><a href="lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item expanded "><a href="lang/rust/04-Rust中异步编程实用介绍.html"><strong aria-hidden="true">4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item expanded "><a href="lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item expanded "><a href="lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">6.</strong> Rust 中的 Arenas</a></li><li class="chapter-item expanded "><a href="lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">7.</strong> Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item expanded "><a href="lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">8.</strong> 图解 Rust 所有权与生命周期</a></li><li class="chapter-item expanded "><a href="lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">9.</strong> Rust 异步执行器</a></li><li class="chapter-item expanded "><a href="lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">10.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item expanded "><a href="lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">11.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item expanded "><a href="lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">12.</strong> Rust 的 Pin 与 Unpin</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Blog Translation</h1>
+
+                    <div class="right-buttons">
+                        
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="用rust学习解析器组合器"><a class="header" href="#用rust学习解析器组合器">用Rust学习解析器组合器</a></h1>
+<h4 id="a-hrefhttpsbodillolparser-combinators原文a"><a class="header" href="#a-hrefhttpsbodillolparser-combinators原文a"><a href="https://bodil.lol/parser-combinators/">原文</a></a></h4>
+</br>
+<p><a href="#%E5%88%9D%E5%AD%A6%E8%80%85%E7%9A%84%E6%83%B3%E6%B3%95">1. 初学者的想法</a><br />
+<a href="#%E5%A6%82%E4%BD%95%E9%98%85%E8%AF%BB%E6%9C%AC%E6%96%87">2. 如何阅读本文</a><br />
+<a href="#Xcruciating%E6%A0%87%E8%AE%B0%E8%AF%AD%E8%A8%80">3. <code>Xcruciating</code>标记语言</a><br />
+<a href="#%E5%AE%9A%E4%B9%89%E8%A7%A3%E6%9E%90%E5%99%A8">4. 定义解析器</a><br />
+<a href="#%E6%88%91%E4%BB%AC%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E8%A7%A3%E6%9E%90%E5%99%A8">5. 我们的第一个解析器</a></p>
+<p>本文向已是 Rust 程序员的人们传授解析器组合器的基础知识。它假定不涉及其他知识，并将解释与 Rust 没有直接关系的所有内容，以及为达到此目的使用 Rust 的一些令人意外的特性。如果你不了解 Rust，他不会教你 Rust 的内容，但是这样的话，同样也无法更好的教你解析器和组合器的知识。如果你想要学习 Rust 语言，我推荐  <a href="https://doc.rust-lang.org/book/">Rust编程语言</a> 这本书。</p>
+<h2 id="初学者的想法"><a class="header" href="#初学者的想法">初学者的想法</a></h2>
+<p>当每个程序员发现自己需要解析器时，它们的生活将变得有意义。</p>
+<p>初学者程序员将会问：“什么是解析器？”。<br />
+中级程序员将会说：“这很简单，我将写一串正则表达式”。<br />
+高级程序员将会说：“退一步考虑问题，我知道<code>Lex</code>（词法分析器）和<code>Yacc</code>（语法解析器）”</p>
+<p>初学者的想法是正确的。</p>
+<p>不是说正则表达式不好（但是请不要用正则表达式写复杂的解析器）。使用经过数千年磨练至完美的解析器和词法分析生成器之类的强大工具并不是没有乐趣可言。但是从头开始一点一点学习解析器将更有趣。这两者只是对当前实际问题的抽象，如果你直接选择正则表达式或者解析器生成工具，你将失去这一份乐趣。在初学者眼中，正如人们说的：本来（解决这个问题）有很多种方法，但是在专家眼里，已经形成思维定视，只会选择一种他们最习惯的方式。
+在本文中我们将从头开始学习如何构建解析器，基于被称为解析器组合器的函数式编程语言的通用技术。一旦你掌握了它们的基本概念，它们的优势将非常巨大，同时又非常接近第一原理。因为这里唯一的抽象是你将在基础的组合器之上构建你自己的抽象。所有这些，你必须先构建它们，才能使用它们。</p>
+<h2 id="如何阅读本文"><a class="header" href="#如何阅读本文">如何阅读本文</a></h2>
+<p>强烈建议你初始化一个 Rust 项目，并且在<code>src/lib.rs</code>中书写你阅读到的代码片段（你可以直接从页面上直接复制，但是最好还是自己手敲，因为这样会自动确保你完整阅读代码）。本文将按序介绍你需要的每段代码。请注意，有时会引入你先前编写功能的最新版本，这时，你需要将旧版本替换为新版本。</p>
+<p>该代码是使用 2018 年语言版本的<code>rustc</code>的 1.34.0 版本编写的。你应该尽可能使用最新版本的编译器，只要你确保你使用的是 2018 的版本即可（检查<code>Cargo.toml</code>文件中是否包含<code>edition = &quot;2018&quot;</code>）。代码不需要任何的外部依赖。</p>
+<p>如果要运行本文中的测试用例，请执行<code>cargo test</code>。</p>
+<h2 id="xcruciating标记语言"><a class="header" href="#xcruciating标记语言"><code>Xcruciating</code>标记语言</a></h2>
+<p>我们将用简化的XML格式写一个解析器，如下所示：</p>
+<pre><code class="language-xml">&lt;parent-element&gt;
+  &lt;single-element attribute=&quot;value&quot; /&gt;
+&lt;/parent-element&gt;
+</code></pre>
+<p>XML元素使用<code>&lt;</code>符号开头和一个由字母组成的标志符开头，后面可以根任意数量的字母，数字和<code>-</code>。后面跟一些空格，以及一些属性对的可选列表：前面定义一个标识符，后面跟一个<code>=</code>符号和一个双引号字符串，最后以<code>/&gt;</code>结尾来表示一个没有子节点的单个元素。或者用<code>&gt;</code>表示后面跟了一串子节点，最终是一个以<code>&lt;/</code>开头的结束标签，后跟一个必须与开始标识匹配的标志符，然后以<code>&gt;</code>结束。</p>
+<p>这就是我们将要支持的特性。没有命名空间，没有文本节点，其余的都没有，并且没有模式校验。我们甚至都不会自寻烦恼，去实现字符串的转义引号（<code>\&quot;</code>） - 它们由第一个双引号开始，到下一个双引号结束，就是这样。如果你想在实际字符串中使用双引号，你可以将这个不合理的要求转移到其他地方。</p>
+<p>我们将用下面的结构体来解析这些元素。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Debug, PartialEq, Eq)]
+struct Element {
+    name: String,
+    attributes: Vec&lt;(String, String)&gt;,
+    children: Vec&lt;Element&gt;,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>没有花哨的类型，仅仅用字符串表示名称（那是每个标签开始的标志符），用字符串元组表示属性（标志符和对应的值），还有一个看起来和父元素完全一样的子元素列表。</p>
+<p>（如果你正在输入，请加上那一系列的<code>derive</code>，你将在后面用到它们）。</p>
+<h2 id="定义解析器"><a class="header" href="#定义解析器">定义解析器</a></h2>
+<p>好了，是时候编写解析器了。</p>
+<p>解析是从数据流中派生结构的过程。解析器就是要弄清楚该结构的工具。</p>
+<p>在我们即将探索的知识中，解析器最简单的一种形式就是一个函数，该函数接受一些输入并返回解析后的输出以及输入的其余部分，或者是一个错误信息：“我无法解析该输入”。</p>
+<p>事实证明，简而言之，更复杂的解析器看起来也是如此。如果你要获取友好的错误提示，你可能会使输入，输出和错误的含义复杂化，但是解析器的特征依然如此：消费输入并产生解析后的数据以及输入的其余部分，或者会让你知道无法将输入解析成输出。</p>
+<p>让我们将其（解析器）写成函数的形式。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Fn(Input) -&gt; Result&lt;(Input, Output), Error&gt;
+<span class="boring">}
+</span></code></pre></pre>
+<p>更具体的说，就我们而言，我们希望可以填充这些类型，就像下面代码块所示。因为我们要做的是将一个字符串转化为<code>Element</code>结构体，并且在这方面我们不想陷入错综复杂的错误提示中，所以当我们不能够解析输入的字符串时，只需返回一段提示错误的字符串即可。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Fn(&amp;str) -&gt; Result&lt;(&amp;str, Element), &amp;str&gt;
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们使用字符串切片（<code>&amp;str</code>），是因为他是指向字符串的有效指针。我们可以进一步对其进行切片，通过切掉已解析的部分来消耗输入，并将余下的输入和结果一起返回。</p>
+<p>可能使用<code>&amp;[u8]</code>类型作为输入（一串字节数组，如果将输入的字节限制在<code>ASCII</code>范围内，则<code>u8</code>和<code>char</code>相对应）会看起来更加干净，尤其是字符串切片（<code>&amp;str</code>）的行为和大多数切片的行为有所不同。你不能够通过一个数字来检索它们，你必须使用一个分片<code>input[0..1]</code>。另一方面，它们对于解析字符串有很多有用的函数，而字节切片没有。</p>
+<p>事实上，我们通常都需要依赖这些函数而不是像<code>input[0]</code>这样对他进行索引。因为 Rust 的字符串是<code>UTF-8</code>格式的，这些索引并不总是对应于单个字符，所以对于我们来说，让标准库为我们处理这些问题更好。</p>
+<h2 id="我们的第一个解析器"><a class="header" href="#我们的第一个解析器">我们的第一个解析器</a></h2>
+<p>让我们来一起写一个解析器，只需要关注字符串中的第一个字符并判断它是否是字母<code>a</code></p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn the_letter_a(input: &amp;str) -&gt; Result&lt;(&amp;str, ()), &amp;str&gt; {
+  match input.chars().next() {
+      Some('a') =&gt; Ok((&amp;input['a'.len_utf8()..], ())),
+      _ =&gt; Err(input),
+  }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>首先，我们来看一下输入和输入和输出的类型：和上面讨论的一样，我们让字符串切片作为输入，并返回携带<code>(&amp;str, ())</code>元组或者错误类型<code>&amp;str</code>的<code>Result</code>。<code>(&amp;str, ())</code>元组比较有趣：正如我们所说的，我们想要返回一个包含下一次待解析的输入和输出。<code>&amp;str</code>是下一次输入，解析返回的结果仅仅是一个单元类型<code>()</code>。因为如果解析成功，只可能有一种结果（我们找到了字母<code>a</code>），但是这里我们并不需要返回字母<code>a</code>，我们只需要告诉调用者我们成功发现了字母<code>a</code>即可。</p>
+<p>然后，让我们看下解析器本身的代码。我们从提取输入的第一个字符开始：<code>input.chars().next()</code>。依靠标准库来避免带来的 Unicode 编码问题并不是在开玩笑 - 我们要求它为字符串的字符提供一个<code>chars()</code>迭代器，然后从中取出第一项。该项是封装在<code>Option</code>中的<code>char</code>类型，因此是<code>Option&lt;char&gt;</code>，如果它的值为<code>None</code>则表示我们尝试在空字符串中提取一个<code>char</code>。</p>
+<p>更糟的是，<code>char</code>可能并不是你想的那样是 Unicode 字符。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+
+                        
+                            <a rel="next" href="lang/rust/02-用Rust编写LLVM的玩具前端.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+
+                
+                    <a rel="next" href="lang/rust/02-用Rust编写LLVM的玩具前端.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
