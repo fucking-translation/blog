@@ -1,6 +1,6 @@
-# Rust 的 Pin 和 Unpin
+# 「转」Rust 的 Pin 和 Unpin
 
-[原文](https://folyd.com/blog/rust-pin-unpin/)
+> 转载：[Rust 的 Pin 和 Unpin](https://folyd.com/blog/rust-pin-unpin/)  
 
 </br>
 
