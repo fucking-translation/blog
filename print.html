@@ -101,7 +101,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item expanded "><a href="lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item expanded "><a href="lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item expanded "><a href="lang/rust/04-Rust中异步编程实用介绍.html"><strong aria-hidden="true">4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item expanded "><a href="lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item expanded "><a href="lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">6.</strong> Rust 中的 Arenas</a></li><li class="chapter-item expanded "><a href="lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">7.</strong> Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item expanded "><a href="lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">8.</strong> 图解 Rust 所有权与生命周期</a></li><li class="chapter-item expanded "><a href="lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">9.</strong> Rust 异步执行器</a></li><li class="chapter-item expanded "><a href="lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">10.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item expanded "><a href="lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">11.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item expanded "><a href="lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">12.</strong> Rust 的 Pin 与 Unpin</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item expanded "><a href="lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item expanded "><a href="lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item expanded "><a href="lang/rust/04-Rust中异步编程实用介绍.html"><strong aria-hidden="true">4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item expanded "><a href="lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item expanded "><a href="lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">6.</strong> Rust 中的 Arenas</a></li><li class="chapter-item expanded "><a href="lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">7.</strong> Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item expanded "><a href="lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">8.</strong> 图解 Rust 所有权与生命周期</a></li><li class="chapter-item expanded "><a href="lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">9.</strong> Rust 异步执行器</a></li><li class="chapter-item expanded "><a href="lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">10.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item expanded "><a href="lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">11.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item expanded "><a href="lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">12.</strong> Rust 的 Pin 与 Unpin</a></li><li class="chapter-item expanded "><a href="lang/rust/14-使用GDB调试Rust应用.html"><strong aria-hidden="true">13.</strong> 使用 GDB 调试 Rust 中的应用</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -7092,6 +7092,445 @@ where
 </ul>
 </blockquote>
 <p>2018 年 Rust 异步组的核心成员 @withoutboats 在他个人博客分享了稳定<code>async/await</code>的整个心路历程，感觉这一路也是充满曲折。比如<code>Pin</code>刚开始还需要区分<code>Pin</code>，<code>PinMut</code>，<code>PinBox</code>等，现在精简到只需要一个<code>Pin&lt;P&gt;</code>就能搞定。还有更早的时候还计划引入一个叫<code>Move</code>的 trait 来标记该类型是否可以<code>move</code>等等。我这篇文章里面的代码基于 1.48 版，不确定<code>Pin</code>以后会不会有更新，而且<code>Pin</code>目前还存在一个<code>unsoundness</code>的问题。不管怎样，一切简单优雅的设计背后一定隐藏着复杂和艰辛，感谢 Rust 官方过去的努力，让我们能够有内存安全、无畏并发和符合人体工程的编程体验！</p>
+<h1 id="使用-gdb-调试-rust-应用"><a class="header" href="#使用-gdb-调试-rust-应用">使用 GDB 调试 Rust 应用</a></h1>
+<p><a href="https://blog.logrocket.com/debugging-rust-apps-with-gdb/#whatisrustgdb">原文</a></p>
+<p><img src="lang/rust/./img/Screen-Shot-2021-02-09-at-9.24.46-AM.webp" alt="gdb" /></p>
+</br>
+<p>根据你以前对编程语言和生态系统的了解，调试可能不是你从未做过的事情，或者说是你开发过程中绝对固定的流程。</p>
+<p>举个例子，在 <a href="https://www.java.com/en/">Java</a> (<a href="https://kotlinlang.org/">Kotlin</a> 或者其他 JVM 语言) 生态系统中，由于其复杂工具的悠久历史，许多人(包括我自己)在正常的开发周期中都依赖调试器。在许多动态类型的语言中，这个工作流未被广泛的采用。</p>
+<p>当然，这些是概括。几乎每种编程语言都具有某种调试机制，但是开发人员是否使用调试器似乎取决于工具的质量和可用性以及他们正在从事的任务。</p>
+<p>无论如何，拥有良好的调试能力是开发过程中的关键部分。在这篇 Rust GDB 教程中，我们将会向你展示如何使用最棒的 Rust 调试工具：<a href="https://www.gnu.org/software/gdb/">GNU Project Debugger (GDB)</a> 来调试 Rust 应用程序。</p>
+<p>我们将涵盖以下内容：</p>
+<ul>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#GDB-%E6%98%AF%E4%BB%80%E4%B9%88">GDB是什么</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#%E5%9C%A8-Rust-%E4%B8%AD%E8%AE%BE%E7%BD%AE-GDB">在 Rust 中设置 GDB</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#%60rust-gdb%60%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><code>rust-gdb</code>是什么</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#rust-gdb%E7%A4%BA%E4%BE%8B"><code>rust-gdb</code>示例</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#%E5%B8%83%E5%B1%80%E5%92%8C%E6%A3%80%E6%9F%A5%E7%8A%B6%E6%80%81">布局和检查状态</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#%E6%93%8D%E4%BD%9C%E7%8A%B6%E6%80%81%E5%92%8C%E8%A7%82%E5%AF%9F%E7%82%B9">操作状态和观察点</a></li>
+<li><a href="lang/rust/14-%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Rust%E5%BA%94%E7%94%A8.html#%E8%B0%83%E8%AF%95%E4%B8%80%E4%B8%AA%E5%BC%82%E6%AD%A5%E7%BD%91%E7%BB%9C%E7%A8%8B%E5%BA%8F">调试一个异步网络程序</a></li>
+</ul>
+<h2 id="gdb-是什么"><a class="header" href="#gdb-是什么">GDB 是什么</a></h2>
+<p>GNU Project Debugger (GDB) 是 <a href="https://stallman.org/">Richard Stallman</a> 编写的极其古老的程序，它在 1986 年自称是“GNU 项目的首席 GNUisance”。GDB 支持多种语言，例如 C/C++ 以及现代语言如 <a href="https://blog.logrocket.com/when-to-use-rust-and-when-to-use-golang/">GO 和 Rust</a>。</p>
+<p>GDB 是一个命令行应用程序，但是有很多的 GUI 界面以及 IDE 将它进行了集成。举个例子，一个现代的，基于浏览器的实现是 <a href="https://www.gdbgui.com/">gdbgui</a>。在本篇教程中，我们将使用它的命令行界面，因为它可以在任何地方运行，不需要外部依赖，并且足够简单，可以用于我们要完成的工作。</p>
+<p>GDB 可以运行在 Linux，MacOS 以及 Windows 中，并且大多数 Linux 的发行版预装了 GDB。你可以阅读 <a href="https://www.gnu.org/software/gdb/documentation/">GDB文档</a>以获取平台的安装说明。</p>
+<p>GDB 十分复杂且功能强大，因此在本教程中我们不会深入探讨 GDB。我们将使用它最基本的功能，如设置断点，运行程序，逐步执行，打印变量等等。</p>
+<h2 id="在-rust-中设置-gdb"><a class="header" href="#在-rust-中设置-gdb">在 Rust 中设置 GDB</a></h2>
+<p>为了继续本文以下内容，你需要安装最新版的 Rust (1.39+) 以及最新版的 GDB (8.x+)。可能也需要一个 TCP 包的发送工具，比如：<code>netcat</code>。</p>
+<p>同样，你需要确保在<code>rustc</code>的同级目录中有<code>rust-gdb</code>可执行程序。如果你使用 <a href="https://rustup.rs/">Rustup</a> 安装并更新 Rust，这应该默认就存在的。</p>
+<p>首先，创建一个新的 Rust 项目：</p>
+<pre><code class="language-console">cargo new rust-gdb-example
+cd rust-gdb-example
+</code></pre>
+<p>接下来，编辑<code>Cargo.toml</code>文件并添加你需要的依赖。</p>
+<pre><code class="language-toml">[dependencies]
+tokio = { version = &quot;1.1&quot;, features=[&quot;full&quot;] }
+</code></pre>
+<p>在这里，我们只添加 Tokio 依赖，因为我们将构建一个非常基础的异步 TCP 示例来演示我们可以像调试“普通函数”那样调试异步函数。</p>
+<p>在<code>src/lib.rs</code>中添加以下代码：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Debug)]
+pub enum AnimalType {
+    Cat,
+    Dog,
+}
+
+#[derive(Clone, Debug)]
+pub struct Animal {
+    pub kind: AnimalType,
+    pub name: String,
+    pub age: usize,
+}
+
+#[derive(Clone, Debug)]
+pub struct Person {
+    pub name: String,
+    pub pets: Vec&lt;Animal&gt;,
+    pub age: usize,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>这些只是我们将在示例程序中调试的基础类型。</p>
+<h2 id="rust-gdb是什么"><a class="header" href="#rust-gdb是什么"><code>rust-gdb</code>是什么？</a></h2>
+<p><code>rust-gdb</code>是 Rust (如：使用 Rustup) 安装时附带的预构建二进制文件，且会自动安装。</p>
+<p>基本上，<code>rust-gdb</code>是将外部 Python 的 pretty-printing 脚本加载到 GDB 中的封装。在调试更加复杂的 Rust 程序时将很有用(并且在一定程度上是必需的)，因为它可以显著改善 Rust 数据类型的显示。</p>
+<p>举个例子，带有 pretty-printing 的<code>Vec&lt;Animal&gt;</code>代码如下所示：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Vec(size=3) = {rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Chip&quot;, age: 4}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Nacho&quot;, age: 6}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Dog, name: &quot;Taco&quot;, age: 2}}
+<span class="boring">}
+</span></code></pre></pre>
+<p>不带 pretty-printing 的代码如下所示：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>alloc::vec::Vec&lt;rust_gdb_example::Animal&gt; {buf: alloc::raw_vec::RawVec&lt;rust_gdb_example::Animal, alloc::alloc::Global&gt; {ptr: core::ptr::unique::Unique&lt;rust_gdb_example::Animal&gt; {pointer: 0x5555555a1480, _marker: core::marker::PhantomData&lt;rust_gdb_example::Animal&gt;}, cap: 3, alloc: alloc::alloc::Global}, len: 3}
+<span class="boring">}
+</span></code></pre></pre>
+<p>pretty-printing 脚本为大多数广泛使用的 Rust 结构如<code>Vec</code>，<code>Option</code>，<code>Result</code>等提供了格式化，隐藏了它们的内部信息并展示了实际的 Rust 类型 - 这是我们在大多数时间都会感兴趣的内容。</p>
+<p>这也是此时涉及 Rust 的调试方法的明显限制之一。如果你有复杂的嵌套的数据类型，你将需要知道它们的内部信息，或者使用某种黑魔法来正确的检查值。随着时间的流逝，这种情况会有所改善，但是从目前的情况来看，如果你使用这种方法调试复杂的实际软件，将会遇到问题。</p>
+<p>在不进行设置的情况下，我们从一个示例程序开始，并使用它启动<code>rust-gdb</code>。</p>
+<h2 id="rust-gdb示例"><a class="header" href="#rust-gdb示例"><code>rust-gdb</code>示例</a></h2>
+<p>让我们从一个在 Rust 中使用 GDB 的基本示例开始。</p>
+<p>在你的项目中创建<code>examples</code>文件夹并添加带有以下内容的<code>basic.rs</code>文件：</p>
+<pre><pre class="playground"><code class="language-rust">use rust_gdb_example::*;
+
+fn main() {
+    let animals: Vec&lt;Animal&gt; = vec![
+        Animal {
+            kind: AnimalType::Cat,
+            name: &quot;Chip&quot;.to_string(),
+            age: 4,
+        },
+        Animal {
+            kind: AnimalType::Cat,
+            name: &quot;Nacho&quot;.to_string(),
+            age: 6,
+        },
+        Animal {
+            kind: AnimalType::Dog,
+            name: &quot;Taco&quot;.to_string(),
+            age: 2,
+        },
+    ];
+
+    get_chip(&amp;animals);
+}
+
+fn get_chip(animals: &amp;Vec&lt;Animal&gt;) {
+    let chip = animals.get(0);
+
+    println!(&quot;chip: {:?}&quot;, chip);
+}
+</code></pre></pre>
+<p>这个非常简单的程序初始化了一个 animals 列表，并在最后调用了一个函数，该函数打印了 animals 列表中第一个元素。</p>
+<p>为了调试这个程序，我们需要将其构建并使用<code>rust-gdb</code>执行构建的二进制文件。请确保使用调试模式对其进行构建而不是发布模式。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>cargo build --example basic
+Finished dev [unoptimized + debuginfo] target(s) in 0.28s
+
+rust-gdb target/debug/examples/basic
+<span class="boring">}
+</span></code></pre></pre>
+<p>如果我们不是在构建示例，而是在构建二进制文件，二进制文件将在<code>target/debug</code>目录下。</p>
+<p>在运行<code>rust-gdb</code>时，GDB 会打印几行欢迎信息和一个输入提示<code>(gdb)</code>。</p>
+<p>如果你之前没有使用过 GDB，<a href="https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf">GDB cheat sheet</a> 将会对你有所帮助。</p>
+<p>我们可以通过使用<code>break</code>命令或缩写<code>b</code>来设置一个断点：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) b get_chip
+Breakpoint 1 at 0x13e3c: file examples/basic.rs, line 26.
+(gdb) info b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000013e3c in basic::get_chip at examples/basic.rs:26
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们可以在某一行上设置断点(如：<code>basic.rs:17</code>)，或者在某个函数中设置断点。我们可以使用<code>info b</code>来查看断点，它向我们展示了断点的位置，数字(以便我们可以删除，禁用或启用它)，以及它是否被启用(<code>Enb</code>)。</p>
+<p><code>info</code>命令可以使用其他的选项，比如<code>info locals</code>，它展示了本地变量，<code>info args</code>，它显示了传入的函数参数以及更多的选项。</p>
+<p>既然我们设置了断点，我们可以通过执行<code>run</code>(或<code>r</code>)来运行程序：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) r
+Starting program: /home/zupzup/dev/oss/rust/rust-gdb-example/target/debug/examples/basic
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library &quot;/lib/x86_64-linux-gnu/libthread_db.so.1&quot;.
+
+Breakpoint 1, basic::get_chip (animals=0x7fffffffd760) at examples/basic.rs:26
+26            let chip = animals.get(0);
+<span class="boring">}
+</span></code></pre></pre>
+<p>它启动了程序。我们停在了定义的断点上，位于<code>get_chip</code>函数的第一行。在这里，我们可以查看函数的参数并尝试打印它们。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) info args
+animals = 0x7fffffffd760
+(gdb) p animals
+$1 = (*mut alloc::vec::Vec&lt;rust_gdb_example::Animal&gt;) 0x7fffffffd760
+(gdb) p *animals
+$2 = Vec(size=3) = {rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Chip&quot;, age: 4}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Nacho&quot;, age: 6}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Dog, name: &quot;Taco&quot;, age: 2}}
+<span class="boring">}
+</span></code></pre></pre>
+<p><code>info args</code>命令提供了传入参数的概览。当我们使用<code>p</code>(<code>print</code>同样有用)打印 animals时，GDB 告诉我们处理的是指向<code>Vec&lt;Animal&gt;</code>的指针，但是并没有向我们展示任何有关<code>Vec</code>内容的信息，因为它只是一个指针。</p>
+<p>你也可以使用<code>display</code>来打印变量，并且这里有很多格式的选项(如：字符串，指针，整型等)。<code>print</code>和<code>display</code>的区别是，使用<code>display</code>，在每次逐步执行指令之后，都会再次打印该值。这对于监控值的变更将很有用。</p>
+<p>我们需要使用<code>*animals</code>来解引用指针。如果我们将其打印，我们会获得完整的，可读的 animal 列表。基础指针的戏法 (juggle) 以及类型转换是我们在引用结构体时处处需要的东西。</p>
+<p>OK，我们现在在哪儿？让我们执行<code>f</code>或<code>frame</code>来查看我们到底在哪里：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) f
+<span class="boring">0  basic::get_chip (animals=0x7fffffffd760) at examples/basic.rs:26
+</span>26            let chip = animals.get(0);
+<span class="boring">}
+</span></code></pre></pre>
+<p>好吧，在我们设置的第一个断点那里。如果只有一种方法可以以图形化的方式来查看我们在源代码中的位置...</p>
+<h2 id="布局和检查状态"><a class="header" href="#布局和检查状态">布局和检查状态</a></h2>
+<p>GDB 中的<code>布局</code>可以帮助你查看你处于 Rust 代码中什么位置上。使用<code>layout src</code>命令打开一个命令行界面：</p>
+<p><img src="lang/rust/./img/Layout-GDB-SRC-Command-Line-Interface.avif" alt="Layout-GDB-SRC-Command-Line-Interface" /></p>
+<p>我们的命令行提示在它的右下方。使用这种方式，我们再也不需要疑惑我们处于代码中什么位置上了。这里还有其他的布局，如<code>layout split</code>，它展示了代码以及相应的汇编：</p>
+<p><img src="lang/rust/./img/GDB-Layout-Split-Visual.avif" alt="GDB-Layout-Split-Visual" /></p>
+<p>看起来十分简洁。如果你想要摆脱这样的布局，你可以使用<code>CTRL+X a</code>。如果界面的渲染变混乱了，使用<code>CTRL+L</code>将会刷新界面(这会时而触发)。</p>
+<p>与其他调试器一样，我们可以使用<code>n</code>或者<code>next</code>逐行执行代码，或者使用<code>s</code>或者<code>step</code>跳入函数内部。如果你想重复这个操作，你可以简单的按下回车键，然后上一个命令就会重复执行了。</p>
+<p>让我们再往下执行，并在调用<code>Vec&lt;Animal&gt;</code>的<code>.get</code>方法查看<code>chip</code>变量的内部是什么：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) n
+28            println!(&quot;chip: {:?}&quot;, chip);
+(gdb) p chip
+$3 = core::option::Option&lt;&amp;rust_gdb_example::Animal&gt;::Some(0x5555555a1480)
+(gdb) print *(0x5555555a1480 as &amp;rust_gdb_example::Animal)
+$4 = rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Chip&quot;, age: 4}
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们执行<code>n</code>，现在我们处于下一行上 (28)。在这里，我们试图打印<code>chip</code>，然后我们看到它是一个<code>Option</code>类型，其中包含了一个<code>Animal</code>的引用。不幸的是，GDB 再一次只向我们展示了它的地址。我们需要将其转换成<code>&amp;rust_gdb_example::Animal</code>，然后查看 animal 中真实的值。</p>
+<p>一个很棒的事情就是大部分这些事情都是自动完成的。因此如果你键入<code>rust_gd</code>，并按下<code>TAB</code>键，这些都将自动完成。和<code>AnimalType</code>以及其他类型，函数，作用域中的变量一样。</p>
+<p>我们也可以打印函数定义：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) p get_chip
+$11 = {fn (*mut alloc::vec::Vec&lt;rust_gdb_example::Animal&gt;)} 0x555555569370 &lt;basic::get_chip&gt;
+<span class="boring">}
+</span></code></pre></pre>
+<p>如果你想到这个函数的结尾处，我们可以使用<code>finish</code>，然后跳出并来到调用该函数的地方。如果我们使用当前的断点完成了某个调试，我们可以使用<code>continue</code>或者<code>c</code>来继续执行程序 - 在这里，将会简单的运行程序并到达它的结尾处。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) finish
+Run till exit from #0  basic::get_chip (animals=0x7fffffffd760) at examples/basic.rs:28
+chip: Some(Animal { kind: Cat, name: &quot;Chip&quot;, age: 4 })
+0x0000555555567d87 in basic::main () at examples/basic.rs:22
+22            get_chip(&amp;animals);
+(gdb) c
+Continuing.
+[Inferior 1 (process 61203) exited normally]
+<span class="boring">}
+</span></code></pre></pre>
+<p>这是不是很棒！这些都是你调试 Rust 程序的必要功能。让我们来查看另一个示例并探索更高级的技术。</p>
+<h2 id="操作状态和观察点"><a class="header" href="#操作状态和观察点">操作状态和观察点</a></h2>
+<p>首先，让我们在<code>examples</code>文件夹下的<code>nested.rs</code>文件中创建另一个示例：</p>
+<pre><pre class="playground"><code class="language-rust">use rust_gdb_example::*;
+
+fn main() {
+    let animals: Vec&lt;Animal&gt; = vec![
+        Animal {
+            kind: AnimalType::Cat,
+            name: &quot;Chip&quot;.to_string(),
+            age: 4,
+        },
+        Animal {
+            kind: AnimalType::Cat,
+            name: &quot;Nacho&quot;.to_string(),
+            age: 6,
+        },
+        Animal {
+            kind: AnimalType::Dog,
+            name: &quot;Taco&quot;.to_string(),
+            age: 2,
+        },
+    ];
+
+    let mut some_person = Person {
+        name: &quot;Some&quot;.to_string(),
+        pets: animals,
+        age: 24,
+    };
+    println!(&quot;person: {:?}&quot;, some_person);
+    some_person.age = 100;
+    some_person.name = some_func(&amp;some_person.name);
+}
+
+fn some_func(name: &amp;str) -&gt; String {
+    name.chars().rev().collect()
+}
+</code></pre></pre>
+<p>我们再一次创建了 animal 列表。但是这一次，我们也创建了<code>Person</code>并将 animals 设置为他们的宠物。而且，我们会打印 person，将他们的年龄设置为<code>100</code>并重置他们的名字(这是 some_func 做得事情)。</p>
+<p>在我们调试这个程序之前，我们需要再一次构建它，并使用<code>rust-gdb</code>执行二进制文件：</p>
+<pre><code class="language-console">cargo build --example nested
+rust-gdb target/debug/examples/nested
+</code></pre>
+<p>感觉真不错。让我们在第 22 行和第 27 行设置断点并运行该程序：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) b nested.rs:22
+Breakpoint 1 at 0x17abf: file examples/nested.rs, line 22.
+(gdb) b nested.rs:27
+Breakpoint 2 at 0x17b13: file examples/nested.rs, line 27.
+(gdb) info b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000017abf in nested::main at examples/nested.rs:22
+2       breakpoint     keep y   0x0000000000017b13 in nested::main at examples/nested.rs:27
+(gdb) r
+Starting program: /home/zupzup/dev/oss/rust/rust-gdb-example/target/debug/examples/nested
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library &quot;/lib/x86_64-linux-gnu/libthread_db.so.1&quot;.
+
+Breakpoint 1, nested::main () at examples/nested.rs:22
+22            let mut some_person = Person {
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们在第一个断点处，该位置创建了 person。让我们继续打印语句。接着，我们将在<code>some_person.age</code>设置所谓的观察点。这个观察点将会在<code>some_person.age</code>每一次改变的时候通知我们。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) c
+(gdb) watch some_person.age
+Hardware watchpoint 3: some_person.age
+(gdb) n
+person: Person { name: &quot;Some&quot;, pets: [Animal { kind: Cat, name: &quot;Chip&quot;, age: 4 }, Animal { kind: Cat, name: &quot;Nacho&quot;, age: 6 }, Animal { kind: Dog, name: &quot;Taco&quot;, age: 2 }], age: 24 }
+28            some_person.age = 100;
+(gdb) n
+
+Hardware watchpoint 3: some_person.age
+
+Old value = 24
+New value = 100
+0x000055555556bba8 in nested::main () at examples/nested.rs:28
+28            some_person.age = 100;
+<span class="boring">}
+</span></code></pre></pre>
+<p>GDB 向我们展示了哪一个观察点被触发，以及对应的新值和旧值。</p>
+<p>让我们再一次通过调用<code>run</code>来重新运行该程序，并确认我们想要重新运行。这次，当我们来到第二个断点处时，让我们通过使用<code>set</code>来手动修改它的值：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span>
+<span class="boring">fn main() {
+</span>(gdb) set some_person.age = 22
+(gdb) p some_person
+$1 = rust_gdb_example::Person {name: &quot;Some&quot;, pets: Vec(size=3) = {rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Chip&quot;, age: 4}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Nacho&quot;, age: 6},
+    rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Dog, name: &quot;Taco&quot;, age: 2}}, age: 22}
+<span class="boring">}
+</span></code></pre></pre>
+<p>如你所见，我们可以使用<code>set ..args</code>来操作我们变量的状态。这在原始类型中可以很好的工作，但是对于复杂的值，略微有些棘手 (tricky)，如 <a href="https://doc.rust-lang.org/std/">Rust 标准库</a> 或者外部第三方的 crate 中的类型。这是另一个缺点 (drawback)，但是在将来有希望会所有改善。</p>
+<p>另一个很棒的特性是我们可以试图执行函数并查看它们的返回值：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) p some_func(&quot;Hello&quot;)
+$3 = &quot;olleH&quot;
+(gdb) p some_func(&quot;Debug&quot;)
+$4 = &quot;gubeD&quot;
+(gdb) p some_func(some_person.name)
+$5 = &quot;emoS&quot;
+(gdb) set some_person.name = some_func(some_person.name)
+(gdb) p some_person
+$6 = rust_gdb_example::Person {name: &quot;emoS&quot;, pets: Vec(size=3) = {rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Chip&quot;, age: 4}, rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Cat, name: &quot;Nacho&quot;, age: 6},
+    rust_gdb_example::Animal {kind: rust_gdb_example::AnimalType::Dog, name: &quot;Taco&quot;, age: 2}}, age: 22}
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们可以调用作用域内的<code>some_func</code>函数，它需要传入一个字面量字符串。我们可以通过<code>some_person.name</code>对其进行调用，并可以使用<code>set</code>来重置<code>some_person.name</code>的值。</p>
+<p>这个功能十分强大，并且可以在调试期间影响到表达式与函数的结果，这有助于发现并解决问题。它对于解决一些简单的场景十分有用，但是如果你试图执行一个包含 I/O 或其他更复杂的操作的函数时，你可能会遇到障碍。但是对于 99% 的场景，已有的功能可以很好的完成工作。</p>
+<p>说到 I/O，让我们查看最后一个示例：如何使用 GDB 调试 Rust 中的异步网络应用。</p>
+<h2 id="调试一个异步网络应用"><a class="header" href="#调试一个异步网络应用">调试一个异步网络应用</a></h2>
+<p>最后同样重要的是，我们将会试图调试一个异步网络应用，运行在 tokio 异步运行时中。</p>
+<p>让我们在<code>examples</code>文件夹下创建<code>tokio.rs</code>：</p>
+<pre><pre class="playground"><code class="language-rust">use std::io;
+use tokio::io::AsyncWriteExt;
+use tokio::net::{TcpListener, TcpStream};
+
+#[tokio::main]
+async fn main() -&gt; io::Result&lt;()&gt; {
+    let listener = TcpListener::bind(&quot;127.0.0.1:8080&quot;).await?;
+    println!(&quot;Accepting TCP on port 8080&quot;);
+
+    loop {
+        let (socket, _) = listener.accept().await?;
+        tokio::spawn(async move { process(socket).await });
+    }
+}
+
+async fn process(mut socket: TcpStream) {
+    socket
+        .write_all(b&quot;Hello&quot;)
+        .await
+        .expect(&quot;can write to socket&quot;);
+}
+</code></pre></pre>
+<p>这是一个非常简单的程序，它在本地<code>8080</code>端口开启了一个 TCP 监听，对于每一个接入的连接，异步调用<code>process</code>函数来处理请求。</p>
+<p><code>process</code>函数简单的写回一个<code>Hello</code>，这让它其成为最简单的“网络应用”。</p>
+<p>然而，我们在这里并不追求复杂性。相反，我们正在尝试确定在调试异步程序(如 Web 服务器)时使用 GDB 的工作流程是否发生了变化。</p>
+<p>让我们编译这个示例并使用生成的二进制文件启动<code>rust-gdb</code>：</p>
+<pre><code class="language-console">cargo build --example tokio
+rust-gdb target/debug/examples/tokio
+</code></pre>
+<p>到目前为止还挺好。</p>
+<p>让我们在第 17 行的<code>process</code>函数的开始部分设下一个断点：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) b tokio.rs:17
+(gdb) info b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   &lt;MULTIPLE&gt;
+1.1                         y   0x000000000009aa87 in tokio::process::{{closure}} at examples/tokio.rs:17
+1.2                         y   0x00000000000a57fa in tokio::process at examples/tokio.rs:17
+<span class="boring">}
+</span></code></pre></pre>
+<p>有趣的是，断点被分为了<code>1.1</code>和<code>1.2</code>。这在 GDB 中被称为位置。发生这种情况的原因可能是因为优化，比如内联 (inline)，举个例子，GDB 将在内联或模版化的函数中设下断点。我假设这是因为<code>tokio::main</code>宏，它将所有的代码都封装在了 Tokio 运行时中。</p>
+<p>如果我们愿意，我们可以禁用每一个位置，但是在本例中这不是重点。让我们运行下这个程序：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>(gdb) r
+Starting program: /home/zupzup/dev/oss/rust/rust-gdb-example/target/debug/examples/tokio
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library &quot;/lib/x86_64-linux-gnu/libthread_db.so.1&quot;.
+[New Thread 0x7ffff7c1e700 (LWP 55035)]
+[New Thread 0x7ffff7a1d700 (LWP 55036)]
+[New Thread 0x7ffff781c700 (LWP 55037)]
+[New Thread 0x7ffff761b700 (LWP 55038)]
+[New Thread 0x7ffff741a700 (LWP 55039)]
+[New Thread 0x7ffff7219700 (LWP 55040)]
+[New Thread 0x7ffff7018700 (LWP 55041)]
+[New Thread 0x7ffff6e17700 (LWP 55042)]
+Accepting TCP on port 8080
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们的监听器已经启动并正在运行，我们甚至可以看到 Tokio 运行时在后台生成的线程。</p>
+<p>让我们使用<code>netcat</code>在其他终端会话中发送一些数据到这个 endpoint 中。</p>
+<pre><code class="language-console">nc 127.0.0.1 8080
+</code></pre>
+<p>这将触发<code>process</code>中的断点：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>[Switching to Thread 0x7ffff6e17700 (LWP 55041)]
+
+Thread 9 &quot;tokio-runtime-w&quot; hit Breakpoint 1, tokio::process::{{closure}} () at examples/tokio.rs:18
+18            socket
+
+(gdb) p socket
+$4 = tokio::net::tcp::stream::TcpStream {io: tokio::io::poll_evented::PollEvented&lt;mio::net::tcp::stream::TcpStream&gt; {io: core::option::Option&lt;mio::net::tcp::stream::TcpStream&gt;::Some(mio::net::tcp::stream::TcpStream {inner: mio::io_source::IoSource&lt;std::net::tcp::TcpStream&gt; {state: mio::sys::unix::IoSourceState, inner: std::net::tcp::TcpStream (std::sys_common::net::TcpStream {inner: std::sys::unix::net::Socket (std::sys::unix::fd::FileDesc {fd: 11})}), selector_id: mio::io_source::SelectorId {id: core::sync::atomic::AtomicUsize {v: core::cell::UnsafeCell&lt;usize&gt; {value: 1}}}}}), registration: tokio::io::driver::registration::Registration {handle: tokio::io::driver::Handle {inner: alloc::sync::Weak&lt;tokio::io::driver::Inner&gt; {ptr: core::ptr::non_null::NonNull&lt;alloc::sync::ArcInner&lt;tokio::io::driver::Inner&gt;&gt; {pointer: 0x55555573a560}}}, shared: tokio::util::slab::Ref&lt;tokio::io::driver::scheduled_io::ScheduledIo&gt; {value: 0x55555573ec20}}}}
+
+(gdb) c
+<span class="boring">}
+</span></code></pre></pre>
+<p>当断点被触发，GDB 通知我们这发生在运行时生成的其中一个线程中，并且我们拥有一个<code>socket</code>变量，我们可以对其施加影响。</p>
+<p><code>socket</code>是一个 Tokio 的 TcpStream，但是我们并不能从打印它中了解到什么。在这里，数字<code>11</code>代表着一个文件修饰符，它可以打开一个网络连接，但是其余的可能是 Tokio 和 mio 的内部信息。</p>
+<p>无论如何，它确实工作了 - 我们成功的在多线程中运行的异步处理器中设置了一个断点。这意味着如果有相同的方法同样会奏效，举个例子，一个运行的 Actix 或 warp 的 web 服务器，在其中一个处理函数中设置了一个断点，来对传入的 HTTP 请求数据施加影响。</p>
+<p>在我们使用<code>c</code>继续执行后，我们第二个终端中显示了<code>Hello</code>的响应。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>nc 127.0.0.1 8080
+Hello
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们使用 GDB 调试 Rust 应用程序的旅程到此结束。</p>
+<p>你可以在 <a href="https://github.com/zupzup/rust-gdb-example">Github</a> 获取本例的完整代码。</p>
+<h2 id="结论-4"><a class="header" href="#结论-4">结论</a></h2>
+<p>在这篇 Rust 调试教程中，我们演示了如何使用 GDB 调试一个 Rust 应用程序。在大多数情况下，如果你要做的只是逐步执行具有断点的程序，那么它可以工作的很好，尤其是带了<code>rust-gdb</code> pretty-printing 扩展的程序。</p>
+<p>当涉及更加复杂的功能时，你可能已经习惯于使用其他语言复杂的 GUI 调试器，这是一个活跃的开发领域，我希望 Rust 的调试生态系统可以得到改善。与 Java 和 C/C++ 中最好的调试器相比，Rust 将花费多长时间以及整体调试体验将有多好，这很难说，这取决于 Rust 中对此类工具的需求。</p>
+<p>本篇教程的目的是为你提供一个工具，以最少的额外功能或必要知识来调试 Rust 程序。该背景应当涵盖你在 Rust 编程中将遇到的大多数情况.</p>
 
                     </main>
 
