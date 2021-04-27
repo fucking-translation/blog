@@ -6,6 +6,6 @@ src = "src"
 title = "Blog Translation"
 
 [output.html]
-# additional-css = ["ferris.css", "theme/2018-edition.css"]
-# additional-js = ["ferris.js"]
+additional-css = ["theme/ferris.css", "theme/2018-edition.css"]
+additional-js = ["theme/ferris.js"]
 git-repository-url = "https://github.com/fucking-translation/blog"
