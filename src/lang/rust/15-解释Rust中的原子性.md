@@ -122,7 +122,7 @@ L1 缓存使用了某种 [MESI 缓存协议](https://en.wikipedia.org/wiki/MESI_
 
 既然我们对如何设计 CPU 之间的协调有了一些了解，我们可以介绍一些不同的内存排序以及它们的含义。
 
-在 Rust 中，[std::sync::atomic::Ordering](https://doc.rust-lang.org/std/sync/atomic/enum.Ordering.html)代表内存排序，它有 5 个可能的值。
+在 Rust 中，[std::sync::atomic::Ordering](https://doc.rust-lang.org/std/sync/atomic/enum.Ordering.html) 代表内存排序，它有 5 个可能的值。
 
 ### 心智模型
 
@@ -184,3 +184,37 @@ L1 缓存使用了某种 [MESI 缓存协议](https://en.wikipedia.org/wiki/MESI_
 
 **在当前 CPU 中：**
 
+与`Acquire`相反，任何在`Release`内存排序标志之前编写的内存操作都将停留在该标志之前。这意味着它与`Acquire`内存排序标志配对。
+
+在弱有序 CPU 中，编译器可能会插入一个[内存栏栅](https://doc.rust-lang.org/std/sync/atomic/fn.fence.html)来确保 CPU 不会对`Release`操作之前的内存操作进行重排，让这些操作在`Release`之后发生。这也做了一个保证，其他所有执行`Acquire`的核心一定可以看到在`Acquire`之后，`Release`之前的所有内存操作。
+
+因此，不仅需要在本地正确地对操作进行排序，还保证了此时更改对于观察者核心必须是可见的。
+
+这意味着一些全局同步一定会在每一个`Acquire`访问之前，或`Release`存储之后发生。这基本上给了我们两个选择：
+
+1. `Acquire`加载 (load) 必须确保它处理了所有的消息，并且如果有任何其他的核心将我们载入的内存设置为无效，它可以拉取到正确的值。
+2. `Release`存储 (store) 必须是原子性的并且在它修改某个值之前，将其他所有持有该值的缓存置为无效。
+
+不过，仅执行其中一项就足够了。这部分使其比`SeqCst`弱，但是性能更高。
+
+**在观察者 CPU 中：**
+
+观察者 CPU 可能看不到任何特定顺序的这些更改，除非它本身使用内存的`Acquire`加载 (load)。如果确实是这样，它会看到在`Acquire`和`Release`之间修改过的所有内存，包括`Release`存储 (store) 本身。
+
+`Release`经常与`Acquire`一起使用以写锁。对于一个函数锁，在成功获取到锁之后 (在锁释放之前)，一些操作需要被保留。**出于这个原因，与`Acquire`排序相反，如果你传递`Release`排序操作，Rust 中的大多数加载 (load) 方法都会发生恐慌 (panic)**。
+
+> ⚠️ 在强有序的 CPU 中，在修改值之前，共享(`Shared`)值的所有实例在该值存在的所有 L1 缓存中均无效。这意味着`Acquire`加载 (load) 对所有相关的内存都已经有了一个更新后的视图，`Release`存储 (store) 将立即将其他包含数据的核心上的任何缓存行置为无效。
+> 
+> 这就是为什么这些语义在这样的系统上没有性能成本的原因。
+
+### AcqRel
+
+该语义旨在用于同时加载 (load) 并存储 (store) 一个值时的操作。`AtomicBool::compare_and_swap`就是一个这样的操作。因为这个操作既加载 (load) 又存储 (store) 某个值，与`Relaxed`操作相比，这在弱有序系统上可能很重要。
+
+我们可以或多或少的将这个操作看作是栏栅。在它之前写入的内存操作不会跨越此边界重新排序，而在它之后写入的内存操作不会在此边界之前重新排序。
+
+> ⚠️ 阅读`Acquire`和`Release`段落，此处同样适用。
+
+### SeqCst
+
+> ⚠️ 在本文的这个部分，我将使用强有序的 CPU 作为基础进行讨论。你在这里将看不到“强有序”的片段。
