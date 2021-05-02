@@ -12,5 +12,5 @@
 - [Rust中的宏: 带有示例的教程](./lang/rust/11-Rust中的宏:带有示例的教程.md)
 - [libp2p 教程: 使用 Rust 构建 p2p 应用](./lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)
 - [Rust 的 Pin 与 Unpin](./lang/rust/13-Rust的Pin与Unpin.md)
-
 - [使用 GDB 调试 Rust 中的应用](./lang/rust/14-使用GDB调试Rust应用.md)
+- [解释 Rust 中的原子性](./lang/rust/15-解释Rust中的原子性.md)

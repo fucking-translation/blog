@@ -164,7 +164,7 @@ L1 缓存使用了某种 [MESI 缓存协议](https://en.wikipedia.org/wiki/MESI_
 > 
 > 让我们快速浏览 [Intel 开发者手册](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf)中的一个 full fence。(比较简短，我还做了总结)
 >
->> 程序的同步也可以通过序列化指令进行(参阅 8.3 节)。这些指令通常用于关键过程或任务边界，以强制完成之前的所有指令，然后跳转到新的代码块或进行上下文切换。和 I/O 指令及锁指令一样，处理器在执行序列化指令之前，**一直等到之前的所有指令都已完成**，并且**所有缓冲的写操作都已耗尽内存**。SFENCE，LFENCE 以及 MFENCE 指令提供了一种性能高效的方式，可确保在在产生弱有序结果及消耗该数据的惯例之间**加载和存储内存排序操作**。
+>> 程序的同步也可以通过序列化指令进行(参阅 8.3 节)。这些指令通常用于关键过程或任务边界，以强制完成之前的所有指令，然后跳转到新的代码块或进行上下文切换。和 I/O 指令及锁指令一样，处理器在执行序列化指令之前，**一直等到之前的所有指令都已完成**，并且**所有缓存的写操作都已在内存中执行**。SFENCE，LFENCE 以及 MFENCE 指令提供了一种性能高效的方式，可确保在在产生弱有序结果及消耗该数据的惯例之间**加载和存储内存排序操作**。
 >>
 >> MFENCE - **在程序指令流中，序列化在 MFENCE 指令之前发生的所有存储和加载操作**。
 >
@@ -218,3 +218,228 @@ L1 缓存使用了某种 [MESI 缓存协议](https://en.wikipedia.org/wiki/MESI_
 ### SeqCst
 
 > ⚠️ 在本文的这个部分，我将使用强有序的 CPU 作为基础进行讨论。你在这里将看不到“强有序”的片段。
+
+`SeqCst`代表顺序一致性 (Sequential Consistency)，它不仅给了和`Acquire/Release`一样的保证，还承诺建立一个单一的全量修改顺序。
+
+`SeqCst`已经因为用作推荐的排序方式而受到批评，并且很难证明有充足的理由使用它，因此我对使用它有很多反对意见。也有人批评它有点功能破损。
+
+此图应该可以说明`SeqCst`在哪些方面可能无法维持其保证：
+
+![bilde](./img/bilde.png)
+
+如何将其修复请参阅[Repairing Sequential Consistency in C/C++11
+](https://plv.mpi-sws.org/scfix/paper.pdf)。
+
+明白了吗？从现在开始，我们将关注于`SeqCst`的实践方面，而不是其理论基础。
+
+只知道围绕它进行了一些讨论，并且`Acquire/Release`很可能解决你的大部分难题，至少在强有序的 CPU 上。
+
+让我们考虑将`SeqCst`与`Acquire/Release`操作进行对比。
+
+我将使用这个 [Gotbolt](https://godbolt.org/z/EFK-qU) 示例进行解释：
+
+代码如下所示：
+
+```rust
+use std::sync::atomic::{AtomicBool, Ordering};
+static X: AtomicBool = AtomicBool::new(true);
+static Y: AtomicBool = AtomicBool::new(true);
+
+pub fn example(val: bool) -> bool {
+    let x = X.load(Ordering::Acquire);
+    X.store(val | x, Ordering::Release);
+    let y = Y.load(Ordering::Acquire);
+    x || y
+}
+```
+
+使用`Acquire/Release`输出的汇编程序如下所示：
+
+```assembly
+movb    example::X.0.0(%rip), %al # load(Acquire)
+testb   %al, %al
+setne   %al
+orb     %dil, %al
+movb    %al, example::X.0.0(%rip) # store(Release)
+movb    $1, %al                   # load(Acquire)
+retq
+```
+
+在弱有序的 CPU 中，指令可能不同，但是结果必须是一致的。
+
+使用`Release`内存排序的存储 (store) 操作是`movb %al, example::X.0.0(%rip)`。我们知道在强有序的系统中，如果其他缓存中包含这个数据，可以确保能够立即在其他缓存中将其设置为`Invalid`。
+
+**所以问题是什么？**
+
+为了将其指明，我们浏览一下在 C++ 规范中关于 Release-Acquire 的相关部分：
+
+> 仅在 Release 和 Acquire 相同原子变量的线程之间建立同步。其他线程可以看到不同于同步线程中看到的内存访问顺序。
+
+Rust 的`Release`文档再次重申 (re-iterates) 并指出：
+
+> 特别是，所有之前的写入操作对执行此值的 [Acquire](https://doc.rust-lang.org/std/sync/atomic/enum.Ordering.html#variant.Acquire) (或更强)加载 (load) 的所有线程都是可见的。
+
+现在是时候仔细看看我在开始时提到的 non-guarantee。[Intel 开发者手册](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf) 在第 8.2.3.4 节进行了更详细的说明：
+
+> 8.2.3.4：Loads 可能会与早期的 Stores 一起重排到不同的位置
+>
+> Intel 64 位内存排序模型允许将加载 (load) 与早期的存储 (store) 重排到不同的位置。然而，加载 (load) 不会与存储 (store) 重排到相同的位置。
+
+所以，如果我们将这个信息放在一起，我们可以有以下情形：
+
+```rust
+let x = X.load(Ordering::Acquire);
+X.store(val | x, Ordering::Release); # earlier store to different location
+let y = Y.load(Ordering::Acquire);   # load
+
+// *Could* get reordered on the CPU to this:
+
+let x = X.load(Ordering::Acquire);
+let y = Y.load(Ordering::Acquire);
+X.store(val | x, Ordering::Release);
+```
+
+现在，我已经尽我最大的努力在 Intel CPU 上引发导致问题的情况，但是我无法得到一个简单的示例可以可靠地表明这一点。但是从理论上讲，从抽象机的规格和描述来看，`Acquire/Release`并不能阻止这种情况。
+
+如果我们将代码改为：
+
+```rust
+use std::sync::atomic::{AtomicBool, Ordering};
+static X: AtomicBool = AtomicBool::new(true);
+static Y: AtomicBool = AtomicBool::new(true);
+
+pub fn example(val: bool) -> bool {
+    let x = X.load(Ordering::SeqCst);
+    X.store(val | x, Ordering::SeqCst);
+    let y = Y.load(Ordering::SeqCst);
+    x || y
+}
+```
+
+我们得到了如下汇编代码：
+
+```assembly
+movb    example::X.0.0(%rip), %al
+testb   %al, %al
+setne   %al
+orb     %dil, %al
+xchgb   %al, example::X.0.0(%rip)
+movb    $1, %al
+retq
+```
+
+一个有趣的改变是存储 (store) 操作从简单的加载 (load) 变为特殊的指令`xchgb %al, example::X.0.0(%rip)`。这是一个*原子操作*(`xchg`有一个[隐式的`lock`前缀](https://en.wikibooks.org/wiki/X86_Assembly/Data_Transfer))。
+
+因为`xchg`指令是一个[locked](https://cfsamsonbooks.gitbook.io/explaining-atomics-in-rust/#the-lockcpu-instruction-prefix)指令，当内存被获取，并在修改后置为无效，它将会确保在其他核心上的所有缓存行指的是同一块被锁住的内存。此外，它还可以作为内存的 full fence，我们可以在 [Intel 开发者手册](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf)中得出：
+
+> 8.2.3.9：加载 (load) 和存储 (store) 不会与锁指令一起重排
+>
+> 内存排序模型可以防止使用较早或较晚的锁指令对加载 (load) 和存储 (store) 进行重排。本节的示例仅说明在加载 (load) 或存储 (store) 之前执行锁指令的情况。读者应该注意，如果在加载 (load) 或存储 (store) 后执行了锁指令，则也将阻止重排。
+
+> 对于我们的观察者核心这是一个可观测的改变。
+>
+> **顺序一致性 (Sequential Consistency)**
+> 
+>  如果我们依赖于加载 (load) 操作发生后获取到的某个值，如标记`Release`之后，如果我们使用`Acquire/Release`语义，我们可以在`Release`操作之前观察到该值确实被改变了。至少在理论上是这样。
+
+> 使用锁指令可以防止这种情况。因此，除了有`Acquire/Release`保证之外，它还确保在这两者之间不会发生任何其他内存操作(读取或写入)。
+>
+> **单一的全量修改顺序**
+>
+> 在弱有序的 CPU 中，`SeqCst`也提供了一些保证，这些保证在默认情况下只能在强有序的 CPU 中得到，其中最重要的是单一全量修改顺序。
+>
+> 这意味着如果我们有两个观察者核心，它们将以相同的顺序看到所有的`SeqCst`操作。`Acquire/Release`不会提供这种保证。观察者 a 可以以与观察者 b 不同的顺序看到两个修改(请记住邮箱的类比 (analogy))。
+>
+> 假设核心 A 需要使用了基于`Acquire`排序的`compare_and_swap`获取标志 X，而核心 B 在 Y 上执行了相同的操作。两者都执行相同的操作，然后使用`Release`存储 (store) 将标志的值改回。
+>
+> 没有什么可以阻止观察者 A 看到标志 Y 在标志 X 之前变回，观察者 B则相反。
+>
+> `SeqCst`阻止了这一切的发生。
+>
+> 在强有序的系统中，在其他所有的核心中都可以立即看到每个存储 (`store`)，因此在这里修改顺序不是一个真正的问题。
+
+**`SeqCst`是最强的内存排序，它的开销也比其他的略高。**
+
+> 你可以在上面看到一个解释了为什么的例子，因为每个原子指令都涉及 CPU 缓存一致性机制并锁定其他缓存中内存位置的开销。在拥有正确程序的情况下，我们所需的此类指令越少，性能就越好。
+
+---
+
+## 原子操作
+
+除了上面讨论的内存栏栅之外，在`std::sync::atomic`模块中使用原子类型还可以访问一些我们通常在 Rust 中看不到的重要 CPU 指令：
+
+从[多核 Intel® EM64T 和 IA32 架构实现可扩展的原子锁开始](https://software.intel.com/en-us/articles/implementing-scalable-atomic-locks-for-multi-core-intel-em64t-and-ia32-architectures)：
+
+*用户级锁涉及利用处理器的原子指令来原子地更新存储空间。原子指令涉及利用指令上的锁前缀，并将目标操作数分配给内存地址。以下指令可以在当前的 Intel 处理器上带上一个锁前缀从而可以原子的运行：ADD，ADC，AND，BTC，BTR，BTS，CMPXCHG，CMPXCH8B，DEC，INC，NEG，NOT，OR，SBB，SUB，XOR，XADD 以及 XCHG...*
+
+当我们使用一个原子的方法时，如 [AtomicUsize](https://doc.rust-lang.org/std/sync/atomic/struct.AtomicUsize.html) 中的`fetch_add`，编译器实际上会更改它发出的指令，将两个数字在 CPU 上相加。相反，其汇编代码看起来像(一个 AT&T 方言)`lock addq ..., ...`而不是我们通常期望的`addq ..., ...`。
+
+> 原子操作是作为一个不可分割的 (indivisible) 单元执行的一组操作。禁止任何观察者在对其操作时看到任何子操作或获取相同的数据。来自其他核心中针对相同数据的冲突操作 B 必须等待，直到第一个原子操作 A 完成。
+>
+> 让我们举一个增加计数器的例子。这里有三步：`加载数据`，`修改数据`，`存储数据`。
+>
+> 对于每个步骤，另一个核心可能会在我们完成之前加载相同的数据，对其进行修改并将值进行存储。
+>
+> ```
+> LOAD NUMBER
+> ---- a competing core can load the same value here ----
+> INCREASE NUMBER
+> ---- a competing core can increase the same value ----
+> ---- a competing core can store its data here ----
+> STORE NUMBER
+> ---- we overwrite that data here ----
+> ```
+> 
+> 通常，在存储数据之前，我们希望阻止任何人从加载数据的角度进行观察和干预。这就是原子操作要为我们解决的问题。
+
+原子的一个普通用例是自旋锁 (spin-locks)。一个非常简单(并且 unsafe)的代码如下所示：
+
+```rust
+static LOCKED: AtomicBool = AtomicBool::new(false);
+static mut COUNTER: usize = 0;
+
+pub fn spinlock(inc: usize) {
+    while LOCKED.compare_and_swap(false, true, Ordering::Acquire) {}
+    unsafe { COUNTER += inc };
+    LOCKED.store(false, Ordering::Release);
+}
+```
+
+它的汇编代码如下所示：
+
+```rust
+xorl    %eax, %eax
+lock    cmpxchgb %cl, example::LOCKED(%rip)
+jne     .LBB0_1
+addq    %rdi, example::COUNTER(%rip)
+movb    $0, example::LOCKED(%rip)
+retq
+```
+
+`lock cmpxchgb %cl, example::LOCKED(%rip)`是我们在`compare_and_swap`中做的原子操作。`lock cmpxchgb`是一个[锁](https://cfsamsonbooks.gitbook.io/explaining-atomics-in-rust/#the-lockcpu-instruction-prefix)操作；它读取一个标志，并且在条件满足时，将值修改。
+
+> 在 [Intel 开发者手册](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf)的第 8.2.5 节中：
+>
+>> 多处理器系统中的处理机制可能取决于强有序模型。在这里，程序可以使用诸如 XCHG 指令或 LOCK 前缀之类的锁指令来确保原子的执行对内存的 read-modify-write 操作。锁操作通常类似于 I/O 操作，因为它们需要等待之前所有的指令完成，并且等待所有缓存的写操作在内存中执行(请参阅第 8.1.2 节 “总线锁定”)。
+
+### 这个锁 (lock) 指令前缀干了什么？
+
+这变得有点技术含量，但是据我所知，对此进行建模的一种简单方法是，当从缓存中获取内存时，它已将缓存行状态设置为`Modified`。
+
+这样，从核心的 L1 缓存中获取数据的那一刻起，就将其标记为`Modified`。处理器使用[缓存一致性机制](https://en.wikipedia.org/wiki/Cache_coherence)确保存在该状态的所有其他缓存都将其更新为`Invalid` - 即使它们尚未处理其邮箱中的所有消息。
+
+如果消息传递是同步变更的正常方式，则锁指令(以及其他内存排序或序列化指令)涉及一种更昂贵，功能更强大的机制，它可以绕过消息传递，将缓存行锁定在其他缓存中(因此当缓存在运行时，不会发生加载或存储操作)，并相应地将其设置为无效，这会迫使缓存从内存中获取更新后的值。
+
+> 如果你对这一方面感兴趣，请参阅 [Intel® 64 和 IA-32 架构软件开发者手册](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf)。
+
+> 在 64 位系统中，缓存行通常是 64 个字节。 这可能因具体的 CPU 而异，但是要考虑的重要一点是，如果内存跨越两条缓存行，则使用的锁机制要昂贵的多，并且可能涉及总线锁定和其他硬件技术。
+>
+> 跨缓存行边界的原子操作在不同的体系结构中具有不同的支持。
+
+## 结论
+
+你还在这儿吗？如果在的话，请放轻松，今天我们要讲的内容已经结束了。感谢你一直陪伴我并读完了这篇文章，我真诚的希望你可以享受本文并可以从中获得一些收获。
+
+我从根本上相信，即使你在日常生活中从未使用过`std::sync::atomic`模块，但围绕自己在努力处理的问题建立良好的心智模型对你的个人目的以及编写代码的方式都会有很多好处。
+
+下次再见👋！
