@@ -15,6 +15,8 @@
 - [x] [libp2p 教程：使用 Rust 构建 p2p 应用](./src/lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)
 - [x] [使用 GDB 调试 Rust 中的应用](./src/lang/rust/14-使用GDB调试Rust应用.md)
 - [x] [解释 Rust 中的原子性](./src/lang/rust/15-解释Rust中的原子性.md)
+- [x] [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
+
 ## 推荐阅读
 
 - [潘少的技术博客](https://strikefreedom.top/)
