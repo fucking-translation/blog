@@ -14,3 +14,4 @@
 - [Rust 的 Pin 与 Unpin](./lang/rust/13-Rust的Pin与Unpin.md)
 - [使用 GDB 调试 Rust 中的应用](./lang/rust/14-使用GDB调试Rust应用.md)
 - [解释 Rust 中的原子性](./lang/rust/15-解释Rust中的原子性.md)
+- [Rust 和 TUI：在 Rust 中构建命令行界面](./lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
