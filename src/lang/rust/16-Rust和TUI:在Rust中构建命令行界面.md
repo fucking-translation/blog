@@ -2,7 +2,7 @@
 
 [原文](https://blog.logrocket.com/rust-and-tui-building-a-command-line-interface-in-rust/)
 
-![rust-tui-command-line-interface](./img/rust-tui-command-line-interface.png)
+![rust-tui-command-line-interface](https://blog.logrocket.com/wp-content/uploads/2021/01/rust-tui-command-line-interface.png)
 
 Rust 是一门拥有良好的交叉编译支持的底层系统编程语言，这使其成为编写命令行程序的主要候选语言。从重新实现广泛使用的工具 (如 [ripgrep](https://github.com/BurntSushi/ripgrep)，[exa](https://github.com/ogham/exa)，[bat](https://github.com/sharkdp/bat)) 到功能完善的终端 UI 工具（如：[GitUI](https://github.com/extrawurst/gitui)，[Spotify TUI](https://github.com/Rigellute/spotify-tui)，[Bandwhich](https://github.com/imsnif/bandwhich)，[KMon](https://github.com/orhun/kmon)，[Diskonaut](https://github.com/imsnif/diskonaut)）都是比较著名 (Prominent) 的例子。
 
