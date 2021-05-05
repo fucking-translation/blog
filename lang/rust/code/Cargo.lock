@@ -440,6 +440,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0dcbc35f504eb6fc275a6d20e4ebcda18cf50d40ba6fabff8c711fa16cb3b16"
 
 [[package]]
+name = "bytes"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b700ce4376041dcd0a327fd0097c41095743c4c8af8887265942faf1100bd040"
+
+[[package]]
 name = "cache-padded"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1342,7 +1348,7 @@ dependencies = [
  "net2",
  "rand 0.7.3",
  "smallvec",
- "tokio",
+ "tokio 0.3.7",
  "void",
  "wasm-timer",
 ]
@@ -1483,7 +1489,7 @@ dependencies = [
  "libp2p-core",
  "log",
  "socket2 0.3.19",
- "tokio",
+ "tokio 0.3.7",
 ]
 
 [[package]]
@@ -2225,6 +2231,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-gdb-example"
+version = "0.1.0"
+dependencies = [
+ "tokio 1.5.0",
+]
+
+[[package]]
 name = "rust-p2p-example"
 version = "0.1.0"
 dependencies = [
@@ -2234,7 +2247,7 @@ dependencies = [
  "pretty_env_logger",
  "serde",
  "serde_json",
- "tokio",
+ "tokio 0.3.7",
 ]
 
 [[package]]
@@ -2410,6 +2423,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16f1d0fef1604ba8f7a073c7e701f213e056707210e9020af4528e0101ce11a6"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "signature"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2540,6 +2562,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "telnet-chat"
+version = "0.1.0"
+dependencies = [
+ "bytes 1.0.1",
+ "futures",
+ "tokio 1.5.0",
+ "tokio-util",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2612,7 +2644,27 @@ dependencies = [
  "num_cpus",
  "pin-project-lite 0.2.6",
  "slab",
- "tokio-macros",
+ "tokio-macros 0.3.2",
+]
+
+[[package]]
+name = "tokio"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83f0c8e7c0addab50b663055baf787d0af7f413a46e6e7fb9559a4e4db7137a5"
+dependencies = [
+ "autocfg",
+ "bytes 1.0.1",
+ "libc",
+ "memchr",
+ "mio",
+ "num_cpus",
+ "once_cell",
+ "parking_lot",
+ "pin-project-lite 0.2.6",
+ "signal-hook-registry",
+ "tokio-macros 1.1.0",
+ "winapi",
 ]
 
 [[package]]
@@ -2624,6 +2676,31 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caf7b11a536f46a809a8a9f0bb4237020f70ecbf115b842360afb127ea2fda57"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.6.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "940a12c99365c31ea8dd9ba04ec1be183ffe4920102bb7122c2f515437601e8e"
+dependencies = [
+ "bytes 1.0.1",
+ "futures-core",
+ "futures-sink",
+ "log",
+ "pin-project-lite 0.2.6",
+ "tokio 1.5.0",
 ]
 
 [[package]]

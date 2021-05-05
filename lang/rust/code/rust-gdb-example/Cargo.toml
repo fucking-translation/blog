@@ -1,0 +1,10 @@
+[package]
+name = "rust-gdb-example"
+version = "0.1.0"
+authors = ["iamazy <1448588084@qq.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.1", features=["full"] }

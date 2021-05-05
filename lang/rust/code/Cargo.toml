@@ -1,5 +1,7 @@
 [workspace]
 members = [
     "rust-p2p-example",
-    "async-io-example"
+    "async-io-example",
+    "rust-gdb-example",
+    "telnet-chat"
 ]
