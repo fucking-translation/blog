@@ -17,6 +17,10 @@
 - [x] [解释 Rust 中的原子性](./src/lang/rust/15-解释Rust中的原子性.md)
 - [x] [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
 
+### service mesh
+
+- [ ] [模式：Service Mesh](./src/架构/ServiceMesh/01-ServiceMesh.md)
+
 ## 推荐阅读
 
 - [潘少的技术博客](https://strikefreedom.top/)
