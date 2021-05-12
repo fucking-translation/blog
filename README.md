@@ -19,7 +19,7 @@
 
 ### service mesh
 
-- [ ] [模式：Service Mesh](./src/架构/ServiceMesh/01-ServiceMesh.md)
+- [x] [模式：Service Mesh](./src/架构/ServiceMesh/01-ServiceMesh.md)
 
 ## 推荐阅读
 
