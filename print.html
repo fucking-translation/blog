@@ -146,13 +146,15 @@
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
                         
+                        
+
                     </div>
                 </div>
 
                 
                 <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
                     </form>
                     <div id="searchresults-outer" class="searchresults-outer hidden">
                         <div id="searchresults-header" class="searchresults-header"></div>
@@ -254,7 +256,7 @@ struct Element {
 <p>首先，我们来看一下输入和输入和输出的类型：和上面讨论的一样，我们让字符串切片作为输入，并返回携带<code>(&amp;str, ())</code>元组或者错误类型<code>&amp;str</code>的<code>Result</code>。<code>(&amp;str, ())</code>元组比较有趣：正如我们所说的，我们想要返回一个包含下一次待解析的输入和输出。<code>&amp;str</code>是下一次输入，解析返回的结果仅仅是一个单元类型<code>()</code>。因为如果解析成功，只可能有一种结果（我们找到了字母<code>a</code>），但是这里我们并不需要返回字母<code>a</code>，我们只需要告诉调用者我们成功发现了字母<code>a</code>即可。</p>
 <p>然后，让我们看下解析器本身的代码。我们从提取输入的第一个字符开始：<code>input.chars().next()</code>。依靠标准库来避免带来的 Unicode 编码问题并不是在开玩笑 - 我们要求它为字符串的字符提供一个<code>chars()</code>迭代器，然后从中取出第一项。该项是封装在<code>Option</code>中的<code>char</code>类型，因此是<code>Option&lt;char&gt;</code>，如果它的值为<code>None</code>则表示我们尝试在空字符串中提取一个<code>char</code>。</p>
 <p>更糟的是，<code>char</code>可能并不是你想的那样是 Unicode 字符。</p>
-<h1 id="用rust编写llvm的玩具编译器"><a class="header" href="#用rust编写llvm的玩具编译器">用Rust编写LLVM的玩具编译器</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="用rust编写llvm的玩具编译器"><a class="header" href="#用rust编写llvm的玩具编译器">用Rust编写LLVM的玩具编译器</a></h1>
 <h4 id="a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a class="header" href="#a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a href="https://blog.ulysse.io/post/a-toy-front-end-for-llvm-written-in-rust/">原文</a></a></h4>
 </br>
 <p>我目前的副业是用Rust编写一个可以将代码转换成LLVM IR的编译器。LLVM的API对于新手（noobs）来说有点令人生畏（daunting），而且没有很多有关的教程（有限的教程大多数还是基于C++的，如何使用Rust做同样的事并不总是那么明确）。我希望当我准备做一件事情时，有人可以手把手的教我，这也是我要写这篇文章的原因。</p>
@@ -844,7 +846,7 @@ entry14:                                          ; preds = %entry13, %entry12
 </code></pre>
 <p>请注意：这些块具有以下的模式：不包含第一个条目，它们三个为一组，第一个是“then”分支，然后是“else”分支，最后是“merge”块（带有可识别的phi指令）。每一次我们遇到“if”表达式时都会在main后面附加三个新块。因为要在AST中递归查询三元组，所以块的三元组是有序的。</p>
 <p>这就是我想要分享的全部内容！希望在这一点上你可以有足够的实力来决定你的命运。</p>
-<h1 id="使用-nom-解析-url"><a class="header" href="#使用-nom-解析-url">使用 nom 解析 url</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="使用-nom-解析-url"><a class="header" href="#使用-nom-解析-url">使用 nom 解析 url</a></h1>
 <h4 id="a-hrefhttpsbloglogrocketcomparsing-in-rust-with-nom原文a"><a class="header" href="#a-hrefhttpsbloglogrocketcomparsing-in-rust-with-nom原文a"><a href="https://blog.logrocket.com/parsing-in-rust-with-nom/">原文</a></a></h4>
 </br>
 <p><img src="lang/rust/./img/parsing-rust-nom.png" alt="nom" /></p>
@@ -1626,7 +1628,7 @@ fn test_uri() {
 <p>真是太好了！我希望本文能够使你对 Rust 中的解析器特别是解析器组合器感到兴奋。</p>
 <p><code>nom</code>库解析速度特别快，是很多生产级别的库和系统的基础。除此之外，它还提供了出色的 API 和文档。</p>
 <p>Rust 生态系统还提供了更多的解析选项，如：<a href="https://github.com/Marwes/combine">combine</a> 和 <a href="https://github.com/pest-parser/pest">pest</a>。</p>
-<h1 id="rust-中异步编程实用介绍"><a class="header" href="#rust-中异步编程实用介绍">Rust 中异步编程实用介绍</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="rust-中异步编程实用介绍"><a class="header" href="#rust-中异步编程实用介绍">Rust 中异步编程实用介绍</a></h1>
 <p><a href="http://jamesmcm.github.io/blog/2020/05/06/a-practical-introduction-to-async-programming-in-rust/">原文</a></p>
 <blockquote>
 <p>在本文中，我们将探讨一个使用 Tokio 运行时在 Rust 中进行异步编程的简短示例，展示了不同的执行场景。这篇文章主要是针对异步编程的初学者的。</p>
@@ -2000,7 +2002,7 @@ OS Thread ThreadId(7) - task3 finished: 14.002589621s
 <p>上述的示例也展示了并发和并行之间的区别。在异步单个 OS 线程中，我们并发的处理任务，但是这不是并行执行的(因为我们只有一个 OS 线程)。</p>
 <h2 id="当前的限制"><a class="header" href="#当前的限制">当前的限制</a></h2>
 <p>请注意，现在你还不能在 <a href="https://rust-lang.github.io/async-book/07_workarounds/06_async_in_traits.html">trait 中使用异步函数</a>，并且你也不能创建<a href="https://boats.gitlab.io/blog/post/poll-drop/">异步的解构</a>。如果你希望结构在销毁时发出网络请求，但是不希望这么做的同时阻塞 OS 线程，这时就会出现问题 - 你无法使用<code>.await</code>因为<code>drop()</code>(来自 From) 不是异步的。</p>
-<h1 id="tokio-内幕自底向上的理解-rust-的异步-io-框架"><a class="header" href="#tokio-内幕自底向上的理解-rust-的异步-io-框架">Tokio 内幕：自底向上的理解 Rust 的异步 I/O 框架</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="tokio-内幕自底向上的理解-rust-的异步-io-框架"><a class="header" href="#tokio-内幕自底向上的理解-rust-的异步-io-框架">Tokio 内幕：自底向上的理解 Rust 的异步 I/O 框架</a></h1>
 <p><a href="https://cafbit.com/post/tokio_internals/">原文</a></p>
 </br>
 <p><a href="https://tokio.rs/">tokio</a> 是用于开发异步 I/O 应用程序的 Rust 框架 - 它基于事件驱动的方式，与传统的同步 I/O 相比，它通常可以实现更好的伸缩性，性能与资源使用。不幸的是，tokio 由于其复杂的 (sophisticated) 抽象而难以学习。即使在阅读了教程之后，我仍然觉得自己没有内部化抽象来推理出实际发生的事情。</p>
@@ -2233,7 +2235,7 @@ epoll_wait(3, 0x7f2a11c36000, 1024, -1) = ...
 <p>2017-12-19 更新：这里有 <a href="https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/">Reddit thread on r/rust</a> 在讨论本文。Mio 的作者 Carl Lerche 在<a href="https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfw5n1/">这里</a>和<a href="https://www.reddit.com/r/rust/comments/7klghl/tokio_internals_understanding_rusts_asynchronous/drfwc1m/">这里</a> 贴了些信息量很大的留言。除了回应上述问题，他也指出 <a href="https://docs.rs/futures/0.1.17/futures/stream/struct.FuturesUnordered.html">FuturesUnordered</a> 提供了一种组合 future 的方式，以便对相关的子 future 进行轮询，从而避免了像<code>join_all()</code>那样对每个 future 进行轮询，且需要权衡其他分配。同样，Tokio 的未来版本将从<code>mio::Registration</code>方案迁移到通知任务，这可以简化前面描述的某些步骤。</p>
 <p>2017-12-21更新：看起来 Hacker News 也在讨论<a href="https://news.ycombinator.com/item?id=15972593">这篇文章</a>。</p>
 <p>2018-01-26更新：我为 Tokio 的示例代码创建了一个<a href="https://github.com/simmons/tokio-aio-examples">Github仓库</a>。</p>
-<h1 id="a-hrefhttpsgithubcomrustmagazinerust_magazine_2021blobmainsrcchapter_3arenas-in-rustmd转a-rust-中的-arenas"><a class="header" href="#a-hrefhttpsgithubcomrustmagazinerust_magazine_2021blobmainsrcchapter_3arenas-in-rustmd转a-rust-中的-arenas"><a href="https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md">「转」</a> Rust 中的 Arenas</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="a-hrefhttpsgithubcomrustmagazinerust_magazine_2021blobmainsrcchapter_3arenas-in-rustmd转a-rust-中的-arenas"><a class="header" href="#a-hrefhttpsgithubcomrustmagazinerust_magazine_2021blobmainsrcchapter_3arenas-in-rustmd转a-rust-中的-arenas"><a href="https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md">「转」</a> Rust 中的 Arenas</a></h1>
 <blockquote>
 <p>转载：<a href="https://github.com/RustMagazine/rust_magazine_2021">RustMagazine 2021 期刊</a> -&gt; <a href="https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/arenas-in-rust.md">Rust 中的 Arenas</a></p>
 </blockquote>
@@ -2521,7 +2523,7 @@ let lonely = Arena::add_person(ref_to_arena, &quot;lonely&quot;, vec![]);
 <p>当然凡事都有例外,由于析构器可以调用指定的 <code>trait</code> 方法(或者特化的方法)来告诉如何读取<code>Person</code>的内容,如果有一个随机的泛型类型提供了这种方法,就可以再次巧妙地更改借用检查器的行为。<code>stdlib</code> 类型和其他自定义数据结构通过转义填充<code>#[may_dangle]</code>（也称为“ eyepatch” 毕竟析构器 &quot;看不到&quot; 生命周期）来实现这种目的，声明不会从生命周期或通用参数中读取自定义析构函数。</p>
 <p>这也适用于诸如 <a href="https://docs.rs/typed-arena/">typed-arena</a> 之类的库；如果需要创建循环引用，则将无法在为放置在 <code>arena</code>  上的类型上编写自定义析构函数。但是只要避免创建循环引用就可以使用 <code>typed-arena</code> 编写自定义析构函数了；因此将无法使用内部可变性来使一个 <code>arena</code> 指向另一个 <code>arena</code>。</p>
 <p>感谢 <a href="https://mpc.sh/">Mark Cohen</a> 和 <a href="https://twitter.com/kneecaw/">Nika Layzell</a> 审阅了这篇文章的草稿。</p>
-<h1 id="转rust-异步-io从-mio-到-coroutine"><a class="header" href="#转rust-异步-io从-mio-到-coroutine">「转」Rust 异步 I/O：从 mio 到 coroutine</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="转rust-异步-io从-mio-到-coroutine"><a class="header" href="#转rust-异步-io从-mio-到-coroutine">「转」Rust 异步 I/O：从 mio 到 coroutine</a></h1>
 <blockquote>
 <p>转载：<a href="https://hexilee.me/2018/12/17/rust-async-io/">Rust 异步 I/O：从 mio 到 coroutine</a></p>
 </blockquote>
@@ -3894,7 +3896,7 @@ Connection closed by foreign host.
 <p>读者有兴趣的话可以看一下 <a href="https://github.com/Hexilee/async-io-demo/blob/master/src/fs_future.rs">src/fs_future.rs</a> 中的实现，这里就不细说，接下来我们再谈谈现在 <code>coroutine API</code> 的不足。</p>
 <p>我目前发现的主要问题就是不能在 <code>Future::poll</code> 中使用 <code>try</code>，导致出现 <code>Result</code> 的地方只能 <code>match</code>，希望之后会有比较好的解决方案（比如给 <code>task::Poll&lt;Result&lt;R, E&gt;&gt;</code> 实现 <code>Try</code>）。</p>
 <p>第二个问题是 <code>Waker</code> 最里面装的是 <code>UnsafeWaker</code>的 <code>NonNull</code> 指针，当然我能理解 <code>rust</code> 团队有性能等其它方面的考虑，但如果用 <code>mio</code> 的 <code>set_readiness</code> 封装出 <code>MyWaker</code> 的话，<code>clone</code> 完全不需要 <code>NonNull</code>，而且我在实际编码时因为这个出过空指针错误。。希望以后能提供一个更安全的选择。</p>
-<h1 id="转图解-rust-所有权与生命周期"><a class="header" href="#转图解-rust-所有权与生命周期">「转」图解 Rust 所有权与生命周期</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="转图解-rust-所有权与生命周期"><a class="header" href="#转图解-rust-所有权与生命周期">「转」图解 Rust 所有权与生命周期</a></h1>
 <blockquote>
 <p>转载：<a href="https://github.com/RustMagazine/rust_magazine_2021">RustMagazine 2021 期刊</a> -&gt; <a href="https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_1/rust_ownership.md">图解 Rust 所有权与生命周期</a></p>
 </blockquote>
@@ -4746,7 +4748,7 @@ unsafe impl&lt;T:?Sized+Sync+Send&gt;Sync for Arc&lt;T&gt;{}
 <p>用户也可以手动使用 <code>unsafe</code> 的方式直接指定。</p>
 <p>下图是与跨线程所有权相关的概念和类型的 <code>UML</code> 图。</p>
 <img src="lang/rust/./img/rust_ownership_8.jpg">
-<center>图 8与多线程相关的所有权转移</center><h1 id="rust-异步执行器"><a class="header" href="#rust-异步执行器">Rust 异步执行器</a></h1>
+<center>图 8与多线程相关的所有权转移</center><div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="rust-异步执行器"><a class="header" href="#rust-异步执行器">Rust 异步执行器</a></h1>
 <p><a href="https://jblog.andbit.net/2019/11/10/rust-async-execution/">原文</a></p>
 <p>作为从事大量并发工作(尤其是在 <a href="https://fanout.io/">Fanout</a> 的网络工作)的老牌 C/C++ 程序员，<a href="https://www.rust-lang.org/">Rust</a> 编程语言及其最近的<a href="https://blog.rust-lang.org/2019/11/07/Async-await-stable.html">异步</a>功能引起了我的兴趣 (intrigued)。</p>
 <p>像 C/C++ 一样，Rust 没有运行时。有趣的是，即使引入了异步也同样如此。使用<code>async</code>和<code>await</code>关键字可以并发的运行代码。你需要使用自己的运行时(如：Tokio 或 async-std) 与语言的核心元素进行交互。</p>
@@ -5304,7 +5306,7 @@ d
 <span class="boring">}
 </span></code></pre></pre>
 <p>完整的代码见<a href="https://github.com/jkarneges/rust-executor-example">这里</a>。</p>
-<h1 id="rust-中的宏带有示例的教程"><a class="header" href="#rust-中的宏带有示例的教程">Rust 中的宏：带有示例的教程</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="rust-中的宏带有示例的教程"><a class="header" href="#rust-中的宏带有示例的教程">Rust 中的宏：带有示例的教程</a></h1>
 <p><a href="https://blog.logrocket.com/macros-in-rust-a-tutorial-with-examples/">原文</a></p>
 <p><img src="lang/rust/./img/macro_in_rust.webp" alt="macro in rust" /></p>
 </br>
@@ -6018,7 +6020,7 @@ pub fn a_proc_macro(_input: TokenStream) -&gt; TokenStream {
 </ul>
 <h2 id="结论-2"><a class="header" href="#结论-2">结论</a></h2>
 <p>在 Rust 宏教程中，我们涉及了 Rust 中宏的所有基础概念，定义了声明式宏和过程宏，并学习了如何通过使用各种语法以及社区提供的类库来编写这两种类型的宏。我们还介绍了使用每一种 Rust 宏的优势。</p>
-<h1 id="libp2p-教程使用-rust-构建-p2p-应用"><a class="header" href="#libp2p-教程使用-rust-构建-p2p-应用">libp2p 教程：使用 Rust 构建 p2p 应用</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="libp2p-教程使用-rust-构建-p2p-应用"><a class="header" href="#libp2p-教程使用-rust-构建-p2p-应用">libp2p 教程：使用 Rust 构建 p2p 应用</a></h1>
 <p><a href="https://blog.logrocket.com/libp2p-tutorial-build-a-peer-to-peer-app-in-rust/">原文</a></p>
 <p><img src="lang/rust/./img/macro_in_rust.webp" alt="p2p" /></p>
 </br>
@@ -6564,7 +6566,7 @@ struct RecipeBehaviour {
 <p>在本文中我们介绍了如何使用 Rust 以及<code>libp2p</code>构建一个简单的，去中心化的应用程序。</p>
 <p>如果你来自 web 后端，那么你对许多的网络概念可能都很熟悉，但是构建 p2p 应用程序仍然需要一种根本不同的设计和构建方法。</p>
 <p><code>libp2p</code>类库已经十分成熟，并且由于 Rust 在加密领域十分流行，因此出现了一个新兴的 (emerge)，丰富的生态系统，用于构建功能强大的去中心化应用程序。</p>
-<h1 id="转rust-的-pin-和-unpin"><a class="header" href="#转rust-的-pin-和-unpin">「转」Rust 的 Pin 和 Unpin</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="转rust-的-pin-和-unpin"><a class="header" href="#转rust-的-pin-和-unpin">「转」Rust 的 Pin 和 Unpin</a></h1>
 <blockquote>
 <p>转载：<a href="https://folyd.com/blog/rust-pin-unpin/">Rust 的 Pin 和 Unpin</a></p>
 </blockquote>
@@ -7092,7 +7094,7 @@ where
 </ul>
 </blockquote>
 <p>2018 年 Rust 异步组的核心成员 @withoutboats 在他个人博客分享了稳定<code>async/await</code>的整个心路历程，感觉这一路也是充满曲折。比如<code>Pin</code>刚开始还需要区分<code>Pin</code>，<code>PinMut</code>，<code>PinBox</code>等，现在精简到只需要一个<code>Pin&lt;P&gt;</code>就能搞定。还有更早的时候还计划引入一个叫<code>Move</code>的 trait 来标记该类型是否可以<code>move</code>等等。我这篇文章里面的代码基于 1.48 版，不确定<code>Pin</code>以后会不会有更新，而且<code>Pin</code>目前还存在一个<code>unsoundness</code>的问题。不管怎样，一切简单优雅的设计背后一定隐藏着复杂和艰辛，感谢 Rust 官方过去的努力，让我们能够有内存安全、无畏并发和符合人体工程的编程体验！</p>
-<h1 id="使用-gdb-调试-rust-应用"><a class="header" href="#使用-gdb-调试-rust-应用">使用 GDB 调试 Rust 应用</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="使用-gdb-调试-rust-应用"><a class="header" href="#使用-gdb-调试-rust-应用">使用 GDB 调试 Rust 应用</a></h1>
 <p><a href="https://blog.logrocket.com/debugging-rust-apps-with-gdb/#whatisrustgdb">原文</a></p>
 <p><img src="lang/rust/./img/Screen-Shot-2021-02-09-at-9.24.46-AM.webp" alt="gdb" /></p>
 </br>
@@ -7531,7 +7533,7 @@ Hello
 <p>在这篇 Rust 调试教程中，我们演示了如何使用 GDB 调试一个 Rust 应用程序。在大多数情况下，如果你要做的只是逐步执行具有断点的程序，那么它可以工作的很好，尤其是带了<code>rust-gdb</code> pretty-printing 扩展的程序。</p>
 <p>当涉及更加复杂的功能时，你可能已经习惯于使用其他语言复杂的 GUI 调试器，这是一个活跃的开发领域，我希望 Rust 的调试生态系统可以得到改善。与 Java 和 C/C++ 中最好的调试器相比，Rust 将花费多长时间以及整体调试体验将有多好，这很难说，这取决于 Rust 中对此类工具的需求。</p>
 <p>本篇教程的目的是为你提供一个工具，以最少的额外功能或必要知识来调试 Rust 程序。该背景应当涵盖你在 Rust 编程中将遇到的大多数情况.</p>
-<h1 id="解释-rust-中的原子性"><a class="header" href="#解释-rust-中的原子性">解释 Rust 中的原子性</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="解释-rust-中的原子性"><a class="header" href="#解释-rust-中的原子性">解释 Rust 中的原子性</a></h1>
 <p><a href="https://cfsamsonbooks.gitbook.io/explaining-atomics-in-rust/">原文</a></p>
 <blockquote>
 <p>当处理原子性以及内存排序选项时理解它们可以帮助我们更好的理解多线程编程以及为什么 Rust 可以帮助我们编写安全高性能的多线程代码。</p>
@@ -7868,7 +7870,7 @@ retq
 <p>你还在这儿吗？如果在的话，请放轻松，今天我们要讲的内容已经结束了。感谢你一直陪伴我并读完了这篇文章，我真诚的希望你可以享受本文并可以从中获得一些收获。</p>
 <p>我从根本上相信，即使你在日常生活中从未使用过<code>std::sync::atomic</code>模块，但围绕自己在努力处理的问题建立良好的心智模型对你的个人目的以及编写代码的方式都会有很多好处。</p>
 <p>下次再见👋！</p>
-<h1 id="rust-和-tui在-rust-中构建命令行界面"><a class="header" href="#rust-和-tui在-rust-中构建命令行界面">Rust 和 TUI：在 Rust 中构建命令行界面</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="rust-和-tui在-rust-中构建命令行界面"><a class="header" href="#rust-和-tui在-rust-中构建命令行界面">Rust 和 TUI：在 Rust 中构建命令行界面</a></h1>
 <p><a href="https://blog.logrocket.com/rust-and-tui-building-a-command-line-interface-in-rust/">原文</a></p>
 <p><img src="https://blog.logrocket.com/wp-content/uploads/2021/01/rust-tui-command-line-interface.png" alt="rust-tui-command-line-interface" /></p>
 <p>Rust 是一门拥有良好的交叉编译支持的底层系统编程语言，这使其成为编写命令行程序的主要候选语言。从重新实现广泛使用的工具 (如 <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a>，<a href="https://github.com/ogham/exa">exa</a>，<a href="https://github.com/sharkdp/bat">bat</a>) 到功能完善的终端 UI 工具（如：<a href="https://github.com/extrawurst/gitui">GitUI</a>，<a href="https://github.com/Rigellute/spotify-tui">Spotify TUI</a>，<a href="https://github.com/imsnif/bandwhich">Bandwhich</a>，<a href="https://github.com/orhun/kmon">KMon</a>，<a href="https://github.com/imsnif/diskonaut">Diskonaut</a>）都是比较著名 (Prominent) 的例子。</p>
