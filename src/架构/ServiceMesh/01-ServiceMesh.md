@@ -1,4 +1,4 @@
-# Service Mesh
+# 模式：Service Mesh
 
 [原文](https://philcalcado.com/2017/08/03/pattern_service_mesh.html)
 
@@ -113,3 +113,26 @@
 
 ## Service Mesh
 
+在这种模型中，你的每一个服务都将伴随一个代理边车 (sidecar)，鉴于服务仅通过边车代理相互通信，因此最终我们得到了如下图所示的部署：
+
+![mesh1](../img/mesh1.png)
+
+Buoyant 公司的 CEO [William Morgan](https://twitter.com/wm) 观察到，代理之间的互联形成了[网状网络](https://en.wikipedia.org/wiki/Mesh_networking)。[在 2017 年初，William 为该平台下了一个定义，并称其为 Service Mesh](https://buoyant.io/2017/04/25/whats-a-service-mesh-and-why-do-i-need-one/)：
+
+> Service Mesh 是用于处理服务到服务之间通信的专用基础架构层。它负责通过构建现代云原生应用程序的复杂服务拓扑来可靠地传递请求。实际上，Service Mesh 通常被实现为轻量级网络代理的阵列，这些代理与应用程序的代码一起部署，但是不需要了解应用程序的具体逻辑。
+
+他的定义中最有力的方面可能是，它摆脱了将代理视为独立组件的想法，并认识到它们形成的网络本身就是有价值的东西。
+
+![mesh2](../img/mesh2.png)
+
+随着组织将其微服务部署移至更复杂的运行时(如 k8s 和 Mesos)，人们和组织已经开始使用那些平台提供的工具来正确的实现这个网状网络的思想。它们正在从一组隔离工作的独立代理转移到一个适当的，有点集中 (centralise) 的控制平面。
+
+![pattern_service_mesh6-b](../img/pattern_service_mesh6-b.png)
+
+纵观我们的鸟瞰图，我们看到实际的服务流量仍然直接地从代理流向代理，但是控制平面知道每一个代理实例。它使代理可以实现诸如访问控制和指标收集之类的事情，这需要协作：
+
+![mesh3](../img/mesh3.png)
+
+最近发布的 [Istio](https://istio.io/) 项目就是此类系统最突出 (prominent) 的示例。
+
+全面了解 Service Mesh 在大规模系统中的影响还为时过早。这个方法的两个好处对我来说已经很明显 (evident) 了。首先，不必编写定制软件来处理微服务体系结构的最终商品代码，这将使许多较小的组织可以使用到以前仅大型企业才能使用的特性，从而创建各种有趣的用例。其次，这种体系结构可能让我们最终实现使用最佳工具/语言完成工作的梦想，而不用担心每个平台库和模式的可用性。
