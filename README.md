@@ -24,6 +24,7 @@
 ## 推荐阅读
 
 - [潘少的技术博客](https://strikefreedom.top/)
+- [爆米花胡了](https://blog.ideawand.com/)
 
 ### rust
 
