@@ -141,7 +141,7 @@ warning: unused manifest key: target.aarch64-linux-android.rustflags
 $ RUSTFLAGS="-L $(pwd)/sqlite-autoconf-3340000/.libs/" cargo apk build --target aarch64-linux-android
 ```
 
-再一次，它。。。在某种程度上成功了。虽然链接器不再将错误解释成缺失库，但是`cargo-apk`依然无法找到该链接器并将其添加到最终的 APK 文件中。
+再一次，它。。。在某种程度上成功了。虽然链接器不再将错误解释成缺失库，但是`cargo-apk`无法找到该链接器并将其添加到最终的 APK 文件中。
 
 ```console
  'lib/arm64-v8a/libstartup.so'...
@@ -151,3 +151,164 @@ Verifying alignment of target/debug/apk/statup.apk (4)...
      997 lib/arm64-v8a/libstartup.so (OK - compressed)
 Verification succesful
 ```
+
+当我还没有编译`libsqlite3.so`时，我返回上一步仔细阅读了链接器产生的错误信息。链接器组合了很多的目标文件，这些目标文件都位于`target/aarch64-linux-android/debug/deps`目录下。如果我将`.so`文件放在这里会发生什么？
+
+```console
+$ cp sqlite-autoconf-3340000/.libs/sqlite3.so target/aarch64-linux-android/debug/deps
+$ cargo apk build --target aarch64-linux-android
+```
+
+让我惊讶的是，它成功了！
+
+```console
+ 'lib/arm64-v8a/libstartup.so'...
+ 'lib/arm64-v8a/libsqlite3.so'...
+Verifying alignment of target/debug/apk/startup.apk (4)...
+      49 AndroidManifest.xml (OK - compressed)
+     997 lib/arm64-v8a/libstatup.so (OK - compressed)
+15881608 lib/arm64-v8a/libsqlite3.so (OK - compressed)
+Verification succesful
+```
+
+我现在有了一个可以安装在 Android 手机上的`.apk`文件。真是个伟大的成就！
+
+## Applications 和 Activities
+
+将 Rust 代码编译进`.apk`中后，我们剩下要做的就是要搞清楚如何将 Rust 代码与编写 UI 的 Java 代码合并。我天真的在 DuckDuckGo 中输入“如何组合 APK”。在阅读顶层几个结果后，明白了这明显是不可能的，至少在对 Android 应用的工作原理没有更深的了解的情况下是不可能的。但是，并不是说没有其他的方法，因为文章提出了另一种方法 - 将 [Activities](https://developer.android.com/reference/android/app/Activity) 组合到一个应用程序里。
+
+如果你像我一样，之前从未开发过 Android，可能会疑惑“什么是 Activities”：当你设计一个应用时，它就是所谓的“界面”或者“视图”。例如，在购物应用中：
+
+- 登陆页面是一个 activity
+- 产品搜索页面是一个 activity
+- 所选产品的详情页面是一个 activity
+- 购物车页面是一个 activity
+- 结账页面是一个 activity
+
+这里的每个页面可能都包含一些交互元素，如无处不在的汉堡包菜单。如果你愿意，从理论上来讲，你可以将整个应用程序放在一个单独的 activity 中，但是开发难度比较大。当然，关于 activity 还有很多内容可以介绍，但是目前和我们要讲的内容关系不大。
+
+让我们继续介绍有关 Rust 的内容。虽然我的问题的解决方案是将 Activities 组合到一个应用程序中，但是我不确定用 Rust 构建的`.apk`文件是如何与所有这些联系在一起的。在仔细研究了 [cargo-apk](https://github.com/rust-windowing/android-ndk-rs/blob/b430a5e274dea8fd7c45e176d5d19c31b73a20ac/ndk-glue/src/lib.rs#L132) 代码之后，我意识到它本质是将我的代码封装进一些魔术胶水 (glue) 代码中，并为 Android 的运行创建 [NativeActivity](https://developer.android.com/reference/android/app/NativeActivity)。
+
+为了将 Activities 组合进一个应用中，我需要修改 (tinker with) 应用程序的`AndroidManifest.xml`文件，在文档中添加合适的 [activity 节点](https://developer.android.com/guide/topics/manifest/activity-element)。但是我应该如何知道`cargo-apk`生成的 NativeActivity 的属性呢？幸运的是，当`cargo-apk`工作时，它会生成一个最小版的`AndroidManifest.xml`文件，并将其放在生成的`.apk`旁边。其中 NativeActivity 的声明如下所示：
+
+```xml
+<activity
+    android:name="android.app.NativeActivity"
+    android:label="startup"
+    android:screenOrientation="portrait"
+    android:launchMode="standard"
+    android:configChanges="orientation|keyboardHidden|screenSize">
+    <meta-data android:name="android.app.lib_name" android:value="startup" />
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity>
+```
+
+我要做的就是将上面的代码片段复制并粘贴到 Java 应用程序的 manifest 中。
+
+当然，这只是在应用的 manifest 中添加了一条语句，告诉应用将要包含哪些 activity。Java 应用程序的构建过程不会知道`libstartup.so`文件的位置，并自动的将其包含在内。幸运的是，我只需要将 [库文件复制到指定的文件夹下](https://developer.android.com/studio/projects/gradle-external-native-builds#jniLibs)即可，Gradle (Android 应用的构建工具) 会自动将它们采集起来。
+
+```console
+$ mkdir -p android/app/src/main/jniLibs/arm64-v8a
+$ cp sqlite-autoconf-3340000/.libs/libsqlite3.so android/app/src/main/jniLibs/arm64-v8a/
+$ cp target/aarch64-linux-android/debug/libstatup.so android/app/src/main/jniLibs/arm64-v8a/
+$ cd android/ && ./gradlew && ./gradlew build
+```
+
+这些都完成后，我启动了构建，它成功了！我将`.apk`安装在我闲置的 (laying around) Android 设备中，但是...好像有哪里不太对劲呢！
+
+![two-launcher-activities](./img/two-launcher-activities.png)
+
+我的应用一旦安装成功后，会在应用的启动界面产生两个快捷方式。其中一个启动 Java 的 UI 界面，而另一个启动包含 Rust 代码的 NativeActivity。在阅读了更多关于 Activity 和 AndroidManifest 的内容后，我了解到，造成此问题的部分是 NativeActivity 的 [<intent-filter>](https://developer.android.com/guide/topics/manifest/intent-filter-element) - 即 (namely) [category](https://developer.android.com/reference/android/content/Intent#CATEGORY_LAUNCHER) 节点声明应在启动器中显示它。一旦我将它移除，一切就会恢复正常，NativeActivity 不再显示在启动器中。
+
+但是，仍然存在一个问题：我如何让 Java 的 Activity 要求 Rust 的Activity 为其工作？
+
+## 恶意的 (Malicious) Intent
+
+Android 中的 Activity 可以毫无问题的相互启动 - 如果这不可能，则无法真正在两者之间传递用户信息。调用另一个 Activity 的标准方法是通过 [startActivity()](https://developer.android.com/reference/android/app/Activity#starting-activities-and-getting-results) 方法，该方法接收一个参数：[Intent](https://developer.android.com/reference/android/content/Intent.html) 类实例。
+
+尽管 Intent 类的名称是不言而喻的 (self-explanatory)，但是起初它的用法可能有点不直观。在它最基本的形式中，它仅包含对调用 Activity 实例的引用，以及我们要调用的 Activity 的类句柄。(确切的说，一个 Intent 需要调用一个 [Context](https://developer.android.com/reference/android/content/Context.html)。Activity 只是 Context 的一种类型)。
+
+但是，Intent 也可以用于传达为什么一个 Activity 会调用另一个 Activity 的信息(例如 [action](https://developer.android.com/reference/android/content/Intent#standard-activity-actions))，可以用来区分例如“显示某些内容”和“编辑某些内容”；或要操作的数据 URI及其 MIME 类型。除了 get/set 方法，Intent 还可以容纳几乎任何数量的“额外”数据，这些数据通常作为键值对存储。
+
+Intent 提供了一种在 Activities 之间传递信息的标准化方式。调用者向被调用者提供处理其请求所需的一切信息，并且它可以接收包含所有请求信息的另一个 Intent 作为返回值。使用 Java 编写代码时，没有什么问题，但是，将 Rust 代码放入 NativeActivity 会发生什么？
+
+如果你查看继承树，你可以看到 NativeActivity 继承了 Activity - 这意味着它可以访问 Activity 所有非私有方法。我可以调用`getIntent()`并从调用者中获取数据。除此之外，由于这是 Java 方法，并且我是在 native 代码中运行，因此需要使用 JNI (Java Native Interface) 执行函数调用。不幸的是，NativeActivity 没有任何其他的机制来传递信息或使用 Intent。这让我十分沮丧 (dismay)，因为这意味着我必须要与 JNI 一起工作。
+
+## JNI 之旅
+
+在这一点上，我花了太多时间却没有取得明显的 (tangible) 成果，这让我感到十分沮丧。另一方面，我意识到使用 JNI 带来了一些新的可能 - 不必使用 Activity 和 Intent，我可以将代码粘贴在函数中，并通过调用参数和返回值进行通信。有了这个新思路，我开始了对 JNI 的研究。
+
+因为在 Java 中，万物皆对象，并且代码不能存在于类之外的部分 - native 代码也必须是类的一部分。因为我不需要持久化，因此简单的使用静态方法就很有用。
+
+```java
+package com.startup.hip;
+ 
+public class RustCode {
+    public static native void doStuff();
+}
+```
+
+上面是一个 Java 类的最小示例，其中带有一个标记为`native`的静态方法。有了这个，我需要实现相应的功能。但是我应该如何正确的使用函数签名呢？
+
+幸运的是，Java 具有为 JNI 生成 C 语言头文件的功能。在 Java SE9 之前，它是一个独立的工具 - [javah](https://docs.oracle.com/javase/9/tools/javah.htm)；后来，它作为`-h`选项合并到了主要的`javac`编译器可执行文件中。该选项需要一个目录参数，用来放置生成的`.h`文件。用法十分简单。
+
+```console
+$ javac -h ./ RustCode.java
+```
+
+调用上面的命令将创建一个`com_startup_hip_RustCode.h`文件，其中包含函数定义。
+
+```cpp
+#include <jni.h>
+JNIEXPORT void JNICALL Java_com_startup_hip_RustCode_doStuff(JNIEnv *, jclass);
+```
+
+有了这些知识，我就可以继续在 Rust 中创建适当的函数了。
+
+## C++ 闪回
+
+当处理外部代码时，Rust 和 C 很像，主要是使用 [extern 块](https://doc.rust-lang.org/reference/items/external-blocks.html)。此外，与 C++ 一样，Rust 可以使用 [name mangling](https://en.wikipedia.org/wiki/Name_mangling) - 这不足为奇，因为这门语言对范型和宏提供了强大的支持。幸运的是，Rust 提供了一种简单的方式来禁用 name mangling - 使用 [#[no mangle]](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#calling-rust-functions-from-other-languages) 注解。
+
+```rust
+use jni::{objects::JClass, JNIEnv};
+ 
+#[no_mangle]
+pub extern "C" fn Java_com_startup_hip_RustCode_doStuff(
+    _env: JNIEnv,
+    _class: JClass,
+) {}
+```
+
+创建了函数声明之后，接下来我需要编写对应的实现。
+
+## 接收参数
+
+通常，native 函数需要接收一些参数。在本例中，它是一个包含代码的字符串，该代码随后将被传递给服务端。
+
+```java
+package com.startup.hip;
+ 
+public class RustCode {
+    public static native void doStuff(String code);
+}
+```
+
+修改 Java 代码之后，我重新生成了 C 语言的头文件并据此编辑了 Rust 代码。
+
+```rust
+use jni::{objects::JClass, JNIEnv};
+ 
+#[no_mangle]
+pub extern "C" fn Java_com_startup_hip_RustCode_doStuff(
+    _env: JNIEnv,
+    _class: JClass,
+    code: JString,
+) {}
+```
+
+这很简单。现在我需要从 Java 字符串中提取文本并将其传递给 Rust 代码。这比我预期 (anticipate) 要复杂的多。问题在于，JVM 内部使用 [UTF-8 的修改版本](https://docs.oracle.com/en/java/javase/11/docs/specs/jni/types.html#modified-utf-8-strings)存储字符串，而 Rust 字符串必须是有效的 [UTF-8](https://doc.rust-lang.org/std/string/struct.String.html#utf-8)。尽管 Rust 具有用于[处理任意字符串](https://doc.rust-lang.org/std/ffi/struct.OsString.html)的类型，但是我们的代码仅使用“经典”的字符串类型，对其进行全部修改需要大量工作。
+
+幸运的是，`jni`库带有内置的机制，可以通过特殊的
