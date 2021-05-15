@@ -16,6 +16,7 @@
 - [x] [使用 GDB 调试 Rust 中的应用](./src/lang/rust/14-使用GDB调试Rust应用.md)
 - [x] [解释 Rust 中的原子性](./src/lang/rust/15-解释Rust中的原子性.md)
 - [x] [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
+- [x] [在 Android 中运行 Rust](./src/lang/rust/17-在Android中运行Rust.md)
 
 ### service mesh
 
