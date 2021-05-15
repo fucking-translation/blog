@@ -171,7 +171,7 @@ Verifying alignment of target/debug/apk/startup.apk (4)...
 Verification succesful
 ```
 
-我现在有了一个可以安装在 Android 手机上的`.apk`文件。真是个伟大的成就！
+我现在有了一个可以安装在 Android 手机上的`.apk`文件。真是个巨大的成功！
 
 ## Applications 和 Activities
 
@@ -311,4 +311,227 @@ pub extern "C" fn Java_com_startup_hip_RustCode_doStuff(
 
 这很简单。现在我需要从 Java 字符串中提取文本并将其传递给 Rust 代码。这比我预期 (anticipate) 要复杂的多。问题在于，JVM 内部使用 [UTF-8 的修改版本](https://docs.oracle.com/en/java/javase/11/docs/specs/jni/types.html#modified-utf-8-strings)存储字符串，而 Rust 字符串必须是有效的 [UTF-8](https://doc.rust-lang.org/std/string/struct.String.html#utf-8)。尽管 Rust 具有用于[处理任意字符串](https://doc.rust-lang.org/std/ffi/struct.OsString.html)的类型，但是我们的代码仅使用“经典”的字符串类型，对其进行全部修改需要大量工作。
 
-幸运的是，`jni`库带有内置的机制，可以通过特殊的
+幸运的是，`jni`库带有内置的机制，可以通过特殊的 [JNIStr](https://docs.rs/jni/0.19.0/jni/strings/struct.JNIStr.html) 类型在标准 UTF-8 和 JVM 修改后的 UTF-8 之间进行转换。在仔细阅读了文档之后，我想到了以下代码：
+
+```rust
+// Convert from JString – a thinly wrapped JObject – to a JavaStr
+let code_jvm = env.get_string(code).unwrap();
+// Create a String from JavaStr, causing text conversion
+let code_rust = String::from(code_jvm);
+```
+
+现在我有了一个 Rust 字符串，可以将其传递给之后的 Rust 代码。真是个巨大的成功！
+
+## 返回值
+
+接收参数只是故事的一半，我还需要一个返回值，巧的是，它也是一个字符串 - 一个代表服务端返回值的字符串。
+
+```java
+package com.startup.hip;
+ 
+public class RustCode {
+    public static native String doStuff(String code);
+}
+```
+
+我再一次修改了 Java 代码，重新生成了 C 语言的头文件，并据此编辑 Rust 代码。
+
+```java
+use jni::{objects::JClass, JNIEnv};
+ 
+#[no_mangle]
+pub extern "C" fn Java_com_startup_hip_RustCode_doStuff<'a>(
+    env: JNIEnv<'a>,
+    _class: JClass,
+    code: JString,
+) -> JString<'a>
+{
+    // function body here
+}
+```
+
+如你所见，JNI 中的返回值仍然作为返回值处理。剩下要做的事就是创建保存结果的 JString。与`get_string()`类似，`JNIEnv`结构还包含一个`new_string()`函数，该函数的功能与名称指代的完全相同。
+
+```rust
+// Copy-pasted from earlier snippet 
+let code_rust = String::from(env.get_string(code_jni).unwrap());
+ 
+let result = match some_rust_function(code_rust) {
+    Ok(value) => format!("OK {}", value),
+    Err(e) => format!("ER {:?}", e),
+};
+return env.new_string(result).unwrap();
+```
+
+就像这样，我的 JNI 封装器就完成了。现在，我可以在 Java 代码中调用 Rust 函数，将值传递给调用并接收返回值。
+
+## Rust 的错误处理
+
+尽管代码如预期一样执行，但是我不喜欢出现的`.unwrap()`调用次数。毕竟，错误处理是 Rust 的重要组成部分，仅仅因为我正在进行语言的互操作，并不意味着就可以忽略此事。恰恰相反，我认为两种语言的接触面应该尽可能简单，以防止最终发现一些晦涩的错误是由于互操作性差而引起的。而且，必须检查 Java 的返回值以确定调用是否成功，这使得整个过程使用起来有些笨拙 (clunky)。
+
+我没有重复造轮子，而是对如何更好的将 Rust 的[Result<A, B>](https://doc.rust-lang.org/std/result/enum.Result.html)方式转换成 Java 侧的代码进行了思考。幸运的是，我的 Rust 函数的返回值都是字符串。至于错误，大多数错误要么是不可恢复的，要么是由错误的输入引起的 - 这意味着我可以放弃 (forego) 使用精确的错误代码，而仅仅依靠正确格式的错误信息 - 这又是指字符串。因此`Result<A, B>`可以变成`Result<String, String>`。
+
+## 定义 Java 类
+
+尽管 Java 支持范型(虽然有点[欺骗](https://en.wikipedia.org/wiki/Generics_in_Java#Problems_with_type_erasure)的感觉)，但是我不想从 JNI 中深入了解使用范型的细节。我决定创建一个 Java 类，大致表示`Result<String, String>`语义。
+
+```java
+public class Result {
+    private boolean ok;
+    private String value;
+ 
+    public Result(boolean is_ok, String value) {
+        this.ok = is_ok;
+        this.value = value;
+    }
+ 
+    public boolean isOk() {
+        return this.ok;
+    }
+ 
+    public boolean isError() {
+        return !this.ok;
+    }
+ 
+    public String getValue() {
+        return this.ok ? this.value : null;
+    }
+ 
+    public String getError() {
+        return this.ok ? null : this.value;
+    }
+}
+```
+
+尽管完成了这项工作，但与 Rust 相比，它有一些缺点 - 最严重的就是当访问错误的结果变量时返回`null`。由于 null 对于 Java 字符串来说是一个没有问题的值，因此调用`getValue()`可能没有注意并将其传递给其他地方导致在无关紧要的代码中弹出 [NullPointerException](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/NullPointerException.html)。尽管可以通过抛出异常来轻松地改善这个问题，我仍决定使用最好的方式来处理这个问题，以便此处以后永远也不需要添加新的内容。
+
+## 从 JNI 中返回一个对象
+
+剩下的唯一一件事就是从 Rust 函数中返回 Result 类的实例。经过一番搜索后，我找到了名为 [NewObject()](https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html#newobject-newobjecta-newobjectv) 的 JNI 函数。该函数有四个参数：
+
+- JNI 环境的句柄
+- 我们想要创建的类的句柄
+- 构造函数签名
+- 构造函数的参数
+
+Rust 函数将 JNI 环境句柄作为其参数之一，因此已经进行了处理。构造函数参数可以作为数组传递，我需要找到另外两个函数参数。
+
+为了获取该函数的句柄，JNI 提供了[FindClass()](https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html#findclass)函数。它有两个参数：环境句柄和类的完全限定名 - 简单的说就是类的“导入名”，但是`.`用`/`代替。例如`java.lang.String`变成`java/lang/String`。在本例中是指，`com.startup.hip.Result`变成`com/startup/hip/Result`。
+
+构造函数签名是一个字符串，它很好的描述了构造函数签名需要多少个参数以及哪些类型。乍一看，这让人有些困惑 - 但后来我想起 Java 支持函数重载，并且还包括构造函数。由于一个类可能有多个构造函数，所以我必须让 JNI 知道我想使用哪个构造函数。在互联网上搜索了之后，我发现最简单的学习函数签名的方法就是编译 Java 类。然后使用 Java 的反汇编工具：[javap](https://docs.oracle.com/en/java/javase/11/tools/javap.html)。
+
+```console
+$ javac android/app/src/main/java/com/startup/hip/Result.java
+$ javap -s android/app/src/main/java/com/startup/hip/Result.class
+Compiled from "Result.java"
+public class com.startup.hip.Result {
+  public com.startup.hip.Result(boolean, java.lang.String);
+    descriptor: (ZLjava/lang/String;)V
+
+  public boolean isOk();
+    descriptor: ()Z
+
+  public boolean isError();
+    descriptor: ()Z
+
+  public java.lang.String getValue();
+    descriptor: ()Ljava/lang/String;
+
+  public java.lang.String getError();
+    descriptor: ()Ljava/lang/String;
+}
+```
+
+执行了上述的命令，现在我知道了我想要使用的函数签名是`(ZLjava/lang/String;)V`。
+
+在所有步骤都准备就绪之后，是时候创建持有构造函数参数的数组，并调用`NewObject()`。
+
+```rust
+fn create_java_result<'e>(
+    env: &JNIEnv<'e>,
+    is_ok: bool,
+    value: &str,
+) -> JObject<'e>
+{
+    let class = env
+        .find_class("com/startup/hip/Result")
+        .unwrap();
+    let args: [JValue<'e>; 2] = [
+        JValue::Bool(u8::from(is_ok)),
+        JValue::Object(JObject::from(env.new_string(value).unwrap())),
+    ];
+    env.new_object(class, "(ZLjava/lang/String;)V", &args)
+        .unwrap()
+}
+```
+
+现在，我可以从 native 函数中返回自定义的`Result` Java 类了。
+
+## 使用更通用的解决方案
+
+尽管上面的代码可以很好的实现这个目的，但是它有一个缺点：它显示地采用了布尔值和字符串，要求调用者自己处理 Result 并使用适当的参数调用函数。编写“错误应该尽早返回”的逻辑很繁琐 (tedious)，但是幸运的是，Rust 为此提供了一个解决方案 - [?](https://doc.rust-lang.org/rust-by-example/std/result/question_mark.html) 运算符。但是我们的代码从不同的库中调用函数，这些函数又使用了不同的错误类型 - 这意味着我们无法使用`Result<OurType, OurError>`，并且必须执行类似 (akin) `Result<OurType, std::error::Error>`的操作 - 这是不可能的，因为 Rust 不允许将特征用作函数的返回类型。
+
+解决此问题的标准方法是使用[Box<dyn Trait>](https://doc.rust-lang.org/rust-by-example/trait/dyn.html)，但为了使事情变得更加简单，我决定使用 [anyhow](https://crates.io/crates/anyhow) 库，该库允许按我的喜好混合和匹配错误。不管怎样，我可以这样编写代码：
+
+```rust
+fn rust_result_to_java_result<'e, T>(
+    env: &JNIEnv<'e>,
+    result: anyhow::Result<T>,
+) -> JObject<'e>
+where
+    T: Display,
+{
+    let (is_ok, value) = match result {
+        Ok(v) => (true, format!("{}", v)),
+        Err(e) => (false, format!("{:?}", e)),
+    };
+    create_java_result(env, is_ok, value)
+}
+ 
+fn actually_do_stuff<'a>(
+    env: JNIEnv<'a>,
+    code: JString,
+) -> anyhow::Result<String>
+{
+    let code = String::from(env.get_string(code)?);
+    let intermediate_value = some_rust_function(code)?;
+    other_rust_function(intermediate_value)
+}
+ 
+#[no_mangle]
+pub extern "C" fn Java_com_startup_hip_RustCode_doStuff<'a>(
+    env: JNIEnv<'a>,
+    _class: JClass,
+    code: JString,
+) -> JObject<'a>
+{
+    rust_result_to_java_result(actually_do_stuff(env, code))
+}
+```
+
+更简单了！现在我可以返回任何想要的结果，并将其转换为 Java 类的实例，以供 Java 代码使用。
+
+## 封装
+
+在 Android 中运行 Rust 并不是一件容易的事，但是我对最终找到的解决方案感到满意。我们使用及其普通 (bog-standard) 的 Rust 编写代码并将其编译到共享库中，然后由 JVM 在运行时加载。尽管 JNI 乍一看有点令人生畏 (intimidate)，但是使用此标准化解决方案意味着 Java 代码和 Gradle 构建系统都不关心我们的 native 代码是用 Rust 编写的。使用 Cargo 进行交叉编译仍然有些棘手 (tricky)，因为事实证明`cargo-apk`设置了许多[环境变量](https://github.com/rust-windowing/android-ndk-rs/blob/7936944edc699d3e7f380cfa87515f8899ce7027/ndk-build/src/cargo.rs#L6)以使整个过程正常运行。我们的代码还依赖于外部库 - 但是所有的这些都可以通过一堆 shell 脚本来解决。
+
+如果你想要自己尝试一下，我已经准备了一个公共 [Github](https://github.com/suve/rust-on-android/) 仓库，其中包含了一个最小的 Android 应用程序，既包含用 Rust 编写的部分，还依赖于外部的 C 库。该项目的许可证是 [zlib](https://tldrlegal.com/license/zlib-libpng-license-%28zlib%29)。因此可以随意的获取源代码并将其用于你的个人目的。
+
+## 参考
+
+- [Android NDK documentation: other build systems: Autoconf](https://developer.android.com/ndk/guides/other_build_systems#autoconf)
+- [crates.io: cargo-apk](https://crates.io/crates/cargo-apk)
+- [cargo-apk: ndk-glue/src/lib.rs](https://github.com/rust-windowing/android-ndk-rs/blob/b430a5e274dea8fd7c45e176d5d19c31b73a20ac/ndk-glue/src/lib.rs#L132)
+- [cargo-apk: nkd-build/src/cargo.rs](https://github.com/rust-windowing/android-ndk-rs/blob/7936944edc699d3e7f380cfa87515f8899ce7027/ndk-build/src/cargo.rs#L6)
+- [Android developer documentation: app manifest: <activity>](https://developer.android.com/guide/topics/manifest/activity-element)
+- [Android developer documentation: Activity](https://developer.android.com/reference/android/app/Activity)
+- [Android developer documentation: NativeActivity](https://developer.android.com/reference/android/app/NativeActivity)
+- [Android developer documentation: Intent](https://developer.android.com/reference/android/content/Intent.html)
+- [crates.io: jni](https://crates.io/crates/jni)
+- [Java SE 11: JNI specification](https://docs.oracle.com/en/java/javase/11/docs/specs/jni/index.html)
+- [Java SE 9: tools: javah](https://docs.oracle.com/javase/9/tools/javah.htm)
+- [The Rust Programming Language: Calling Rust Functions from Other Languages](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#calling-rust-functions-from-other-languages)
+- [Java SE 11: tools: javap](https://docs.oracle.com/en/java/javase/11/tools/javap.html)
+- [Thorn Technologies: Using JNI to call C functions from Android Java](https://www.thorntech.com/2012/08/using-jni-with-java-for-android-sawbix-case-study-part-ii/)
+- [Code Ranch: How to create new objects with JNI](https://coderanch.com/t/446953/java/create-NewObject-JNI-methods)
+- [Stack Overflow: Java signature for method](https://stackoverflow.com/questions/22038466/jni-signature-for-method)
