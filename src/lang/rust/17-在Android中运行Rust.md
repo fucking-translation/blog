@@ -2,7 +2,7 @@
 
 [原文](https://blog.svgames.pl/article/running-rust-on-android)
 
-为了我目前的一位客户，我们决定将 Rust 作为我们主要的编程语言。做出这个决定的原因有很多：除了技术优势 (merit) 外，还有一个无可争议的 (undisputable) 事实就是：Rust 仍然是一门相对较新的语言，花哨 (fancy) 且时髦 (hip) - 当你是一家初创公司 (startup) 时，使用十几年前的技术可能会让你陷入困境。我的意思是，这是合乎逻辑的 - 不使用创新的技术如何进行创新？最快的成功方式就是对其大肆宣传 (aboard the hype train)。
+为了我目前的一位客户，我们决定将 Rust 作为我们主要的编程语言。做出这个决定的原因有很多：除了技术优势 (merit) 外，还有一个无可争议的 (undisputable) 事实就是：Rust 仍然是一门相对较新的语言，花哨 (fancy) 且时髦 (hip) - 当你是一家初创公司 (startup) 时，使用十几年前的技术可能会让你陷入困境。我的意思是 - 不使用创新的技术如何进行创新？最快的成功方式就是对其大肆宣传 (aboard the hype train)。
 
 ”用户持有自己的数据“应该是产品的一个卖点，它不能是一个完全通过浏览器访问的服务，而应该是一种可以分发给用户，并让其运行在用户设备上的某个东西。我们在内部已经运行了一些 headless (一种不需要外设的模式) 实例，只要再完成一些琐碎的 (trivial) 工作，就可以为 Windows 和 Linux 系统制作可重新分发的程序包。但是我们知道如果程序包只能运行在桌面操作系统中时，将会严重阻碍应用的普及 - 如果我们想让它脱颖而出 (take off)，则需要该应用程序的移动版本。这意味着我们必须要知道如何让我们的程序运行在 Android 或者 iOS 系统中。因为我对交叉编译与自动化构建已经有了一些经验，我主动的研究了这个主题。
 
@@ -31,7 +31,7 @@ $ ./sdkmanager --sdk_root="${HOME}/android/sdk" --install 'platform-tools'
 $ ./sdkmanager --sdk_root="${HOME}/android/sdk" --install 'platforms;android-29'
 ```
 
-尽管 Android 支持运行原生 (native) 代码，但是大多数应用还是采用 Java 或者 Kotlin 来编写，SDK 反应了这一点。为了能够使用原生代码，我还需要一个工具 - 原生开发工具套件 (Native Development kit)。[NDK 下载页面](https://developer.android.com/ndk/downloads) 提供了几个版本以供选择 - 在经过一段深思熟虑后，我决定使用 LTS 版本：r21e。
+尽管 Android 支持运行 native 代码，但是大多数应用还是采用 Java 或者 Kotlin 来编写，SDK 反应了这一点。为了能够使用 native 代码，我还需要一个工具 - 原生开发工具套件 (Native Development kit)。[NDK 下载页面](https://developer.android.com/ndk/downloads) 提供了几个版本以供选择 - 在经过一段深思熟虑后，我决定使用 LTS 版本：r21e。
 
 ## 足够简单！或想太多？
 
@@ -95,7 +95,7 @@ $ export ANDROID_NDK_ROOT="${HOME}/android/ndk"
 $ cargo apk build --target aarch64-linux-android
 ```
 
-令人惊奇的是，它成功了！(等等) 额，好吧，我再一次遇到了链接错误。但是这一次，它不是关于重定位和文件格式的神秘错误，而是一个缺失库的简单情况：
+令人惊奇的是，它成功了！(等等) 额，好吧，我再一次遇到了链接错误。但是这一次，它不是关于重定位和文件格式的神秘错误，而是一个缺少链接库的错误提示：
 
 ```console
 error: linking with `aarch64-linux-android29-clang` failed: exit code: 1
@@ -105,7 +105,7 @@ error: linking with `aarch64-linux-android29-clang` failed: exit code: 1
 
 ## 依赖，依赖，依赖
 
-我们的项目使用 [SQLite](https://sqlite.org/)，这是一个 C 库。尽管 Rust 社区在每个可能的场合都吹捧 (tout) ”用 Rust 重写“在某种程度上是臭名昭著的，但是实际上与流行库一起使用的 crate 并不需要重新实现，因为这需要大量的 (colossal) 工作。相反，它们仅提供在 Rust 代码中调用库的方式，既可以作为 C 函数重新导出，也可以提供更加友好的 API 并稍微抽象化 FFI 调用。我们使用的 [rusqlite](https://crates.io/crates/rusqlite) 并没有什么不同，意味着我们也需要构建 SQLite。
+我们的项目使用 [SQLite](https://sqlite.org/)，这是一个 C 库。尽管 Rust 社区在每个可能的场合都吹捧 (tout) ”用 Rust 重写“在某种程度上是臭名昭著的，但是实际上某些与流行库一起使用的 crate 并不需要重新实现，因为这需要大量的 (colossal) 工作。相反，它们仅提供在 Rust 代码中调用库的方式，既可以作为 C 函数重新导出，也可以提供更加友好的 API 并稍微抽象化 FFI 调用。我们使用的 [rusqlite](https://crates.io/crates/rusqlite) 并没有什么不同，意味着我们也需要构建 SQLite。
 
 SQLite 使用 GNU Autotool 进行构建。在对环境变量和用于配置的选项有了一些了解之后，我仔细浏览了 NDK 的文档 - 我找到了一个在各种构建系统([包括 Autotools](https://developer.android.com/ndk/guides/other_build_systems#autoconf)) 中使用 NDK 的文档页面。尽管 Google 提供了 LTS 版本的 NDK，以及最新版本的文档，但在 r21 LTS 和最新的 r22 之间发生了变化，事情变得稍微有点棘手。幸运的是，Wayback 机器具有该页面的[历史版本](http://web.archive.org/web/20200531051836/https://developer.android.com/ndk/guides/other_build_systems#autoconf)，让我能够找到合适的 NDK r21 的说明。
 
@@ -173,23 +173,23 @@ Verification succesful
 
 我现在有了一个可以安装在 Android 手机上的`.apk`文件。真是个巨大的成功！
 
-## Applications 和 Activities
+## 应用 和 Activity
 
-将 Rust 代码编译进`.apk`中后，我们剩下要做的就是要搞清楚如何将 Rust 代码与编写 UI 的 Java 代码合并。我天真的在 DuckDuckGo 中输入“如何组合 APK”。在阅读顶层几个结果后，明白了这明显是不可能的，至少在对 Android 应用的工作原理没有更深的了解的情况下是不可能的。但是，并不是说没有其他的方法，因为文章提出了另一种方法 - 将 [Activities](https://developer.android.com/reference/android/app/Activity) 组合到一个应用程序里。
+将 Rust 代码编译进`.apk`中后，我们剩下要做的就是要搞清楚如何将 Rust 代码与编写 UI 的 Java 代码合并。我天真的在 DuckDuckGo 中输入“如何组合 APK”。在阅读顶层几个结果后，明白了这明显是不可能的，至少在对 Android 应用的工作原理没有更深的了解的情况下是不可能的。但是，并不是说没有其他的方法，因为文章提出了另一种方法 - 将 [Activity](https://developer.android.com/reference/android/app/Activity) 组合到一个应用程序里。
 
-如果你像我一样，之前从未开发过 Android，可能会疑惑“什么是 Activities”：当你设计一个应用时，它就是所谓的“界面”或者“视图”。例如，在购物应用中：
+如果你像我一样，之前从未开发过 Android，可能会疑惑“什么是 Activity”：当你设计一个应用时，它就是所谓的“界面”或者“视图”。例如，在购物应用中：
 
-- 登陆页面是一个 activity
-- 产品搜索页面是一个 activity
-- 所选产品的详情页面是一个 activity
-- 购物车页面是一个 activity
-- 结账页面是一个 activity
+- 登陆页面是一个 Activity
+- 产品搜索页面是一个 Activity
+- 所选产品的详情页面是一个 Activity
+- 购物车页面是一个 Activity
+- 结账页面是一个 Activity
 
-这里的每个页面可能都包含一些交互元素，如无处不在的汉堡包菜单。如果你愿意，从理论上来讲，你可以将整个应用程序放在一个单独的 activity 中，但是开发难度比较大。当然，关于 activity 还有很多内容可以介绍，但是目前和我们要讲的内容关系不大。
+这里的每个页面可能都包含一些交互元素，如无处不在的汉堡包菜单。如果你愿意，从理论上来讲，你可以将整个应用程序放在一个单独的 Activity 中，但是开发难度比较大。当然，关于 Activity 还有很多内容可以介绍，但是目前和我们要讲的内容关系不大。
 
-让我们继续介绍有关 Rust 的内容。虽然我的问题的解决方案是将 Activities 组合到一个应用程序中，但是我不确定用 Rust 构建的`.apk`文件是如何与所有这些联系在一起的。在仔细研究了 [cargo-apk](https://github.com/rust-windowing/android-ndk-rs/blob/b430a5e274dea8fd7c45e176d5d19c31b73a20ac/ndk-glue/src/lib.rs#L132) 代码之后，我意识到它本质是将我的代码封装进一些魔术胶水 (glue) 代码中，并为 Android 的运行创建 [NativeActivity](https://developer.android.com/reference/android/app/NativeActivity)。
+让我们继续介绍有关 Rust 的内容。虽然我的问题的解决方案是将 Activity 组合到一个应用程序中，但是我不确定用 Rust 构建的`.apk`文件是如何与所有这些联系在一起的。在仔细研究了 [cargo-apk](https://github.com/rust-windowing/android-ndk-rs/blob/b430a5e274dea8fd7c45e176d5d19c31b73a20ac/ndk-glue/src/lib.rs#L132) 代码之后，我意识到它本质是将我的代码封装进一些胶水 (glue) 代码中，并为 Android 的运行创建 [NativeActivity](https://developer.android.com/reference/android/app/NativeActivity)。
 
-为了将 Activities 组合进一个应用中，我需要修改 (tinker with) 应用程序的`AndroidManifest.xml`文件，在文档中添加合适的 [activity 节点](https://developer.android.com/guide/topics/manifest/activity-element)。但是我应该如何知道`cargo-apk`生成的 NativeActivity 的属性呢？幸运的是，当`cargo-apk`工作时，它会生成一个最小版的`AndroidManifest.xml`文件，并将其放在生成的`.apk`旁边。其中 NativeActivity 的声明如下所示：
+为了将 Activity 组合进一个应用中，我需要修改 (tinker with) 应用程序的`AndroidManifest.xml`文件，在文档中添加合适的 [Activity 节点](https://developer.android.com/guide/topics/manifest/activity-element)。但是我应该如何知道`cargo-apk`生成的 NativeActivity 的属性呢？幸运的是，当`cargo-apk`工作时，它会生成一个最小版的`AndroidManifest.xml`文件，并将其放在生成的`.apk`旁边。其中 NativeActivity 的声明如下所示：
 
 ```xml
 <activity
@@ -208,7 +208,7 @@ Verification succesful
 
 我要做的就是将上面的代码片段复制并粘贴到 Java 应用程序的 manifest 中。
 
-当然，这只是在应用的 manifest 中添加了一条语句，告诉应用将要包含哪些 activity。Java 应用程序的构建过程不会知道`libstartup.so`文件的位置，并自动的将其包含在内。幸运的是，我只需要将 [库文件复制到指定的文件夹下](https://developer.android.com/studio/projects/gradle-external-native-builds#jniLibs)即可，Gradle (Android 应用的构建工具) 会自动将它们采集起来。
+当然，这只是在应用的 manifest 中添加了一条语句，告诉应用将要包含哪些 Activity。Java 应用程序的构建过程不会知道`libstartup.so`文件的位置，并自动的将其包含在内。幸运的是，我只需要将[库文件复制到指定的文件夹下](https://developer.android.com/studio/projects/gradle-external-native-builds#jniLibs)即可，Gradle (Android 应用的构建工具) 会自动将它们采集起来。
 
 ```console
 $ mkdir -p android/app/src/main/jniLibs/arm64-v8a
@@ -231,9 +231,9 @@ Android 中的 Activity 可以毫无问题的相互启动 - 如果这不可能�
 
 尽管 Intent 类的名称是不言而喻的 (self-explanatory)，但是起初它的用法可能有点不直观。在它最基本的形式中，它仅包含对调用 Activity 实例的引用，以及我们要调用的 Activity 的类句柄。(确切的说，一个 Intent 需要调用一个 [Context](https://developer.android.com/reference/android/content/Context.html)。Activity 只是 Context 的一种类型)。
 
-但是，Intent 也可以用于传达为什么一个 Activity 会调用另一个 Activity 的信息(例如 [action](https://developer.android.com/reference/android/content/Intent#standard-activity-actions))，可以用来区分例如“显示某些内容”和“编辑某些内容”；或要操作的数据 URI及其 MIME 类型。除了 get/set 方法，Intent 还可以容纳几乎任何数量的“额外”数据，这些数据通常作为键值对存储。
+但是，Intent 也可以用于传达为什么一个 Activity 会调用另一个 Activity 的信息(例如 [action](https://developer.android.com/reference/android/content/Intent#standard-activity-actions))，可以用来区分例如“显示某些内容”和“编辑某些内容”；或要操作的数据 URI 及其 MIME 类型。除了 get/set 方法，Intent 还可以容纳几乎任何数量的“额外”数据，这些数据通常作为键值对存储。
 
-Intent 提供了一种在 Activities 之间传递信息的标准化方式。调用者向被调用者提供处理其请求所需的一切信息，并且它可以接收包含所有请求信息的另一个 Intent 作为返回值。使用 Java 编写代码时，没有什么问题，但是，将 Rust 代码放入 NativeActivity 会发生什么？
+Intent 提供了一种在 Activity 之间传递信息的标准化方式。调用者向被调用者提供处理其请求所需的一切信息，并且它可以接收包含所有请求信息的另一个 Intent 作为返回值。使用 Java 编写代码时，没有什么问题，但是，将 Rust 代码放入 NativeActivity 会发生什么？
 
 如果你查看继承树，你可以看到 NativeActivity 继承了 Activity - 这意味着它可以访问 Activity 所有非私有方法。我可以调用`getIntent()`并从调用者中获取数据。除此之外，由于这是 Java 方法，并且我是在 native 代码中运行，因此需要使用 JNI (Java Native Interface) 执行函数调用。不幸的是，NativeActivity 没有任何其他的机制来传递信息或使用 Intent。这让我十分沮丧 (dismay)，因为这意味着我必须要与 JNI 一起工作。
 
@@ -320,7 +320,7 @@ let code_jvm = env.get_string(code).unwrap();
 let code_rust = String::from(code_jvm);
 ```
 
-现在我有了一个 Rust 字符串，可以将其传递给之后的 Rust 代码。真是个巨大的成功！
+现在我有了一个 Rust 字符串，可以将其传递给之后的 Rust 代码。又是个巨大的成功！
 
 ## 返回值
 
@@ -369,7 +369,7 @@ return env.new_string(result).unwrap();
 
 尽管代码如预期一样执行，但是我不喜欢出现的`.unwrap()`调用次数。毕竟，错误处理是 Rust 的重要组成部分，仅仅因为我正在进行语言的互操作，并不意味着就可以忽略此事。恰恰相反，我认为两种语言的接触面应该尽可能简单，以防止最终发现一些晦涩的错误是由于互操作性差而引起的。而且，必须检查 Java 的返回值以确定调用是否成功，这使得整个过程使用起来有些笨拙 (clunky)。
 
-我没有重复造轮子，而是对如何更好的将 Rust 的[Result<A, B>](https://doc.rust-lang.org/std/result/enum.Result.html)方式转换成 Java 侧的代码进行了思考。幸运的是，我的 Rust 函数的返回值都是字符串。至于错误，大多数错误要么是不可恢复的，要么是由错误的输入引起的 - 这意味着我可以放弃 (forego) 使用精确的错误代码，而仅仅依靠正确格式的错误信息 - 这又是指字符串。因此`Result<A, B>`可以变成`Result<String, String>`。
+我没有重复造轮子，而是对如何更好的将 Rust 的 [Result<A, B>](https://doc.rust-lang.org/std/result/enum.Result.html) 方式转换成 Java 侧的代码进行了思考。幸运的是，我的 Rust 函数的返回值都是字符串。至于错误，大多数错误要么是不可恢复的，要么是由错误的输入引起的 - 这意味着我可以放弃 (forego) 使用精确的错误代码，而仅仅依靠正确格式的错误信息 - 这又是指字符串。因此`Result<A, B>`可以变成`Result<String, String>`。
 
 ## 定义 Java 类
 
@@ -471,7 +471,7 @@ fn create_java_result<'e>(
 
 尽管上面的代码可以很好的实现这个目的，但是它有一个缺点：它显示地采用了布尔值和字符串，要求调用者自己处理 Result 并使用适当的参数调用函数。编写“错误应该尽早返回”的逻辑很繁琐 (tedious)，但是幸运的是，Rust 为此提供了一个解决方案 - [?](https://doc.rust-lang.org/rust-by-example/std/result/question_mark.html) 运算符。但是我们的代码从不同的库中调用函数，这些函数又使用了不同的错误类型 - 这意味着我们无法使用`Result<OurType, OurError>`，并且必须执行类似 (akin) `Result<OurType, std::error::Error>`的操作 - 这是不可能的，因为 Rust 不允许将特征用作函数的返回类型。
 
-解决此问题的标准方法是使用[Box<dyn Trait>](https://doc.rust-lang.org/rust-by-example/trait/dyn.html)，但为了使事情变得更加简单，我决定使用 [anyhow](https://crates.io/crates/anyhow) 库，该库允许按我的喜好混合和匹配错误。不管怎样，我可以这样编写代码：
+解决此问题的标准方法是使用 [Box<dyn Trait>](https://doc.rust-lang.org/rust-by-example/trait/dyn.html)，但为了使事情变得更加简单，我决定使用 [anyhow](https://crates.io/crates/anyhow) 库，该库允许按我的喜好混合和匹配错误。不管怎样，我可以这样编写代码：
 
 ```rust
 fn rust_result_to_java_result<'e, T>(
