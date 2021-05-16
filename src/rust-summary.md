@@ -1,6 +1,5 @@
-# Summary
+# 索引
 
-- [Rust](rust-summary.md)
     - [用 Rust 学习解析器组合器](./lang/rust/01-用Rust学习解析器组合器.md)
     - [用 Rust 编写 LLVM 的玩具前端](./lang/rust/02-用Rust编写LLVM的玩具前端.md)
     - [使用 nom 解析 url](./lang/rust/03-使用nom解析url.md)
@@ -18,6 +17,3 @@
     - [解释 Rust 中的原子性](./lang/rust/15-解释Rust中的原子性.md)
     - [Rust 和 TUI：在 Rust 中构建命令行界面](./lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
     - [在 Android 中运行 Rust](./lang/rust/17-在Android中运行Rust.md)
-
-- [Service Mesh](./架构/ServiceMesh/summary.md)
-    - [模式：Service Mesh](./架构/ServiceMesh/01-ServiceMesh.md)
