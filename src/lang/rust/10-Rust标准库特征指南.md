@@ -16,7 +16,7 @@
     - [作用域 Scope](#作用域)
     - [衍生宏 Derive Macros](#衍生宏)
     - [默认实现 Default Impls](#默认实现)
-    - [一揽子泛型实现 Generic Blanket Impls](#一揽子泛型实现)
+    - [通用泛型实现 Generic Blanket Impls](#通用泛型实现)
     - [子特性与超特性 Subtraits & Supertraits](#子特性与超特性)
     - [特性对象 Trait Objects](#特性对象)
     - [仅用于标记的特性 Marker Traits](#仅用于标记的特性)
@@ -82,7 +82,7 @@
 或者有这样的疑问：
 
 - _“我应该在特性中使用关联类型还是泛型类型？”_
-- _"什么是一揽子泛型实现？"_
+- _"什么是通用泛型实现？"_
 - _"子特性与超特性是如何工作的？"_
 - _"为什么某个特性没有实现任何方法？"_
 
@@ -706,9 +706,9 @@ fn main() {
 
 标准库中的许多特性都为它们的方法提供默认实现。
 
-### 一揽子泛型实现
+### 通用泛型实现
 
-一揽子泛型实现是对泛型类型的实现，与之对应的是对特定类型的实现。我们将以 is_even 方法为例说明如何对数字类型实现一揽子泛型实现。
+通用泛型实现是对泛型类型的实现，与之对应的是对特定类型的实现。我们将以 is_even 方法为例说明如何对数字类型实现通用泛型实现。
 
 ```rust
 trait Even {
@@ -744,7 +744,7 @@ fn test_is_even() {
 }
 ```
 
-显而易见地，我们重复实现了近乎相同的逻辑，这非常的繁琐。进一步来讲，如果 Rust 在将来决定增加更多的数字类型（小概率事件并非绝不可能），那么我们将不得不重新回到这里对新增的数字类型编写代码。一揽子泛型实现恰可以解决这些问题：
+显而易见地，我们重复实现了近乎相同的逻辑，这非常的繁琐。进一步来讲，如果 Rust 在将来决定增加更多的数字类型（小概率事件并非绝不可能），那么我们将不得不重新回到这里对新增的数字类型编写代码。通用泛型实现恰可以解决这些问题：
 
 ```rust
 use std::fmt::Debug;
@@ -756,7 +756,7 @@ trait Even {
 }
 
 // generic blanket impl
-// 一揽子泛型实现
+// 通用泛型实现
 impl<T> Even for T
 where
     T: Rem<Output = T> + PartialEq<T> + Sized,
@@ -779,7 +779,7 @@ fn test_is_even() {
 }
 ```
 
-默认实现可以重写，而一揽子泛型实现不可重写。
+默认实现可以重写，而通用泛型实现不可重写。
 
 ```rust
 use std::fmt::Debug;
@@ -1580,7 +1580,7 @@ trait Any: 'static {
 }
 ```
 
-Rust 的多态性风格本身是参数化的，但如果我们希望临时使用一种更贴近于动态语言的多态性风格，可以借用 `Any` 特性来模拟。我们不需要手动实现 `Any` 特性，因为该特性通常由一揽子泛型实现所实现。
+Rust 的多态性风格本身是参数化的，但如果我们希望临时使用一种更贴近于动态语言的多态性风格，可以借用 `Any` 特性来模拟。我们不需要手动实现 `Any` 特性，因为该特性通常由通用泛型实现所实现。
 
 ```rust
 impl<T: 'static + ?Sized> Any for T {
@@ -1741,7 +1741,7 @@ trait ToString {
 }
 ```
 
-我们不需要自己手动实现，事实上，我们也不能，因为对于实现了 `Display` 的类型来说，`ToString` 是由一揽子泛型实现所自动实现的。
+我们不需要自己手动实现，事实上，我们也不能，因为对于实现了 `Display` 的类型来说，`ToString` 是由通用泛型实现所自动实现的。
 
 ```rust
 impl<T: Display + ?Sized> ToString for T;
@@ -1963,7 +1963,7 @@ enum Suit {
 }
 ```
 
-多亏了一揽子泛型实现，一旦我们为特定类型实现了 `PartialEq` 特性，那么直接使用该类型的引用互相比较也是可以的：
+多亏了通用泛型实现，一旦我们为特定类型实现了 `PartialEq` 特性，那么直接使用该类型的引用互相比较也是可以的：
 
 ```rust
 // this impl only gives us: Point == Point
@@ -1976,25 +1976,25 @@ struct Point {
 
 // all of the generic blanket impls below
 // are provided by the standard library
-// 以下的一揽子泛型实现由标准库提供
+// 以下的通用泛型实现由标准库提供
 
 // this impl gives us: &Point == &Point
-// 这个一揽子泛型实现允许我们通过不可变引用之间进行比较
+// 这个通用泛型实现允许我们通过不可变引用之间进行比较
 impl<A, B> PartialEq<&'_ B> for &'_ A
 where A: PartialEq<B> + ?Sized, B: ?Sized;
 
 // this impl gives us: &mut Point == &Point
-// 这个一揽子泛型实现允许我们通过可变引用与不可变引用进行比较
+// 这个通用泛型实现允许我们通过可变引用与不可变引用进行比较
 impl<A, B> PartialEq<&'_ B> for &'_ mut A
 where A: PartialEq<B> + ?Sized, B: ?Sized;
 
 // this impl gives us: &Point == &mut Point
-// 这个一揽子泛型实现允许我们通过不可变引用与可变引用进行比较
+// 这个通用泛型实现允许我们通过不可变引用与可变引用进行比较
 impl<A, B> PartialEq<&'_ mut B> for &'_ A
 where A: PartialEq<B> + ?Sized, B: ?Sized;
 
 // this impl gives us: &mut Point == &mut Point
-// 这个一揽子泛型实现允许我们通过可变引用之间进行比较
+// 这个通用泛型实现允许我们通过可变引用之间进行比较
 impl<A, B> PartialEq<&'_ mut B> for &'_ mut A
 where A: PartialEq<B> + ?Sized, B: ?Sized;
 ```
@@ -3401,7 +3401,7 @@ trait Into<T> {
 
 实现 `Into<T>` 特性的类型允许我们从自身的类型 `Self` 转换到 `T` 类型。
 
-这是一对恰好相反的特性，如同一枚硬币的两面。注意，我们只能手动实现 `From<T>` 特性，而不能手动实现 `Into<T>` 特性，因为 `Into<T>` 特性已经被一揽子泛型实现所自动实现。
+这是一对恰好相反的特性，如同一枚硬币的两面。注意，我们只能手动实现 `From<T>` 特性，而不能手动实现 `Into<T>` 特性，因为 `Into<T>` 特性已经被通用泛型实现所自动实现。
 
 ```rust
 impl<T, U> Into<U> for T
@@ -3789,7 +3789,7 @@ sum += line.parse::<i32>()
 
 > The second approach takes advantage of this generic blanket impl from the standard library:
 
-方法二，利用标准库的一揽子泛型实现：
+方法二，利用标准库的通用泛型实现：
 
 ```rust
 impl<E: error::Error> From<E> for Box<dyn error::Error>;
@@ -3939,7 +3939,7 @@ trait TryInto<T> {
 }
 ```
 
-与 `Into` 相似地，我们不能手动实现 `TryInto` ，因为它已经为一揽子泛型实现所提供。
+与 `Into` 相似地，我们不能手动实现 `TryInto` ，因为它已经为通用泛型实现所提供。
 
 ```rust
 impl<T, U> TryInto<U> for T
@@ -4324,7 +4324,7 @@ struct User {
 
 // unfortunately the standard library cannot provide
 // a generic blanket impl to save us from this boilerplate
-// 不幸的是，标准库并没有提供相应的一揽子泛型实现，我们不得不手动实现
+// 不幸的是，标准库并没有提供相应的通用泛型实现，我们不得不手动实现
 impl AsRef<User> for User {
     fn as_ref(&self) -> &User {
         self
@@ -4631,7 +4631,7 @@ where
 }
 ```
 
-理解这类特性存在的意义，有助于我们揭开 `HashSet`，`HashMap`，`BTreeSet` 和 `BTreeMap` 中某些方法的实现的神秘面纱。但是在实际应用中，几乎没有什么地方需要我们去实现这样的特性，因为再难找到一个需要我们对一个值再创造一个“借用”版本的类型的场景了。对于某种类型 `T` ，`&T` 就能解决 99.9% 的问题了，且 `T: Borrow<T>` 已经被一揽子泛型实现对 `T` 实现了，所以我们无需手动实现它，也无需去实现某种的对 `U` 有 `T: Borrow<U>` 了。
+理解这类特性存在的意义，有助于我们揭开 `HashSet`，`HashMap`，`BTreeSet` 和 `BTreeMap` 中某些方法的实现的神秘面纱。但是在实际应用中，几乎没有什么地方需要我们去实现这样的特性，因为再难找到一个需要我们对一个值再创造一个“借用”版本的类型的场景了。对于某种类型 `T` ，`&T` 就能解决 99.9% 的问题了，且 `T: Borrow<T>` 已经被通用泛型实现对 `T` 实现了，所以我们无需手动实现它，也无需去实现某种的对 `U` 有 `T: Borrow<U>` 了。
 
 
 ### ToOwned
@@ -4950,7 +4950,7 @@ impl MyType {
 }
 ```
 
-另外，最好了解这个一揽子泛型实现：
+另外，最好了解这个通用泛型实现：
 
 ```rust
 impl<I: Iterator + ?Sized> Iterator for &mut I;
@@ -5190,7 +5190,7 @@ trait Write {
 
 > Generic blanket impls worth knowing:
 
-值得关注的一揽子泛型实现：
+值得关注的通用泛型实现：
 
 ```rust
 impl<R: Read + ?Sized> Read for &mut R;
