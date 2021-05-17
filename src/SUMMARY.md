@@ -1,6 +1,6 @@
 # Summary
 
-- [Rust](./lang/rust/rust-summary.md)
+- [Rust](./lang/rust/summary.md)
     - [用 Rust 学习解析器组合器](./lang/rust/01-用Rust学习解析器组合器.md)
     - [用 Rust 编写 LLVM 的玩具前端](./lang/rust/02-用Rust编写LLVM的玩具前端.md)
     - [使用 nom 解析 url](./lang/rust/03-使用nom解析url.md)
