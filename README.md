@@ -18,7 +18,7 @@
 - [x] [解释 Rust 中的原子性](./src/lang/rust/15-解释Rust中的原子性.md)
 - [x] [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)
 - [x] [在 Android 中运行 Rust](./src/lang/rust/17-在Android中运行Rust.md)
-- [x] [Rust 中常见的有关生命周期的误解](./src/lang/rust/18-Rust中常见的有关生命周期的误解.md)
+- [x] [「转」Rust 中常见的有关生命周期的误解](./src/lang/rust/18-Rust中常见的有关生命周期的误解.md)
 - [x] [生命周期型变示例](./src/lang/rust/19-生命周期型变示例.md)
 
 ### service mesh

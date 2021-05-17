@@ -17,5 +17,5 @@
 - [解释 Rust 中的原子性](15-解释Rust中的原子性.md)
 - [Rust 和 TUI：在 Rust 中构建命令行界面](16-Rust和TUI:在Rust中构建命令行界面.md)
 - [在 Android 中运行 Rust](17-在Android中运行Rust.md)
-- [Rust 中常见的有关生命周期的误解](18-Rust中常见的有关生命周期的误解.md)
+- [「转」Rust 中常见的有关生命周期的误解](18-Rust中常见的有关生命周期的误解.md)
 - [生命周期型变示例](19-生命周期型变示例.md)
