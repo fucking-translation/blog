@@ -103,7 +103,7 @@
 
 不幸的是，修改网络堆栈以添加此层不是一项可行的 (feasible) 任务。许多从业人员使用的解决方案是将其作为一组代理来实现。这里的想法是，服务不会直接连接其下游依赖项，而是将所有流量通过一小段程序透明的添加所需的功能。
 
-在这个领域中，第一次使用了边车 (sidecat) 的概念。边车是一个辅助 (auxiliary) 进程，运行在你的应用程序周围，并为它提供额外的功能。在 2013 年，[Airbnb 编写了 Synapse 和 Nerve](https://medium.com/airbnb-engineering/smartstack-service-discovery-in-the-cloud-4b8a080de619)，这是边车的开源实现。一年后，[Netflix 推出了 Prana](https://medium.com/netflix-techblog/prana-a-sidecar-for-your-netflix-paas-based-applications-and-services-258a5790a015)，它是一种边车，致力于允许非 JVM 应用从 [Netflix OSS 生态系统](http://netflix.github.io/)中受益。在 SoundCloud 中，我们构建了边车，使我们的传统 Ruby 程序可以使用[我们为 JVM 微服务构建的基础架构](https://www.youtube.com/watch?v=ttmuN8hPQLA)。
+在这个领域中，第一次使用了边车 (sidecar) 的概念。边车是一个辅助 (auxiliary) 进程，运行在你的应用程序周围，并为它提供额外的功能。在 2013 年，[Airbnb 编写了 Synapse 和 Nerve](https://medium.com/airbnb-engineering/smartstack-service-discovery-in-the-cloud-4b8a080de619)，这是边车的开源实现。一年后，[Netflix 推出了 Prana](https://medium.com/netflix-techblog/prana-a-sidecar-for-your-netflix-paas-based-applications-and-services-258a5790a015)，它是一种边车，致力于允许非 JVM 应用从 [Netflix OSS 生态系统](http://netflix.github.io/)中受益。在 SoundCloud 中，我们构建了边车，使我们的传统 Ruby 程序可以使用[我们为 JVM 微服务构建的基础架构](https://www.youtube.com/watch?v=ttmuN8hPQLA)。
 
 ![pattern_service_mesh6](../img/pattern_service_mesh6-a.png)
 
