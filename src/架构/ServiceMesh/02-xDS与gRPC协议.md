@@ -183,6 +183,51 @@ nonce: A
 
 ![later-ack](../img/later-ack.svg)
 
+服务器检测 NACK 的首选机制是在客户端发送的请求中查找 [error_detail] 字段的存在。某些较旧的服务器可能会通过查看请求中的版本和随机数来检测 NACK：如果请求中的版本与服务器使用该随机数发送的版本不相等，则客户端已拒绝了最新版本。但是这种方法不适用于客户端的 LDS 和 CDS 以外的 API，这些 API 可能会动态修改其订阅的资源集，除非服务器以某种方式安排了每当一个客户端订阅一个新资源时就增加资源类型实例版本。具体来说，请考虑以下示例：
+
+![error-detail-nack](../img/error-detail-nack.svg)
+
+### ACK 与 NACK 语义总结
+
+- xDS 客户端应该对管理服务器收到的每个 [DiscoveryResponse] 进行 ACK 或 NACK。[response_nonce] 字段告诉服务器，ACK 或 NACK 关联的是哪一个响应。
+- ACK 表示更新配置成功，且包含来自 [DiscoveryResponse] 中的 [version_info]
+- NACK 表示更新配置失败，且此值是通过出现 [error_detail] 字段来表示的。[version_info] 表示客户端正在使用的最新版本，尽管在客户端在现有版本中订阅了新的资源且该新资源无效的情况下，该版本可能不是较旧的版本(参考上面的示例)。
+
+### 何时发送一个更新请求
+
+管理服务器仅当 [DiscoveryResponse] 中的资源发生变更时才会将更新发送给 Envoy 客户端。Envoy 在被接受或拒绝后，立即使用包含 ACK/NACK 的 [DiscoveryRequest] 答复 [DiscoveryResponse]。如果管理服务器提供了相同的资源集而不是等待 (资源) 发生变更，这将导致客户端和服务管理器进行不必要的工作，可能会严重的影响性能。
+
+在流中，新的 [DiscoveryRequests] 将会取代 (supersede) 所有具有相同资源类型的先前 [DiscoveryRequests]。这意味着对于任何给定的资源类型，管理服务器只需响应每个流上的最新 [DiscoveryRequest]。
+
+### 客户端如何指定返回哪一种资源
+
+xDS 允许客户端指定一组资源名称，作为服务器对客户端感兴趣资源的提示。在 SotW 协议变体中，这是通过在 [DiscoveryRequest] 中指定 [resource_names] 完成的；在增量协议变体中，是通过 [DeltaDiscoveryRequest] 中的 [resource_names_subscribe] 和 [resource_names_unsubscribe] 字段来完成的。
+
+通常(查看下面的异常)，请求必须指定客户端感兴趣的资源集的名称。管理服务器必须提供被请求的资源(如果存在)。客户端将忽略未明确请求任何提供的资源。当客户端发送一个新请求来更改请求的资源集时，服务器必须重新发送任何新请求的资源，即使该服务没有请求先前发送的那些资源，并且自那时以来资源也没有发生变化。如果资源名称列表为空，则意味着客户端不再对指定类型的任何资源感兴趣。
+
+对于 [Listener] 和 [Cluster] 资源类型，这里也有一个“通配符”模式，它将在该资源类型的流上初始化不包含资源名称的请求时被触发。在这种情况下，服务端通常根据客户端的[节点]标识，使用特定站点的业务逻辑来确定客户端感兴趣的全部资源。请注意对于给定的资源类型，一旦流进入了通配符模式，就无法让流脱离通配符模式；流上随后请求中的特定资源名称将被忽略。
+
+### 客户端行为
+
+对于 [Listener] 和 [Cluster] 资源，Envoy 将总是使用通配符模式。然而，其他的 xDS 客户端(如使用 xDS 的 gRPC 的客户端)将会为这些资源类型指定明确的资源名称，例如，如果它们只有一个 listener 且已经从某些带外 (out-of-band) 数据中知道了它的名称。
+
+### 将资源分组到响应中
+
+在增量协议变体中，服务端会在它自己的响应中发送每个资源。这意味着如果服务端在之前发送了 100 个资源且其中只有一个资源发生了变更，它可能发送只包含变更资源的响应；它不需要重发那 99 个未发生变更的资源，客户端也不会删除未改变的资源。
+
+在 SotW 协议变体中，除 [Listener] 和 [Cluster] 之外，所有的资源类型都会以增强协议变体相同的方式分组到响应中。然而，[Listener] 和 [Cluster] 资源类型处理的方式不一样：服务端必须包括世界的完整状态，意味着必须包括客户端需要的相关类型的所有资源，即使自从上一个响应之后它们不再发生改变。这意味着服务端之前已经发送了 100 中资源并且只有其中一种资源发生了变更，它必须重发所有的资源，即使那 99 种资源并没有发生变更。
+
+请注意，所有协议变体都以整个命名资源为单位进行操作。这里没有机制提供命名资源中重复字段的增量更新。最值得注意 (notably) 的是，目前尚无增量更新 EDS 响应中各个终结点的机制。
+
+### 重复资源名称
+
+服务器发送的单个响应中包含两个相同的资源名是错误的。客户端应该对包含多个相同资源名称的实例进行 NACK 响应。
+
+### 删除资源
+
+在增量协议变体中，服务端通过响应中的 [removed_resources] 字段告诉客户端该资源应该被删除。客户端需要从其本地的缓存中移除资源。
+
+
 
 
 
@@ -219,3 +264,9 @@ nonce: A
 [增量协议变体]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-delta
 [system_version_info]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryresponse-system-version-info
 [error_detail]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-discoveryrequest-error-detail
+[DiscoveryRequests]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-msg-service-discovery-v3-discoveryrequest
+[resource_names]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-discoveryrequest-resource-names
+[resource_names_subscribe]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryrequest-resource-names-subscribe
+[resource_names_unsubscribe]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryrequest-resource-names-unsubscribe
+[节点]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-node
+[removed_resources]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryresponse-removed-resources
