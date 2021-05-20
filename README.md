@@ -30,6 +30,7 @@
 - [潘少的技术博客](https://strikefreedom.top/)
 - [⭐️ Read Rust](https://readrust.net/)
 - [爆米花胡了](https://blog.ideawand.com/)
+- [从易到难 Rust 问题解答](https://dtolnay.github.io/rust-quiz)
 
 ### rust
 
