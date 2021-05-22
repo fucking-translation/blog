@@ -225,7 +225,37 @@ xDS 允许客户端指定一组资源名称，作为服务器对客户端感兴�
 
 ### 删除资源
 
-在增量协议变体中，服务端通过响应中的 [removed_resources] 字段告诉客户端该资源应该被删除。客户端需要从其本地的缓存中移除资源。
+在增量协议变体中，服务端通过响应中的 [removed_resources] 字段告诉客户端该资源应该被删除。这告诉客户端需要从其本地的缓存中移除资源。
+
+在 SotW 协议变体中，删除资源的标准 (criteria) 更加复杂。对于 [Listener] 和 [Cluster] 资源来说，如果在新的响应中没有发现之前的资源，则表示资源已经被移除了，因此客户端必须将它删除；一个不包含任何资源的响应表示删除了该类型的所有资源。然而，对于其他资源类型来说，API 没有提供任何机制让服务端告诉客户端该资源已被删除；取而代之的是，通过将父资源更改为不再引用子资源来隐式表示删除操作。例如，当客户端接收到一个 LDS 更新时，移除之前指向 [RouteConfiguration] A 的 [Listener]，如果没有其他 [Listener] 指向 [RouteConfiguration] A，客户端可能会将 A 删除。对这些资源类型，从客户端的角度来说，空的 [DiscoveryResponse] 是一个有效的空操作。
+
+### 知道何时请求的资源不存在
+
+SotW 协议变体不提供给任何显式的机制来确定何时请求的资源不存在。
+
+[Listener] 和 [Cluster] 资源类型的响应必须包含客户端请求的所有资源。然而，客户端无法仅 (solely) 基于响应中缺少的资源来判断资源是否不存在，因为更新操作最终是一致的：如果客户端最初发送对资源 A 的请求，然后发送对资源 A 和 B 的请求，然后看到某个响应中仅包含资源 A，客户端不能得出资源 B 不存在的结论，因为在服务器看到第二个请求之前，是根据第一个请求发送的响应。
+
+对于其他资源类型，由于每个资源类型可以在它们各自响应中发送，(客户端) 没有任何办法知道在下一个响应中是否存在新请求的资源，因为下一个响应可能是先前已订阅的另一个资源的更新。
+
+因此，客户端应在发送新资源的请求后使用超时 (建议持续时间为 15 秒)，此后，如果未收到资源，客户端将认为请求的资源不存在。在 Envoy 中，这是在 [资源预热] 期间对 [RouteConfiguration] 和 [ClusterLoadAssignment] 资源所做的事情。
+
+注意到，在 [Listener] 和 [Cluster] 资源类型使用通配符模式时，该超时并非绝对需要，因为在这种情况下，每个响应都包含与客户端相关的所有现有资源，因此客户端在下一个响应中没有发现某个资源，就可以确定该资源不存在。然而，在这种情况下，仍建议使用超时，因为这样可以防止管理服务器无法及时发送响应的情况
+
+请注意，尽管该资源可能在客户端请求的那一刻不存在，但是它可以在任何时间被创建。管理服务器必须记住客户端请求的资源集，如果这些资源在之后出现 (spring into)，服务端必须将这些新资源的更新发送给客户端。最初看到资源不存在的客户端必须为随时创建该资源做好准备。
+
+### 取消资源的订阅
+
+在增量协议变体中，资源可以通过 [resource_names_unsubscribe] 字段取消订阅。
+
+在 SotW 协议变体中，每一个请求必须在 [resource_names] 字段中包含将要订阅的完整资源名称列表，因此，取消订阅资源集是通过发送一个新请求来完成的，该请求包含仍在订阅的所有资源名称，但是不包含将要取消订阅的资源名称。举个例子，如果客户端之前已经订阅了资源 A 和 B，但是想要取消订阅资源 B，它必须发送一个仅包含资源 A 的新请求。
+
+请注意，对于流处于“通配符”模式的 [Listener] 和 [Cluster] 资源类型(有关详细信息，请参见 [客户端如何指定要返回的资源])，
+
+
+
+
+
+
 
 
 
@@ -270,3 +300,5 @@ xDS 允许客户端指定一组资源名称，作为服务器对客户端感兴�
 [resource_names_unsubscribe]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryrequest-resource-names-unsubscribe
 [节点]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto#envoy-v3-api-msg-config-core-v3-node
 [removed_resources]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryresponse-removed-resources
+[资源预热]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-warming
+[客户端如何指定要返回的资源]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-hints
