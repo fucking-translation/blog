@@ -249,7 +249,47 @@ SotW 协议变体不提供给任何显式的机制来确定何时请求的资源
 
 在 SotW 协议变体中，每一个请求必须在 [resource_names] 字段中包含将要订阅的完整资源名称列表，因此，取消订阅资源集是通过发送一个新请求来完成的，该请求包含仍在订阅的所有资源名称，但是不包含将要取消订阅的资源名称。举个例子，如果客户端之前已经订阅了资源 A 和 B，但是想要取消订阅资源 B，它必须发送一个仅包含资源 A 的新请求。
 
-请注意，对于流处于“通配符”模式的 [Listener] 和 [Cluster] 资源类型(有关详细信息，请参见 [客户端如何指定要返回的资源])，
+请注意，对于流处于“通配符”模式的 [Listener] 和 [Cluster] 资源类型(有关详细信息，请参见 [客户端如何指定要返回的资源])，要订阅的资源集是服务端而不是客户端决定的，因此客户端没有取消订阅资源的机制。
+
+### 在单个流中请求多个资源
+
+对于 EDS/RDS，Envoy 可以为给定类型的每种资源生成不同的流(例如，对于管理服务器来说，每个 [ConfigSource] 都具有不同的上游集群)，或者当它们注定 (destined for) 要使用同一个管理服务器时，可以在给定资源类型的情况下将多个资源请求组合在一起。尽管这会留给实现细节，但是对于每个请求中给定的资源类型来说，管理服务器应该能够处理一个或多个 [resource_names]。以下两个顺序图对于获取两个 EDS 资源`{foo, bar}`都是有效的。
+
+![eds-same-stream](../img/eds-same-stream.svg)
+
+![eds-distinct-stream](../img/eds-distinct-stream.svg)
+
+### 资源更新
+
+如上所述，Envoy 可以在每个给特定 [DiscoveryResponse] 发送 ACK/NACK 的 [DiscoveryRequest] 中更新它提供给管理服务器的 [resource_names] 列表。此外，Envoy 稍后可能会在给定的 [version_info] 上发出其他的 [DiscoveryRequest]，以使用新的资源提示更新管理服务器。例如，如果 Envoy 为 EDS 的 **X** 版本，并且仅知道集群`foo`，但是随后又接收到了 CDS 更新并了解了`bar`的信息，则它可能会使用`{foo, bar}`作为`resource_names`发送针对 **X** 的附加 [DiscoveryRequest]。
+
+![ds-eds-resources](../img/cds-eds-resources.svg)
+
+这里可能会发生一个竞争条件；如果 Envoy 在 **X** 发出资源提示更新之后，但是在管理服务器处理更新之前，它用新版本 **Y** 答复，则可以通过提供 **X** 的 [version_info] 将资源提示更新解释为拒绝 **Y**。为避免这种情况，管理服务器提供了一个随机数，Envoy 使用该随机数来指示每个 [DiscoveryRequest] 对应的特定 [DiscoveryResponse]。
+
+![update-race](../img/update-race.svg)
+
+管理服务器不应为任何具有过期 (stale) 随机数的 [DiscoveryRequest] 发送 [DiscoveryResponse]。在 [DiscoveryResponse] 中向 Envoy 显示新的随机数后，旧的随机数随即过时。在确定有可用新版本之前，管理服务器无需发送更新。这样一来，早期版本的请求也会过时。它可能会在一个新版本中处理多个 [DiscoveryRequest]，直到准备好新版本为止。
+
+![stale-requests](../img/stale-requests.svg)
+
+上述资源更新序列的含义 (implication) 是，Envoy 并不期望它发出的每个 [DiscoveryRequests] 都具有 [DiscoveryResponse]。
+
+### 资源预热
+
+[Cluster] 和 [Listener] 需要经过预热才能提供服务。这个过程在 [Envoy 初始化]阶段和`Cluster`及`Listener`更新时都会发生。仅当管理服务器提供 [ClusterLoadAssignment] 响应时，[Cluster] 预热才算完成。同样的，如果 [Listener] 指向一个 RDS 配置时，仅当管理服务器提供 [RouteConfiguration] 时，[Listener] 预热才算完成。管理服务器在预热阶段会提供 EDS/RDS 更新。如果管理服务器没有提供 EDS/RDS 响应，Envoy 在初始化阶段不会自行初始化，并且在提供 EDS/RDS 响应之前，通过 CDS/LDS 发送的更新将不会产生生效。
+
+### 最终一致性思考
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -302,3 +342,4 @@ SotW 协议变体不提供给任何显式的机制来确定何时请求的资源
 [removed_resources]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryresponse-removed-resources
 [资源预热]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-warming
 [客户端如何指定要返回的资源]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-hints
+[Envoy 初始化]: https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/operations/init#arch-overview-initialization
