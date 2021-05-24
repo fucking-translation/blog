@@ -25,6 +25,7 @@
 
 - [x] [模式：Service Mesh](./src/架构/ServiceMesh/01-ServiceMesh.md)
 
+
 ## 推荐阅读
 
 - [潘少的技术博客](https://strikefreedom.top/)
@@ -37,3 +38,7 @@
 - [从 mio 到 coroutine](https://hexilee.me/2018/12/17/rust-async-io/)
 - [Rust mio库源码情景分析](https://blog.zongwu233.com/rust-mio-source-scenario-analysis/)
 - [Rust的Pin与Unpin](https://folyd.com/blog/rust-pin-unpin/)
+
+### service mesh
+
+- [dapr 源码详解](https://github.com/1046102779/daprdocs)
