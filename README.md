@@ -24,6 +24,7 @@
 ### service mesh
 
 - [x] [模式：Service Mesh](./src/架构/ServiceMesh/01-ServiceMesh.md)
+- [x] [xDS 与 gRPC 协议](./src/架构/ServiceMesh/02-xDS与gRPC协议.md)
 
 
 ## 推荐阅读
