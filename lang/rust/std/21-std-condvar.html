@@ -1,0 +1,370 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>std::sync::Condvar - Blog Translation</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        <link rel="icon" href="../../../favicon.svg">
+        
+        
+        <link rel="shortcut icon" href="../../../favicon.png">
+        
+        <link rel="stylesheet" href="../../../css/variables.css">
+        <link rel="stylesheet" href="../../../css/general.css">
+        <link rel="stylesheet" href="../../../css/chrome.css">
+        
+        <link rel="stylesheet" href="../../../css/print.css" media="print">
+        
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../../../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../../../highlight.css">
+        <link rel="stylesheet" href="../../../tomorrow-night.css">
+        <link rel="stylesheet" href="../../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../../../theme/ferris.css">
+        
+        <link rel="stylesheet" href="../../../theme/2018-edition.css">
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../../../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../lang/rust/summary.html"><strong aria-hidden="true">1.</strong> Rust</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">1.2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">1.3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/04-Rust中异步编程实用介绍.html"><strong aria-hidden="true">1.4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">1.5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">1.6.</strong> 「转」Rust 中的 Arenas</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">1.7.</strong> 「转」Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">1.8.</strong> 「转」图解 Rust 所有权与生命周期</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">1.9.</strong> Rust 异步执行器</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/10-Rust标准库特征指南.html"><strong aria-hidden="true">1.10.</strong> 「转」Rust 标准库特征指南</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">1.11.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">1.12.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">1.13.</strong> 「转」Rust 的 Pin 与 Unpin</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/14-使用GDB调试Rust应用.html"><strong aria-hidden="true">1.14.</strong> 使用 GDB 调试 Rust 中的应用</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/15-解释Rust中的原子性.html"><strong aria-hidden="true">1.15.</strong> 解释 Rust 中的原子性</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/16-Rust和TUI:在Rust中构建命令行界面.html"><strong aria-hidden="true">1.16.</strong> Rust 和 TUI：在 Rust 中构建命令行界面</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/17-在Android中运行Rust.html"><strong aria-hidden="true">1.17.</strong> 在 Android 中运行 Rust</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/18-Rust中常见的有关生命周期的误解.html"><strong aria-hidden="true">1.18.</strong> 「转」Rust 中常见的有关生命周期的误解</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/19-生命周期型变示例.html"><strong aria-hidden="true">1.19.</strong> 生命周期型变示例</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/std/20-std-pin.html"><strong aria-hidden="true">1.20.</strong> 标准库</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../lang/rust/std/20-std-pin.html"><strong aria-hidden="true">1.20.1.</strong> std::pin</a></li><li class="chapter-item expanded "><a href="../../../lang/rust/std/21-std-condvar.html" class="active"><strong aria-hidden="true">1.20.2.</strong> std::sync::Condvar</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../../../架构/ServiceMesh/summary.html"><strong aria-hidden="true">2.</strong> Service Mesh</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../架构/ServiceMesh/01-ServiceMesh.html"><strong aria-hidden="true">2.1.</strong> 模式：Service Mesh</a></li><li class="chapter-item expanded "><a href="../../../架构/ServiceMesh/02-xDS与gRPC协议.html"><strong aria-hidden="true">2.2.</strong> xDS 与 gRPC 协议</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Blog Translation</h1>
+
+                    <div class="right-buttons">
+                        
+                        <a href="../../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        
+                        <a href="https://github.com/fucking-translation/blog" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        
+                        
+
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="stdsynccondvar"><a class="header" href="#stdsynccondvar">std::sync::Condvar</a></h1>
+<p><a href="https://doc.rust-lang.org/std/sync/struct.Condvar.html">原文</a></p>
+<p>定义：一种条件变量</p>
+<h2 id="描述"><a class="header" href="#描述">描述</a></h2>
+<p>条件变量代表阻塞线程的能力，以使线程在等待时间发生时不占用CPU时间。条件变量通常与布尔谓词(predicate)和互斥锁相关联，在验证线程必须阻塞之前，始终在互斥对象内部验证该谓词。</p>
+<p>该模块中的函数将阻止当前执行的线程，并在可能的情况下绑定系统提供的条件变量。请注意，此模块对系统条件变量又一个附加限制：每一个<code>Condvar</code>在运行时可以与一个<code>Mutex</code>一起使用。任何在同一条件变量上使用多个互斥锁的尝试都将引起运行时<code>panic</code>。如果不希望这样，在<code>sys</code>中的<code>unsafe</code>原语将没有这种限制，但是可能会导致为定义的行为。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+
+let pair = Arc::new((Mutex::new(false), Condvar::new()));
+let pair2 = pair.clone();
+
+// Inside of our lock, spawn a new thread, and then wait for it to start.
+thread::spawn(move|| {
+    let (lock, cvar) = &amp;*pair2;
+    let mut started = lock.lock().unwrap();
+    *started = true;
+    // We notify the condvar that the value has changed.
+    println!(&quot;111&quot;);
+    cvar.notify_one();
+});
+
+// Wait for the thread to start up.
+let (lock, cvar) = &amp;*pair;
+let mut started = lock.lock().unwrap();
+println!(&quot;222&quot;);
+while !*started {
+    println!(&quot;333&quot;);
+    started = cvar.wait(started).unwrap();
+    println!(&quot;444&quot;);
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>输出</p>
+<pre><code>222
+333
+111
+444
+</code></pre>
+<h2 id="实现"><a class="header" href="#实现">实现</a></h2>
+<h3 id="impl-condvar"><a class="header" href="#impl-condvar">impl Condvar</a></h3>
+<blockquote>
+<p>pub fn new() -&gt; Condvar</p>
+</blockquote>
+<p>创建一个新的条件变量，并随时等待并通知它。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Condvar;
+let condvar = Condvar::new();
+<span class="boring">}
+</span></code></pre></pre>
+<blockquote>
+<p>pub fn wait&lt;'a, T&gt;(&amp;self, guard: MutexGuard&lt;'a, T&gt;) -&gt; LockResult&lt;MutexGuard&lt;'a, T&gt;&gt;</p>
+</blockquote>
+<p>阻塞当前线程，直到条件变量接收到一个通知。</p>
+<p>这个函数将会自动解锁指定的<code>MutexGuard</code>并且阻塞当前线程。这意味着在互斥体(<code>mutex</code>)解锁后，任何逻辑上的调用<code>notify_one</code>和<code>notify_all</code>方法都是唤醒该线程的候选对象。当函数返回时，将重新获得指定的锁。</p>
+<p>请注意，这个方法易受虚假唤醒的影响。条件变量通常使用布尔谓词和他们建立关联，并且该方法每次返回时都必须检查谓词以防止虚假唤醒。</p>
+<p>❗️：如果正在等待的互斥锁在此线程重新获取锁时中毒，该方法将返回错误。想要了解更多信息，请参阅有关资料: 中毒的互斥体(<code>Mutex</code>)。</p>
+<p>😱：如果同时使用多个互斥体将会触发<code>panic!</code>。每个条件变量都动态的绑定在一个互斥体上以确保跨平台行为定义。如果不需要此限制，则需提供<code>sys</code>中的<code>unsafe</code>原语。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+
+let pair = Arc::new((Mutex::new(false), Condvar::new()));
+let pair2 = pair.clone();
+
+thread::spawn(move|| {
+    let (lock, cvar) = &amp;*pair2;
+    let mut started = lock.lock().unwrap();
+    *started = true;
+    // We notify the condvar that the value has changed.
+    cvar.notify_one();
+});
+
+// Wait for the thread to start up.
+let (lock, cvar) = &amp;*pair;
+let mut started = lock.lock().unwrap();
+// As long as the value inside the `Mutex&lt;bool&gt;` is `false`, we wait.
+while !*started {
+    started = cvar.wait(started).unwrap();
+}
+<span class="boring">}
+</span></code></pre></pre>
+<blockquote>
+<p>pub fn wait_while&lt;'a, T, F&gt;(&amp;self, guard: MutexGuard&lt;'a, T&gt;, condition: F) -&gt; LockResult&lt;MutexGuard&lt;'a, T&gt;&gt; where F: FnMut(&amp;mut T) -&gt; bool</p>
+</blockquote>
+<p>阻塞当前线程直到条件变量收到一个通知并且所提供的条件为<code>false</code>为止。</p>
+<p>这个函数将会自动解锁指定的<code>MutexGuard</code>并且阻塞当前线程。这意味着在互斥体(<code>mutex</code>)解锁后，任何逻辑上的调用<code>notify_one</code>和<code>notify_all</code>方法都是唤醒该线程的候选对象。当函数返回时，将重新获得指定的锁。</p>
+<p>❗️：如果正在等待的互斥锁在此线程重新获取锁时中毒，该方法将返回错误。想要了解更多信息，请参阅有关资料: 中毒的互斥体(<code>Mutex</code>)。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+
+let pair = Arc::new((Mutex::new(true), Condvar::new()));
+let pair2 = pair.clone();
+
+thread::spawn(move|| {
+    let (lock, cvar) = &amp;*pair2;
+    let mut pending = lock.lock().unwrap();
+    *pending = false;
+    // We notify the condvar that the value has changed.
+    cvar.notify_one();
+});
+
+// Wait for the thread to start up.
+let (lock, cvar) = &amp;*pair;
+// As long as the value inside the `Mutex&lt;bool&gt;` is `true`, we wait.
+let _guard = cvar.wait_while(lock.lock().unwrap(), |pending| { *pending }).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
+<blockquote>
+<p>pub fn wait_timeout&lt;'a, T&gt;(&amp;self, guard: MutexGuard&lt;'a, T&gt;, dur: Duration) -&gt; LockResult&lt;(MutexGuard&lt;'a, T&gt;, WaitTimeoutResult)&gt;</p>
+</blockquote>
+<p>在此条件变量上等待通知，在指定的持续时间之后超时。</p>
+<p><font color='yellow'>此函数的语义等同于<code>wait</code>（除了线程被阻塞的时间不超过<code>dur</code>），由于诸如抢占或平台差异之类的异常可能不会导致等待的最大时间精确地变短，因此该方法不应用于精确的计时。</font></p>
+<p>⚠️：已尽最大的努力确保等待时间是由单调时间测量的，并且不会被系统时间修改所影响。这个函数容易受到虚假唤醒的影响。条件变量通常都会有一个布尔谓词</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../../../lang/rust/std/20-std-pin.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../../../架构/ServiceMesh/summary.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../../../lang/rust/std/20-std-pin.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../../../架构/ServiceMesh/summary.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        <script type="text/javascript" src="../../../theme/ferris.js"></script>
+        
+
+        
+
+    </body>
+</html>
