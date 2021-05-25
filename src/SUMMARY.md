@@ -21,6 +21,10 @@
     - [「转」Rust 中常见的有关生命周期的误解](./lang/rust/18-Rust中常见的有关生命周期的误解.md)
     - [生命周期型变示例](./lang/rust/19-生命周期型变示例.md)
 
+    - [标准库](./lang/rust/std/20-std-pin.md)
+        - [std::pin](./lang/rust/std/20-std-pin.md)
+        - [std::sync::Condvar](./lang/rust/std/21-std-condvar.md)
+
 - [Service Mesh](./架构/ServiceMesh/summary.md)
     - [模式：Service Mesh](./架构/ServiceMesh/01-ServiceMesh.md)
     - [xDS 与 gRPC 协议](./架构/ServiceMesh/02-xDS与gRPC协议.md)

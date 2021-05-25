@@ -19,3 +19,10 @@
 - [在 Android 中运行 Rust](17-在Android中运行Rust.md)
 - [「转」Rust 中常见的有关生命周期的误解](18-Rust中常见的有关生命周期的误解.md)
 - [生命周期型变示例](19-生命周期型变示例.md)
+
+---
+
+# 标准库文档翻译
+
+- [std::pin](./std/20-std-pin.md)
+- [std::sync::Condvar](./std/21-std-condvar.md)
