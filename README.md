@@ -3,11 +3,11 @@
 
 ### rust
 
-- [ ] [用Rust学习解析器组合器](./src/lang/rust/01-用Rust学习解析器组合器.md)
-- [x] [用Rust编写LLVM的玩具前端](./src/lang/rust/02-用Rust编写LLVM的玩具前端.md)
-- [x] [使用nom解析url](./src/lang/rust/03-使用nom解析url.md)
-- [x] [Rust中异步编程实用介绍](./src/lang/rust/04-Rust中异步编程实用介绍.md)
-- [x] [Tokio内幕-自底向上理解Rust的IO框架](./src/lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.md)
+- [ ] [用 Rust 学习解析器组合器](./src/lang/rust/01-用Rust学习解析器组合器.md)
+- [x] [用 Rust 编写 LLVM 的玩具前端](./src/lang/rust/02-用Rust编写LLVM的玩具前端.md)
+- [x] [使用 nom 解析 url](./src/lang/rust/03-使用nom解析url.md)
+- [x] [Rust 中异步编程实用介绍](./src/lang/rust/04-Rust中异步编程实用介绍.md)
+- [x] [Tokio 内幕-自底向上理解 Rust 的 IO 框架](./src/lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.md)
 - [x] [「转」Rust 中的 Arenas](./src/lang/rust/06-Rust中的Arenas.md)
 - [x] [「转」图解 Rust 所有权与生命周期](./src/lang/rust/08-图解Rust所有权与生命周期.md)
 - [x] [Rust 异步执行器](./src/lang/rust/09-Rust异步执行器.md)
@@ -37,8 +37,8 @@
 ### rust
 
 - [从 mio 到 coroutine](https://hexilee.me/2018/12/17/rust-async-io/)
-- [Rust mio库源码情景分析](https://blog.zongwu233.com/rust-mio-source-scenario-analysis/)
-- [Rust的Pin与Unpin](https://folyd.com/blog/rust-pin-unpin/)
+- [Rust mio 库源码情景分析](https://blog.zongwu233.com/rust-mio-source-scenario-analysis/)
+- [Rust的 Pin 与 Unpin](https://folyd.com/blog/rust-pin-unpin/)
 
 ### service mesh
 
