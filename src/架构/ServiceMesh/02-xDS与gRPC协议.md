@@ -281,28 +281,151 @@ SotW 协议变体不提供给任何显式的机制来确定何时请求的资源
 
 ### 最终一致性思考
 
+因为 Envoy 的 xDS API 是最终一致性的，因此在更新期间流量可能会短暂下降。例如，如果通过 CDS/EDS 只能发现集群 **X**，`RouteConfiguration`引用集群**X**，并且在 CDS/EDS 更新提供集群 **Y** 之前将其调整为集群 **Y**，在此期间流量将被”丢进黑洞“ (blackholed，即流量像被丢进黑洞一样被丢弃)，知道 Envoy 实例发现了集群 **Y**。
 
+对于一些应用，短暂的流量下降是可以接受的，在客户端或者通过其他的 Envoy 边车 (Sidecar) 重试将隐藏这次流量下降。然而在其他一些场景，流量下降是不可被容忍的，它可以通过同时提供集群 **X** 和 **Y** 的 CDS/EDS 更新，然后将 RDS 更新从 **X** 指向 **Y**，然后 CDS/EDS 更新丢弃 **X** 来避免流量下降。
 
+通常，为了避免流量下降，更新的顺序应该遵循**先立后破** (make before break) 模型，其中：
 
+- 必须首先推送 CDS 更新 (如果有)
+- EDS 更新 (如果有) 必须在各自集群的 CDS 更新之后到达
+- LDS 更新必须在相应的 CDS/EDS 更新之后到达
+- 和新添加的 [Listener] 关联的 RDS 必须在 CDS/EDS/RDS 更新之后到达
+- 和新添加的 [RouteConfiguration] 关联的 VHDS 更新 (如果有) 必须在 RDS 更新之后到达
+- 过期的 (stale) CDS 集群以及相关的 EDS 终结点 (不再被引用) 可以在之后被移除
 
+如果没有新的 cluster/route/listener 添加或者短暂的流量下降可以被接受，xDS 更新可以独自被推送。请注意，在进行 LDS 更新的情况下，[Listener] 将在接收流量之前预热，即 RDS 将会拉取配置的从属路由。添加/删除/更新集群时，集群会预热。另一方面，路由未预热，即在推送路由更新之前，管理平面必须确保被路由引用的集群已经到位。
 
+### TTL
 
+如果管理服务器无法访问，Envoy 将会保留最新收到的已知配置，直到重新建立连接为止。对于某些服务，这可能不是理想的。例如在提供故障注入服务的情况下，管理服务器在错误的时间崩溃可能会使 Envoy 处于不良 (undesirable) 状态。如果与管理服务器失去联系，TTL 设置允许 Envoy 在指定的时间段后删除一组资源。例如，当无法再访问管理服务器时，可以使用它来终止故障注入测试。
 
+对于支持`xds.config.supports-resource-ttl`特性的客户端，可以在每个资源上指定 TTL 字段。每个资源都有其 TTL 过期时间。每种 xDS 类型可能有不同的方式来处理这种过期。
 
+为了更新与某个资源相关的 TTL，管理服务器使用新的 TTL 重新发送该资源。为了移除 TTL，管理服务器将会重新发送不带 TTL 字段的资源。
 
+为了允许进行轻量级的 TTL 更新(”心跳“)，可以发送未设置 [resource] 字段的 [Resource]，并且可以使用与最近发送版本匹配的版本来更新 TTL。这些资源不会视为资源更新，而仅视为 TTL 更新。
 
+### SotW TTL
 
+为了将 TTL 与 SotW xDS 一起使用，必须将相关资源封装在 [Resource] 中。这允许在不更改 SotW API 的情况下设置用于 Detla xDS 和 SotW 的相同 TTL 字段。SotW 也支持心跳：响应中任何看起来像心跳资源的资源都将仅用于更新 TTL。
 
+此功能由客户端的`xds.config.supports-resource-in-sotw`特性控制。
 
+### 聚合发现服务 (ADS)
 
+要在顺序方面提供上述保证，以避免在分发管理服务器时流量下降是一项挑战。ADS 允许单个管理服务器通过单个 gRPC 流传递所有 API 更新。这提供了严格的顺序更新以避免流量下降的功能。对于 ADS，单个流与通过类型 URL 多路复用的多个独立的 [DiscoveryRequest]/[DiscoveryResponse] 顺序一起使用。对于任何给定类型的 URL，都适用上述 [DiscoveryRequest] 和 [DiscoveryResponse] 消息的顺序。一个顺序更新的示例如下所示：
 
+![ads](../img/ads.svg)
 
+每个 Envoy 实例都有一个可用的 ADS 流。
 
+ADS 配置的最小`bootstrap.yaml`片段示例如下所示：
 
+```yaml
+node:
+  # set <cluster identifier>
+  cluster: envoy_cluster
+  # set <node identifier>
+  id: envoy_node
 
+dynamic_resources:
+  ads_config:
+    api_type: GRPC
+    transport_api_version: V3
+    grpc_services:
+    - envoy_grpc:
+        cluster_name: ads_cluster
+  cds_config:
+    resource_api_version: V3
+    ads: {}
+  lds_config:
+    resource_api_version: V3
+    ads: {}
 
+static_resources:
+  clusters:
+  - name: ads_cluster
+    connect_timeout: 5s
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: ads_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                # set <ADS management server address>
+                address: my-control-plane
+                # set <ADS management server port>
+                port_value: 777
+    # It is recommended to configure either HTTP/2 or TCP keepalives in order to detect
+    # connection issues, and allow Envoy to reconnect. TCP keepalive is less expensive, but
+    # may be inadequate if there is a TCP proxy between Envoy and the management server.
+    # HTTP/2 keepalive is slightly more expensive, but may detect issues through more types
+    # of intermediate proxies.
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options:
+            connection_keepalive:
+              interval: 30s
+              timeout: 5s
+    upstream_connection_options:
+      tcp_keepalive: {}
+```
 
+### 增量 xDS
 
+增量 xDS是一个单独的 xDS 终结点，它支持：
+
+- 允许协议根据资源/资源名称增量 (”Delta xDS“) 在线路上进行通信。这可用于支持 xDS 资源可伸缩性的目标。管理服务器只需交付已更改的单个集群，而不是在修改单个集群时交付所有的 100k 个集群。
+- 允许 Envoy 按需/惰性地请求其他资源。例如仅当该集群的请求到达时才请求该集群。
+
+增量 xDS 会话 (session) 始终在 gRPC 双向流的上下文中。这使 xDS 服务器可以跟踪与其连接的 xDS 客户端状态。尚无 REST 版本的增量 xDS。
+
+在 增量 (delta) xDS 有线协议中，nonce 字段是必填字段，用于将 [DeltaDiscoveryResponse] 与 [DeltaDiscoveryRequest] ACK/NACK 配对。存在仅用于调试目的的响应消息级别 [system_version_info]。
+
+[DeltaDiscoveryRequest] 可以在以下情况下发送：
+
+- 在 xDS 双向 gRPC 流中的初始消息
+- 作为对先前 [DeltaDiscoveryResponse] 的 ACK/NACK 响应。在这种情况下，[response_nonce] 在响应中设置为随机值。ACK/NACK 由 [error_detail] 的存在与否决定。
+- 来自客户端的自发 (Spontaneous) [DeltaDiscoveryRequests]。这样做可以从跟踪的 [resource_names] 集合中动态添加或删除元素。在这种情况下，必须省略 [response_nonce]。
+
+在此第一个示例中，客户端连接并接收其 ACK 的第一个更新。第二个更新失败，客户端将对该更新进行 NACK。然后，xDS 客户端自发请求 ”wc“ 资源。
+
+![incremental](../img/incremental.svg)
+
+重新连接时，增量 xDS 客户端可以通过在 [initial_resource_versions] 中发送它已知的资源，以避免服务端通过网络重新发送这些资源。因为在前一个流中假定没有保留状态，所以重连的客户端必须向服务端提供感兴趣的所有资源名称。请注意，对于通配符请求 (CDS/LDS/SRDS)，请求中都必须没有资源在 [resource_names_subscribe] 以及 [resource_names_unsubscribe] 中。
+
+![incremental-reconnect](../img/incremental-reconnect.svg)
+
+### 资源名称
+
+资源由资源名称或别名标识。资源的别名(如果存在)可以通过 [DeltaDiscoveryResponse] 资源中的 alias 字段进行标识。资源名称将在 [DeltaDiscoveryResponse] 资源的 name 字段中返回。
+
+### 订阅资源
+
+为了订阅一个资源，客户端在 [DeltaDiscoveryRequest] 的 [resource_names_subscribe] 字段中发送资源的别名或名称。应该同时检查资源的名称和别名，以确定有关实体是否已经订阅。
+
+[resource_names_subscribe] 字段可能包含服务端认为客户端已经订阅的资源名称，此外还有其最新版本。但是服务端仍必须在响应中提供这些资源。由于服务端上隐藏了实现细节，客户端可能已经”忘记了“那些资源，尽管它们显示仍在订阅中。
+
+### 取消资源订阅
+
+当客户端对某些资源失去兴趣时，它将使用 [DeltaDiscoveryRequest] 的 [resource_names_unsubscribe] 字段进行表示。与 [resource_names_unsubscribe] 一样，它们可以是资源名或别名。
+
+[resource_names_unsubscribe] 字段可能包含多余的 (superfluous) 资源名称，服务端认为该客户端尚未订阅。服务端必须干净地处理这样的请求；它可以简单地忽略这些未订阅的幻象 (phantom) 资源名称。
+
+### 知道何时请求的资源不存在
+
+客户端订阅的资源不存在时，服务端将会发送一个 [Resource]，该 [Resource] 的 [name] 字段匹配客户端订阅的名称且其 [resource] 字段未被设置。这允许客户端不用等待超时时间即可确定资源是否存在，就像在 SotW 协议变体中所做得那样。然而，仍然鼓励客户端使用超时时间来防止管理服务器无法及时发送响应的情况。
+
+### REST-JSON 轮询订阅集
+
+通过 REST 终结点进行的同步(长)轮询也可用于 xDS 单例 API。上述的消息排序类似，除了管理服务器没有维护一个持久流。预计在任何时间点都只有一个未完成的请求，因此响应随机数在 REST-JSON 中是可选的。proto3 中的 JSON 规范转换用于编码 [DiscoveryRequest] 和 [DiscoveryResponse] 消息。ADS 不可用与 REST-JSON 轮询。
+
+如果将轮询周期设置为一个较小的值(目前进行的是长轮询)，那么除非通过资源更新对基础 (underlying) 资源进行了更改，否则还需要避免发送 [DiscoveryResponse]。
 
 
 [ConfigSource]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/config_source.proto#envoy-v3-api-msg-config-core-v3-configsource
@@ -343,3 +466,7 @@ SotW 协议变体不提供给任何显式的机制来确定何时请求的资源
 [资源预热]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-warming
 [客户端如何指定要返回的资源]: https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol#xds-protocol-resource-hints
 [Envoy 初始化]: https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/operations/init#arch-overview-initialization
+[resource]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-msg-service-discovery-v3-resource
+[DeltaDiscoveryRequests]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-msg-service-discovery-v3-deltadiscoveryrequest
+[initial_resource_versions]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-deltadiscoveryrequest-initial-resource-versions
+[name]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/discovery/v3/discovery.proto#envoy-v3-api-field-service-discovery-v3-resource-name
