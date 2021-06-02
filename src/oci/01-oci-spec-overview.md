@@ -1,4 +1,4 @@
-# 开放容器倡议 (OCI) 规范
+# 开放容器倡议 (OCI) 规范概述
 
 [原文](https://alibaba-cloud.medium.com/open-container-initiative-oci-specifications-375b96658f55)
 
@@ -104,4 +104,56 @@ OCI 运行时规范还定义了容器的生命周期，这是一系列从容器�
 
 2. Linux 命名空间
 
-    
+Linux 平台的大量配置专用于命名空间配置。实际上，命名空间是容器技术的基础。换句话说，没有命名空间就没有容器。Linux 提供了 7 种命名空间，它们都得到了 OCI 运行时规范的支持。
+
+|名称|宏定义|隔离的资源|
+|---|---|---|
+|IPC|CLONE_NEWIPC|System V IPC (信号量，消息队列和共享内存)，POSIX message queues|
+|Network|CLONE_NEWNET|Network devices，stacks，ports (网络设备，网络栈，端口等)|
+|Mount|CLONE_NEWNS|Mount points (文件系统挂载点)|
+|PID|CLONE_NEWPID|Process IDs (进程编号)|
+|User|CLONE_NEWUSER|User and group IDs (用户和用户组)|
+|UTS|CLONE_NEWUTS|Hostname and NIS domain name (主机名与 NIS 域名)|
+|Cgroup|CLONE_NEWCGROUP|Cgroup root directory (cgroup 的根目录)|
+
+3. 注释
+
+除了容器应该运行的内容和方式之外，还可以通过注释标记容器。基于某些属性标记和选择容器的能力是容器编排 (orchestration) 平台的基本要求。
+
+## 镜像，容器和进程
+
+容器通过(容器)镜像创建。你可以通过一个镜像创建多个容器，还可以重新打包容器(这些容器通常带有一些基础容器的变更内容)以创建新的镜像。
+
+在你获取容器之后，你可以在容器内部运行进程，而无需容器的所有优点。最值得注意的是，一旦我们容器化一个应用程序，它就会称为自包含的，不会与宿主环境混淆，因此它可以”run everwhere“。
+
+以下是各种概念，镜像，容器和进程之间的关系，将它们理清楚是至关重要的。
+
+![oci4](./img/oci4.png)
+
+## Docker 和 Kubernetes
+
+Docker 使容器称为行业趋势，很多人认为 Docker 是容器，容器是 Docker。Docker 在这里绝对值得称赞，但从技术角度来看，Docker 是应用最广泛的容器实现。Docker 实现的架构从一个版本到另一个版本的演变非常快。在撰写本文时，它如下所示：
+
+![oci5](./img/oci5.png)
+
+该图遵循`github]Org/project`的格式。大多数组件源自 Docker，但目前在不同的 Github 组织和项目下。最上面使我们日常使用的 Docker 命令工具，它是 Docker Inc. 的商业产品；Docker 工具以来于一个名为 moby 的开源项目，该项目又使用了 runc，它是 oci 运行时规范的参考实现。runc 严重以来 libcontainer，它也是 Docker Inc. 捐赠的。
+
+## 容器编排
+
+如果我们只需要 1 到 2 个容器，Docker 可能就够了。但是如果我们要运行成千上万的容器，我们就有很多的问题需要解决。仅举几例：
+
+1. 调度：容器放在哪个主机上？
+2. 更新：如何更新容器镜像？
+3. 伸缩性：当需要扩容时如何添加更多的容器？
+
+这是容器编排系统的工作。Kubernetes 是其中之一，但是截至目前，我认为它是最有前途。这里我们不会深入研究 Kubernetes，而是从容器运行时如何适应容器编排平台的角度简要介绍一下。
+
+下图中展示了 Kubernetes 是如何与容器运行时进行交互的。
+
+![oci6](./img/oci6.png)
+
+Kubernetes 使用容器运行时接口对运行时实现进行解耦。简单来说，CRI 定义了创建，启动，停止和删除容器的接口。它允许 Kubernetes 使用可插拔式容器运行时，你不必锁定到某一个特定的运行时。目前有几种实现方式，如`cri-containerd`和`cri-o`，两者最终都会使用`oci/runc`。
+
+## 总结
+
+本文是对 OCI 运行时镜像和运行时规范的概述。它涵盖了每个规范的责任以及它们如何相互协作，我们回顾了容器生命周期和运行时规范的主要配置。然后介绍了 Docker 和`runc`的关系，并简要介绍了容器编排以及容器运行时是如何融入其中的。
