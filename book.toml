@@ -9,3 +9,11 @@ title = "Blog Translation"
 additional-css = ["theme/ferris.css", "theme/2018-edition.css"]
 additional-js = ["theme/ferris.js"]
 git-repository-url = "https://github.com/fucking-translation/blog"
+
+[output.html.playground]
+editable = true
+copy-js = true
+
+[output.html.fold]
+enable = true
+level = 0
