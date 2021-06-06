@@ -17,6 +17,7 @@
 | [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)||
 | [在 Android 中运行 Rust](./src/lang/rust/17-在Android中运行Rust.md)||
 | [生命周期型变示例](./src/lang/rust/19-生命周期型变示例.md)||
+| [Rust 如何实现线程安全](./src/lang/rust/20-Rust如何实现线程安全.md)||
 
 ## service mesh
 
