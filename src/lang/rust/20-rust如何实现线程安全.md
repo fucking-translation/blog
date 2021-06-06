@@ -6,7 +6,7 @@
 
 你也可以参阅：[Huon 关于此主题的博客](http://huonw.github.io/blog/2015/02/some-notes-on-send-and-sync/)
 
-在[之前的文章](http://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-your-guarantees/)中，我稍微谈到了 [Copy] 特征。标准库中还有其他这样的“标记”特征，本文中与之相关的是[Send] 和 [Sync] 特征。如果你对像 [RefCell] 和 [Rc] 这样的包装器类型不熟悉，我建议你阅读那篇文章，因为我将在本文中将它们作为示例；但是这里解释的概念在很大程度上是独立的。
+在[之前的文章](http://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-your-guarantees/)中，我稍微谈到了 [Copy] 特征。标准库中还有其他这样的“标记”特征，本文中与之相关的是 [Send] 和 [Sync] 特征。如果你对像 [RefCell] 和 [Rc] 这样的包装器类型不熟悉，我建议你阅读那篇文章，因为我将在本文中将它们作为示例；但是这里解释的概念在很大程度上是独立的。
 
 处于本文的目的，我将线程安全限制为没有数据竞争或跨线程悬垂指针。Rust 的目的不是为了解决竞争条件。然而，有些项目利用类型系统来提供某种形式的额外安全，如 [rust-session](https://github.com/Munksgaard/rust-sessions) 尝试使用会话类型提供协议安全。
 
