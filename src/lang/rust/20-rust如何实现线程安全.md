@@ -1,5 +1,7 @@
 # Rust 如何实现线程安全
 
+[原文](https://manishearth.github.io/blog/2015/05/30/how-rust-achieves-thread-safety/)
+
 在我迄今为止的每一次演讲中，都会遇到 “Rust 是如何实现线程安全”的提问，我通常只是概述一下，而本文为感兴趣的人提供了更全面的解释。
 
 你也可以参阅：[Huon 关于此主题的博客](http://huonw.github.io/blog/2015/02/some-notes-on-send-and-sync/)
