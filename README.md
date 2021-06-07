@@ -41,3 +41,4 @@
 - [从易到难 Rust 问题解答](https://dtolnay.github.io/rust-quiz)
 - [dapr 源码详解](https://github.com/1046102779/daprdocs)
 - [Kafka 读书笔记](https://www.cnblogs.com/jixp/category/1308441.html)
+- [Kubernetes 内幕](https://github.com/fucking-translation/kubernetes-internals)
