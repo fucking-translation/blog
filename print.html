@@ -258,7 +258,7 @@ struct Element {
 </span></code></pre></pre>
 <p>首先，我们来看一下输入和输入和输出的类型：和上面讨论的一样，我们让字符串切片作为输入，并返回携带<code>(&amp;str, ())</code>元组或者错误类型<code>&amp;str</code>的<code>Result</code>。<code>(&amp;str, ())</code>元组比较有趣：正如我们所说的，我们想要返回一个包含下一次待解析的输入和输出。<code>&amp;str</code>是下一次输入，解析返回的结果仅仅是一个单元类型<code>()</code>。因为如果解析成功，只可能有一种结果（我们找到了字母<code>a</code>），但是这里我们并不需要返回字母<code>a</code>，我们只需要告诉调用者我们成功发现了字母<code>a</code>即可。</p>
 <p>然后，让我们看下解析器本身的代码。我们从提取输入的第一个字符开始：<code>input.chars().next()</code>。依靠标准库来避免带来的 Unicode 编码问题并不是在开玩笑 - 我们要求它为字符串的字符提供一个<code>chars()</code>迭代器，然后从中取出第一项。该项是封装在<code>Option</code>中的<code>char</code>类型，因此是<code>Option&lt;char&gt;</code>，如果它的值为<code>None</code>则表示我们尝试在空字符串中提取一个<code>char</code>。</p>
-<p>更糟的是，<code>char</code>可能并不是你想的那样是 Unicode 字符。</p>
+<p>更糟的是，<code>char</code>可能并不是你想的那样是 Unicode 字符。它很可能就是 Unicode 所说的“<a href="http://www.unicode.org/glossary/#grapheme_cluster">字素簇</a>”，它可以由几个<code>char</code>组成，实际上代表“<a href="http://www.unicode.org/glossary/#unicode_scalar_value">标量值</a>”，大约比字素簇低两级。但是这种方式太疯狂了，出于我们(讲解)的目的，我们可能根本不会看到除 ASCII 之外的字符集，所以这种情况我们不做讨论。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="用rust编写llvm的玩具编译器"><a class="header" href="#用rust编写llvm的玩具编译器">用Rust编写LLVM的玩具编译器</a></h1>
 <h4 id="a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a class="header" href="#a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a href="https://blog.ulysse.io/post/a-toy-front-end-for-llvm-written-in-rust/">原文</a></a></h4>
 </br>
