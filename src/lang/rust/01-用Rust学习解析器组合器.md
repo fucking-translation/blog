@@ -108,4 +108,5 @@ fn the_letter_a(input: &str) -> Result<(&str, ()), &str> {
 
 然后，让我们看下解析器本身的代码。我们从提取输入的第一个字符开始：`input.chars().next()`。依靠标准库来避免带来的 Unicode 编码问题并不是在开玩笑 - 我们要求它为字符串的字符提供一个`chars()`迭代器，然后从中取出第一项。该项是封装在`Option`中的`char`类型，因此是`Option<char>`，如果它的值为`None`则表示我们尝试在空字符串中提取一个`char`。
 
-更糟的是，`char`可能并不是你想的那样是 Unicode 字符。
+更糟的是，`char`可能并不是你想的那样是 Unicode 字符。它很可能就是 Unicode 所说的“[字素簇](http://www.unicode.org/glossary/#grapheme_cluster)”，它可以由几个`char`组成，实际上代表“[标量值](http://www.unicode.org/glossary/#unicode_scalar_value)”，大约比字素簇低两级。但是这种方式太疯狂了，出于我们(讲解)的目的，我们可能根本不会看到除 ASCII 之外的字符集，所以这种情况我们不做讨论。
+
