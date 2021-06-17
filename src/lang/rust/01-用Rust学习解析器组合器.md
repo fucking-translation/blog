@@ -110,3 +110,247 @@ fn the_letter_a(input: &str) -> Result<(&str, ()), &str> {
 
 更糟的是，`char`可能并不是你想的那样是 Unicode 字符。它很可能就是 Unicode 所说的“[字素簇](http://www.unicode.org/glossary/#grapheme_cluster)”，它可以由几个`char`组成，实际上代表“[标量值](http://www.unicode.org/glossary/#unicode_scalar_value)”，大约比字素簇低两级。但是这种方式太疯狂了，出于我们(讲解)的目的，我们可能根本不会看到除 ASCII 之外的字符集，所以这种情况我们不做讨论。
 
+我们模式匹配上了`Some('a')`，这是我们正在寻找的特定结果，如果匹配上，则返回结果`Ok((&input['a'.len_utf8()..], ()))`。也就是说，我们在字符串切片中删除了刚刚解析的`'a'`并返回剩余部分以及我们的解析结果(一个空的`()`)。考虑到 Unicode 怪物，我们在切片之前向标准库询问了`'a'`在 UTF-8 编码中的长度，但是，请永远不要假设 Unicode 怪物。
+
+如果我们匹配到其他的`Some(char)`或者`None`，我们将返回一个错误。你可能还记得，我们的错误类型目前还是解析失败时的字符串切片，也就是作为`input`传入的字符串切片。它不以`'a'`开头，因此这是我们的错误。但这不是一个大的错误，但是至少比“其他地方出了问题”要好一些。
+
+虽然我们不需要使用此解析器解析 XML，但是我们要做的第一件事就是查找`<`，因此我们可能需要一些相似的东西。我们还需要专门解析`>`，`/`，`=`，因此我们可以创建一个函数为我们想要的字符构建一个解析器？
+
+## 一个 Parser Builder
+
+我们想象一下：编写一个函数，可以为任意长度的静态字符串(而不仅仅是单个字符)生成一个解析器。这种方式甚至更容易，因为一个字符串切片已经是一个合法的 UTF-8 字符串切片，我们不需要再去考虑 Unicode 怪物。
+
+```rust
+fn match_literal(expected: &'static str)
+    -> impl Fn(&str) -> Result<(&str, ()), &str>
+{
+    move |input| match input.get(0..expected.len()) {
+        Some(next) if next == expected => {
+            Ok((&input[expected.len()..], ()))
+        }
+        _ => Err(input),
+    }
+}
+```
+
+这个函数看起来有点不同。
+
+我们先看下类型。我们的函数看起来不再像是一个解析器，它将我们期望的字符串作为参数，并返回一个看似解析器的东西。它是一个返回函数的函数 - 换言之，是一个高阶函数。基本上，我们在编写一个函数，该函数可以构建一个类似之前的`the_letter_a`函数。
+
+因此，我们不是在函数体中完成工作，而是返回一个闭包用来处理这些事情，该闭包与我们之前解析器的类型签名相匹配。
+
+模式匹配看起来是一样的，除了我们不能直接匹配字符串字面量，因为我们不知道它具体是什么，所以我们使用匹配条件`if next == expected`代替。否则它和以前完全一样，只是在闭包的主体内。
+
+## 测试我们的解析器
+
+我们来为它编写测试用例，确保这个函数没有问题。
+
+```rust
+#[test]
+fn literal_parser() {
+    let parse_joe = match_literal("Hello Joe!");
+    assert_eq!(
+        Ok(("", ())),
+        parse_joe("Hello Joe!")
+    );
+    assert_eq!(
+        Ok((" Hello Robert!", ())),
+        parse_joe("Hello Joe! Hello Robert!")
+    );
+    assert_eq!(
+        Err("Hello Mike!"),
+        parse_joe("Hello Mike!")
+    );
+}
+```
+
+首先，我们构建了一个解析器：`match_literal("Hello Joe!")`。它应该消耗字符串`"Hello Joe!"`并返回字符串的剩余部分，或者失败并返回整个字符串。
+
+在第一种情况下，我们为它提供了它期望的确切字符串，并看到它返回了一个空字符串以及`()`值，这表示“我们解析了期望的字符串，并且不需要将它真的返回”。
+
+在第二种情况下，我们提供了字符串`"Hello Joe! Hello Robert!"`，并且我们看到它确实消耗了字符串`"Hello Joe!"`并且返回了输入字符串的剩余部分：`"Hello Robert!"`(包括空格)。
+
+在第三种情况下，我们提供了一个不正确的输入`"Hello Mike!"`，并注意到该函数拒绝了这个输入并返回了一个错误。不是说 Mike 作为一般规则是不正确的，而是它不是此解析器所需要的。
+
+#### 练习
+
+- 你能在标准库中找到一个关于`str`类型的方法，让你编写`match_literal()`时不必做麻烦的`get`索引吗？
+
+## 通用解析器
+
+我们可以继续解析`<`，`>`，`=`以及`</`和`/>`。我们几乎已经完成了。
+
+`<`之后需要识别的部分是元素名称。我们不能通过简单的字符串比较做到这一点。但是我们可以使用正则表达式。
+
+但是我们需要克制一下自己，这将是一个很容易在简单代码中复用的正则表达式，我们不需要为此引入`regex`库。让我们尝试一下是否可以只使用 Rust 标准库来编写自己的解析器。
+
+回顾元素名称标志符的规则：首位是字母，后跟零个或多个字母，数字或`-`。
+
+```rust
+fn identifier(input: &str) -> Result<(&str, String), &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+
+    match chars.next() {
+        Some(next) if next.is_alphabetic() => matched.push(next),
+        _ => return Err(input),
+    }
+
+    while let Some(next) = chars.next() {
+        if next.is_alphanumeric() || next == '-' {
+            matched.push(next);
+        } else {
+            break;
+        }
+    }
+
+    let next_index = matched.len();
+    Ok((&input[next_index..], matched))
+}
+```
+
+与往常一样，我们首先查看类型。这次我们不是编写函数来构建解析器，只需要编写解析器本身，就像第一次一样。这里显著的区别是，我们返回元组中的`String`和剩余的输入，而不是`()`的结果类型。这个`String`将包含我们刚刚解析的标志符。
+
+考虑到这一点，我们首先创建一个空字符串并将称之为`matched`。它是我们将要返回的结果值。我们在`input`中获取一个字符的迭代器，我们将对其进行拆解。
+
+第一步是查看前面是否有字母。我们从迭代器中取出第一个字符并检查它是否是一个字母：`next.is_alphabetic()`。Rust 标准库当然是帮我们来处理 Unicode 的 - 这将匹配任何字母表中的字母，而不仅仅是 ASCII。如果它是一个字母，我们将它放入我们的`matched`字符串中，如果不是，显然我们不是在查看元素标志符，所以我们立即返回一个错误。
+
+第二步，我们不断从迭代器中取出字符，将它们放入我们正在构建的字符串中，直到我们找到一个既不是`is_alphanumeric()`(就像是`is_alphabetic()`，它只是不能匹配字母表中的任何数字)也不是破折号`'-'`的字符。
+
+当我们第一次看到不符合这些条件的字符时，意味着我们已经完成了解析，所以我们跳出循环并返回我们构建的`String`，记住去掉我们在`input`中消耗的字符。如果迭代器用完了字符，意味着我们到达了`input`的末尾。
+
+值得注意的是，当我们看到不是字母数字 (alphanumeric) 或破折号(`-`)的内容时，我们不会返回错误。一旦我们匹配了第一个字母，我们就已经有足够的东西来创建一个有效的标志符。而且在我们解析完标志符以后，输入字符串中有更多待解析的字符是非常正常的，所以我们只是停止解析并返回我们的结果，只有当我们找不到第一个字母时，我们才真正的返回错误，因为在这种情况下，肯定没有标志符。
+
+还记得我们要将 XML 文档解析成的`Element`结构吗？
+
+```rust
+struct Element {
+    name: String,
+    attributes: Vec<(String, String)>,
+    children: Vec<Element>,
+}
+```
+
+我们实际上只是完成了解析器的第一部分，`name`字段。我们解析器返回的字符串就在那里。它也是解析每个`attribute`第一部分需要的解析器。
+
+让我们对其进行测试。
+
+```rust
+#[test]
+fn identifier_parser() {
+    assert_eq!(
+        Ok(("", "i-am-an-identifier".to_string())),
+        identifier("i-am-an-identifier")
+    );
+    assert_eq!(
+        Ok((" entirely an identifier", "not".to_string())),
+        identifier("not entirely an identifier")
+    );
+    assert_eq!(
+        Err("!not at all an identifier"),
+        identifier("!not at all an identifier")
+    );
+}
+```
+
+我们可以在第一种情况中看到，字符串`"i-am-an-identifier"`被完整解析，只留下空的字符串。在第二种情况中，解析器返回`"not"`作为标志符，并且字符串的剩余部分作为剩余的输入返回。在第三种情况中，解析彻底 (outright) 失败，因为它找到的第一个字符不是字母。
+
+## 组合器
+
+现在，我们已经可以解析`<`，以及之后的标志符了，但是我们需要同时将它们进行解析，以便在这里可以取得进展。因此接下来将编写另一个解析器的构造函数，它将两个解析器作为输入并返回一个新的解析器，并按顺序解析它们。换言之，它是一个解析器组合器，因为它将两个解析器组合成一个新的解析器。让我们看看我们是否能够做到这一点。
+
+```rust
+fn pair<P1, P2, R1, R2>(parser1: P1, parser2: P2) -> impl Fn(&str) -> Result<(&str, (R1, R2)), &str>
+where
+    P1: Fn(&str) -> Result<(&str, R1), &str>,
+    P2: Fn(&str) -> Result<(&str, R2), &str>,
+{
+    move |input| match parser1(input) {
+        Ok((next_input, result1)) => match parser2(next_input) {
+            Ok((final_input, result2)) => Ok((final_input, (result1, result2))),
+            Err(err) => Err(err),
+        },
+        Err(err) => Err(err),
+    }
+}
+```
+
+这里有点复杂，但是你知道该怎么做：从查看类型开始。
+
+首先，我们有四种类型变量：`P1`，`P2`，`R1`以及`R2`。这是 Parser1，Parser2，Result1，Result2 的缩写。`P1`，`P2`是函数，你会注意到它们遵循解析器函数的既定模式 (established pattern)：就像返回值，它们将`&str`作为输入并返回一个`Result`类型，该`Result`类型可能是一个包含剩余输入以及解析结果的二元组，或者是一个错误。
+
+但是查看每个函数的结果类型：`P1`如果解析成功，将会产生`R1`，`P2`同理会产生`R2`。最终解析器的结果 - 从我们的函数返回的结果 - 是`(R1, R2)`。因此该解析器的工作是先在输入上运行解析器`P1`，然后在`P1`返回的剩余输入上运行`P2`，如果这两个解析器都执行成功，则我们将两个解析器返回的结果组合进元组`(R1, R2)`。
+
+查看代码，我们看到这也正是它所做得。我们首先在输入上运行第一个解析器，然后是第二个解析器，接着将两个结果组合成一个元组并返回。如果这些解析器中的任何一个执行失败，我们会立即返回它给出的错误。
+
+这样，我们应该能够结合之前的两个解析器`match_literal`和`identifier`来实际解析 XML 标签的第一部分(`<my-first-element/>`)。让我们编写测试用例看它是否正确。
+
+```rust
+#[test]
+fn pair_combinator() {
+    let tag_opener = pair(match_literal("<"), identifier);
+    assert_eq!(
+        Ok(("/>", ((), "my-first-element".to_string()))),
+        tag_opener("<my-first-element/>")
+    );
+    assert_eq!(Err("oops"), tag_opener("oops"));
+    assert_eq!(Err("!oops"), tag_opener("<!oops"));
+}
+```
+
+它看起来成功了！但是看下结果类型：`((), String)`。很明显，我们只关心右边的值 - `String`。这种情况相当普遍 - 我们的一些解析器只匹配输入中的模式但不产生值，因此可以安全的忽略他们的输出。为了适应这种模式，我们将使用`pair`组合子编写另外两个组合子`left`，它丢弃第一个解析器的结果，只返回第二个，以及它的相反数`right`，我们想在上面的测试中使用`right`而不是`pair` - 它可以丢弃二元组左边的`()`只保留右边的`String`。
+
+## 函子 (functor)
+
+在我们深入讨论之前，先介绍另一个组合器：`map`，它将使编写这两个解析器更加简单。
+
+这个组合器有一个目的：改变结果的类型。例如，假设你有一个解析器返回`((), String)`，但是你希望能够将其返回值类型修改为`String`。
+
+为了做到这点，我们传入一个函数，该函数知道如何将原始类型转换成新的类型。在我们的示例中，该函数十分简单：`|(_left, right)| right`。它的一般格式就像`Fn(A) -> B`，其中`A`是解析器的原始类型，`B`是期望的新类型。
+
+```rust
+fn map<P, F, A, B>(parser: P, map_fn: F) -> impl Fn(&str) -> Result<(&str, B), &str>
+where
+    P: Fn(&str) -> Result<(&str, A), &str>,
+    F: Fn(A) -> B,
+{
+    move |input| match parser(input) {
+        Ok((next_input, result)) => Ok((next_input, map_fn(result))),
+        Err(err) => Err(err),
+    }
+}
+```
+
+这些类型说明什么？`P`是我们的解析器。它在成功时将返回`A`。`F`是我们将用于将`P`映射到我们的返回值中的函数，它看起来和`P`很像，但是它的返回值类型是`B`而不是`A`。
+
+在代码中，我们运行`parser(input)`，如果执行成功，我们将拿到`result`并在其上运行函数`map_fn(result)`，然后将`A`转换成`B`。
+
+实际上，我们可以稍微放纵 (indulge) 一下自己并缩短一下这个函数，因为`map`实际上是处理`Result`的一种常见模式：
+
+```rust
+fn map<P, F, A, B>(parser: P, map_fn: F) -> impl Fn(&str) -> Result<(&str, B), &str>
+where
+    P: Fn(&str) -> Result<(&str, A), &str>,
+    F: Fn(A) -> B,
+{
+    move |input|
+        parser(input)
+            .map(|(next_input, result)| (next_input, map_fn(result)))
+}
+```
+
+这种模式在 Haskell 以及范畴论 (category theory) 中被称为”函子 (functor)“。如果你在其中有一个类型为`A`的东西，并且有一个可用的`map`函数，你可以将某个函数从`A`传递到`B`以将其转换成相同类型的东西，但是在其中使用类型`B`，这就是一个函子。你可以在 Rust 中很多地方见到它，如在 [Option](https://doc.rust-lang.org/std/option/enum.Option.html#method.map) 中，[Result](https://doc.rust-lang.org/std/result/enum.Result.html#method.map) 中，[Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map) 甚至在 [Future](https://docs.rs/futures/0.1.26/futures/future/trait.Future.html#method.map) 中，但它没有被明确命名。因为在 Rust 的类型系统中，你不能真正的将函子表示为泛化的东西，因为它缺乏更高级的类型，但那是另一回事了，所以我们只需关注这些函子，寻找`map`函数即可。
+
+## 
+
+你可能已经注意到，我们不断重复解析器类型签名的格式：`Fn(&str) -> Result<(&str, Output), &str>`。你可能已经厌倦了像我写的那样完整的阅读它，所以我认为是时候引入一个 trait，让这些更具有可读性，还可以为解析器添加一些扩展性。
+
+但是首先，我们先为一直使用的返回值类型创建一个类型别名：
+
+```rust
+type ParseResult<'a, Output> = Result<(&'a str, Output), &'a str>;
+```
+
+现在，我们可以不用一直输入那串冗长的类型，可以直接使用`ParseResult<String>`。我们可以在这里添加一个生命周期，因为类型的声明需要它，但是大多数时候 Rust 编译器可以帮你推断。通常，可以尝试不添加生命周期，并观察 rustc 是否报错，如果报错则添加生命周期。
+
+在此情况下，生命周期`'a`专门是指`input`的生命周期。
