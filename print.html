@@ -178,7 +178,7 @@
 <li><a href="lang/rust/./std/20-std-pin.html">std::pin</a></li>
 <li><a href="lang/rust/./std/21-std-condvar.html">std::sync::Condvar</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="用rust学习解析器组合器"><a class="header" href="#用rust学习解析器组合器">用Rust学习解析器组合器</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="用-rust-学习解析器组合器"><a class="header" href="#用-rust-学习解析器组合器">用 Rust 学习解析器组合器</a></h1>
 <h4 id="a-hrefhttpsbodillolparser-combinators原文a"><a class="header" href="#a-hrefhttpsbodillolparser-combinators原文a"><a href="https://bodil.lol/parser-combinators/">原文</a></a></h4>
 </br>
 <p><a href="lang/rust/01-%E7%94%A8Rust%E5%AD%A6%E4%B9%A0%E8%A7%A3%E6%9E%90%E5%99%A8%E7%BB%84%E5%90%88%E5%99%A8.html#%E5%88%9D%E5%AD%A6%E8%80%85%E7%9A%84%E6%83%B3%E6%B3%95">1. 初学者的想法</a><br />
@@ -187,7 +187,7 @@
 <a href="lang/rust/01-%E7%94%A8Rust%E5%AD%A6%E4%B9%A0%E8%A7%A3%E6%9E%90%E5%99%A8%E7%BB%84%E5%90%88%E5%99%A8.html#%E5%AE%9A%E4%B9%89%E8%A7%A3%E6%9E%90%E5%99%A8">4. 定义解析器</a><br />
 <a href="lang/rust/01-%E7%94%A8Rust%E5%AD%A6%E4%B9%A0%E8%A7%A3%E6%9E%90%E5%99%A8%E7%BB%84%E5%90%88%E5%99%A8.html#%E6%88%91%E4%BB%AC%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E8%A7%A3%E6%9E%90%E5%99%A8">5. 我们的第一个解析器</a></p>
 <p>本文向已是 Rust 程序员的人们传授解析器组合器的基础知识。它假定不涉及其他知识，并将解释与 Rust 没有直接关系的所有内容，以及为达到此目的使用 Rust 的一些令人意外的特性。如果你不了解 Rust，他不会教你 Rust 的内容，但是这样的话，同样也无法更好的教你解析器和组合器的知识。如果你想要学习 Rust 语言，我推荐  <a href="https://doc.rust-lang.org/book/">Rust编程语言</a> 这本书。</p>
-<h2 id="初学者的想法"><a class="header" href="#初学者的想法">初学者的想法</a></h2>
+<h2 id="beginners-mind"><a class="header" href="#beginners-mind">Beginner's Mind</a></h2>
 <p>当每个程序员发现自己需要解析器时，它们的生活将变得有意义。</p>
 <p>初学者程序员将会问：“什么是解析器？”。<br />
 中级程序员将会说：“这很简单，我将写一串正则表达式”。<br />
@@ -195,11 +195,11 @@
 <p>初学者的想法是正确的。</p>
 <p>不是说正则表达式不好（但是请不要用正则表达式写复杂的解析器）。使用经过数千年磨练至完美的解析器和词法分析生成器之类的强大工具并不是没有乐趣可言。但是从头开始一点一点学习解析器将更有趣。这两者只是对当前实际问题的抽象，如果你直接选择正则表达式或者解析器生成工具，你将失去这一份乐趣。在初学者眼中，正如人们说的：本来（解决这个问题）有很多种方法，但是在专家眼里，已经形成思维定视，只会选择一种他们最习惯的方式。
 在本文中我们将从头开始学习如何构建解析器，基于被称为解析器组合器的函数式编程语言的通用技术。一旦你掌握了它们的基本概念，它们的优势将非常巨大，同时又非常接近第一原理。因为这里唯一的抽象是你将在基础的组合器之上构建你自己的抽象。所有这些，你必须先构建它们，才能使用它们。</p>
-<h2 id="如何阅读本文"><a class="header" href="#如何阅读本文">如何阅读本文</a></h2>
+<h2 id="how-to-work-through-this-article"><a class="header" href="#how-to-work-through-this-article">How To Work Through This Article</a></h2>
 <p>强烈建议你初始化一个 Rust 项目，并且在<code>src/lib.rs</code>中书写你阅读到的代码片段（你可以直接从页面上直接复制，但是最好还是自己手敲，因为这样会自动确保你完整阅读代码）。本文将按序介绍你需要的每段代码。请注意，有时会引入你先前编写功能的最新版本，这时，你需要将旧版本替换为新版本。</p>
 <p>该代码是使用 2018 年语言版本的<code>rustc</code>的 1.34.0 版本编写的。你应该尽可能使用最新版本的编译器，只要你确保你使用的是 2018 的版本即可（检查<code>Cargo.toml</code>文件中是否包含<code>edition = &quot;2018&quot;</code>）。代码不需要任何的外部依赖。</p>
 <p>如果要运行本文中的测试用例，请执行<code>cargo test</code>。</p>
-<h2 id="xcruciating标记语言"><a class="header" href="#xcruciating标记语言"><code>Xcruciating</code>标记语言</a></h2>
+<h2 id="the-xcruciating-markup-language"><a class="header" href="#the-xcruciating-markup-language">The Xcruciating Markup Language</a></h2>
 <p>我们将用简化的XML格式写一个解析器，如下所示：</p>
 <pre><code class="language-xml">&lt;parent-element&gt;
   &lt;single-element attribute=&quot;value&quot; /&gt;
@@ -221,7 +221,7 @@ struct Element {
 </span></code></pre></pre>
 <p>没有花哨的类型，仅仅用字符串表示名称（那是每个标签开始的标志符），用字符串元组表示属性（标志符和对应的值），还有一个看起来和父元素完全一样的子元素列表。</p>
 <p>（如果你正在输入，请加上那一系列的<code>derive</code>，你将在后面用到它们）。</p>
-<h2 id="定义解析器"><a class="header" href="#定义解析器">定义解析器</a></h2>
+<h2 id="defining-the-parser"><a class="header" href="#defining-the-parser">Defining The Parser</a></h2>
 <p>好了，是时候编写解析器了。</p>
 <p>解析是从数据流中派生结构的过程。解析器就是要弄清楚该结构的工具。</p>
 <p>在我们即将探索的知识中，解析器最简单的一种形式就是一个函数，该函数接受一些输入并返回解析后的输出以及输入的其余部分，或者是一个错误信息：“我无法解析该输入”。</p>
@@ -243,7 +243,7 @@ struct Element {
 <p>我们使用字符串切片（<code>&amp;str</code>），是因为他是指向字符串的有效指针。我们可以进一步对其进行切片，通过切掉已解析的部分来消耗输入，并将余下的输入和结果一起返回。</p>
 <p>可能使用<code>&amp;[u8]</code>类型作为输入（一串字节数组，如果将输入的字节限制在<code>ASCII</code>范围内，则<code>u8</code>和<code>char</code>相对应）会看起来更加干净，尤其是字符串切片（<code>&amp;str</code>）的行为和大多数切片的行为有所不同。你不能够通过一个数字来检索它们，你必须使用一个分片<code>input[0..1]</code>。另一方面，它们对于解析字符串有很多有用的函数，而字节切片没有。</p>
 <p>事实上，我们通常都需要依赖这些函数而不是像<code>input[0]</code>这样对他进行索引。因为 Rust 的字符串是<code>UTF-8</code>格式的，这些索引并不总是对应于单个字符，所以对于我们来说，让标准库为我们处理这些问题更好。</p>
-<h2 id="我们的第一个解析器"><a class="header" href="#我们的第一个解析器">我们的第一个解析器</a></h2>
+<h2 id="our-first-parser"><a class="header" href="#our-first-parser">Our First Parser</a></h2>
 <p>让我们来一起写一个解析器，只需要关注字符串中的第一个字符并判断它是否是字母<code>a</code></p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
@@ -262,7 +262,7 @@ struct Element {
 <p>我们模式匹配上了<code>Some('a')</code>，这是我们正在寻找的特定结果，如果匹配上，则返回结果<code>Ok((&amp;input['a'.len_utf8()..], ()))</code>。也就是说，我们在字符串切片中删除了刚刚解析的<code>'a'</code>并返回剩余部分以及我们的解析结果(一个空的<code>()</code>)。考虑到 Unicode 怪物，我们在切片之前向标准库询问了<code>'a'</code>在 UTF-8 编码中的长度，但是，请永远不要假设 Unicode 怪物。</p>
 <p>如果我们匹配到其他的<code>Some(char)</code>或者<code>None</code>，我们将返回一个错误。你可能还记得，我们的错误类型目前还是解析失败时的字符串切片，也就是作为<code>input</code>传入的字符串切片。它不以<code>'a'</code>开头，因此这是我们的错误。但这不是一个大的错误，但是至少比“其他地方出了问题”要好一些。</p>
 <p>虽然我们不需要使用此解析器解析 XML，但是我们要做的第一件事就是查找<code>&lt;</code>，因此我们可能需要一些相似的东西。我们还需要专门解析<code>&gt;</code>，<code>/</code>，<code>=</code>，因此我们可以创建一个函数为我们想要的字符构建一个解析器？</p>
-<h2 id="一个-parser-builder"><a class="header" href="#一个-parser-builder">一个 Parser Builder</a></h2>
+<h2 id="a-parser-builder"><a class="header" href="#a-parser-builder">A Parser Builder</a></h2>
 <p>我们想象一下：编写一个函数，可以为任意长度的静态字符串(而不仅仅是单个字符)生成一个解析器。这种方式甚至更容易，因为一个字符串切片已经是一个合法的 UTF-8 字符串切片，我们不需要再去考虑 Unicode 怪物。</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
@@ -283,7 +283,7 @@ struct Element {
 <p>我们先看下类型。我们的函数看起来不再像是一个解析器，它将我们期望的字符串作为参数，并返回一个看似解析器的东西。它是一个返回函数的函数 - 换言之，是一个高阶函数。基本上，我们在编写一个函数，该函数可以构建一个类似之前的<code>the_letter_a</code>函数。</p>
 <p>因此，我们不是在函数体中完成工作，而是返回一个闭包用来处理这些事情，该闭包与我们之前解析器的类型签名相匹配。</p>
 <p>模式匹配看起来是一样的，除了我们不能直接匹配字符串字面量，因为我们不知道它具体是什么，所以我们使用匹配条件<code>if next == expected</code>代替。否则它和以前完全一样，只是在闭包的主体内。</p>
-<h2 id="测试我们的解析器"><a class="header" href="#测试我们的解析器">测试我们的解析器</a></h2>
+<h2 id="testing-our-parser"><a class="header" href="#testing-our-parser">Testing Our Parser</a></h2>
 <p>我们来为它编写测试用例，确保这个函数没有问题。</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
@@ -310,11 +310,11 @@ fn literal_parser() {
 <p>在第一种情况下，我们为它提供了它期望的确切字符串，并看到它返回了一个空字符串以及<code>()</code>值，这表示“我们解析了期望的字符串，并且不需要将它真的返回”。</p>
 <p>在第二种情况下，我们提供了字符串<code>&quot;Hello Joe! Hello Robert!&quot;</code>，并且我们看到它确实消耗了字符串<code>&quot;Hello Joe!&quot;</code>并且返回了输入字符串的剩余部分：<code>&quot;Hello Robert!&quot;</code>(包括空格)。</p>
 <p>在第三种情况下，我们提供了一个不正确的输入<code>&quot;Hello Mike!&quot;</code>，并注意到该函数拒绝了这个输入并返回了一个错误。不是说 Mike 作为一般规则是不正确的，而是它不是此解析器所需要的。</p>
-<h4 id="练习"><a class="header" href="#练习">练习</a></h4>
+<h4 id="exercises"><a class="header" href="#exercises">Exercises</a></h4>
 <ul>
 <li>你能在标准库中找到一个关于<code>str</code>类型的方法，让你编写<code>match_literal()</code>时不必做麻烦的<code>get</code>索引吗？</li>
 </ul>
-<h2 id="通用解析器"><a class="header" href="#通用解析器">通用解析器</a></h2>
+<h2 id="a-parser-for-something-less-specific"><a class="header" href="#a-parser-for-something-less-specific">A Parser For Something Less Specific</a></h2>
 <p>我们可以继续解析<code>&lt;</code>，<code>&gt;</code>，<code>=</code>以及<code>&lt;/</code>和<code>/&gt;</code>。我们几乎已经完成了。</p>
 <p><code>&lt;</code>之后需要识别的部分是元素名称。我们不能通过简单的字符串比较做到这一点。但是我们可以使用正则表达式。</p>
 <p>但是我们需要克制一下自己，这将是一个很容易在简单代码中复用的正则表达式，我们不需要为此引入<code>regex</code>库。让我们尝试一下是否可以只使用 Rust 标准库来编写自己的解析器。</p>
@@ -384,7 +384,7 @@ fn identifier_parser() {
 <span class="boring">}
 </span></code></pre></pre>
 <p>我们可以在第一种情况中看到，字符串<code>&quot;i-am-an-identifier&quot;</code>被完整解析，只留下空的字符串。在第二种情况中，解析器返回<code>&quot;not&quot;</code>作为标志符，并且字符串的剩余部分作为剩余的输入返回。在第三种情况中，解析彻底 (outright) 失败，因为它找到的第一个字符不是字母。</p>
-<h2 id="组合器"><a class="header" href="#组合器">组合器</a></h2>
+<h2 id="combinators"><a class="header" href="#combinators">Combinators</a></h2>
 <p>现在，我们已经可以解析<code>&lt;</code>，以及之后的标志符了，但是我们需要同时将它们进行解析，以便在这里可以取得进展。因此接下来将编写另一个解析器的构造函数，它将两个解析器作为输入并返回一个新的解析器，并按顺序解析它们。换言之，它是一个解析器组合器，因为它将两个解析器组合成一个新的解析器。让我们看看我们是否能够做到这一点。</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
@@ -425,7 +425,7 @@ fn pair_combinator() {
 <span class="boring">}
 </span></code></pre></pre>
 <p>它看起来成功了！但是看下结果类型：<code>((), String)</code>。很明显，我们只关心右边的值 - <code>String</code>。这种情况相当普遍 - 我们的一些解析器只匹配输入中的模式但不产生值，因此可以安全的忽略他们的输出。为了适应这种模式，我们将使用<code>pair</code>组合子编写另外两个组合子<code>left</code>，它丢弃第一个解析器的结果，只返回第二个，以及它的相反数<code>right</code>，我们想在上面的测试中使用<code>right</code>而不是<code>pair</code> - 它可以丢弃二元组左边的<code>()</code>只保留右边的<code>String</code>。</p>
-<h2 id="函子-functor"><a class="header" href="#函子-functor">函子 (functor)</a></h2>
+<h2 id="enter-the-functor"><a class="header" href="#enter-the-functor">Enter The Functor</a></h2>
 <p>在我们深入讨论之前，先介绍另一个组合器：<code>map</code>，它将使编写这两个解析器更加简单。</p>
 <p>这个组合器有一个目的：改变结果的类型。例如，假设你有一个解析器返回<code>((), String)</code>，但是你希望能够将其返回值类型修改为<code>String</code>。</p>
 <p>为了做到这点，我们传入一个函数，该函数知道如何将原始类型转换成新的类型。在我们的示例中，该函数十分简单：<code>|(_left, right)| right</code>。它的一般格式就像<code>Fn(A) -&gt; B</code>，其中<code>A</code>是解析器的原始类型，<code>B</code>是期望的新类型。</p>
@@ -462,7 +462,7 @@ where
 <span class="boring">}
 </span></code></pre></pre>
 <p>这种模式在 Haskell 以及范畴论 (category theory) 中被称为”函子 (functor)“。如果你在其中有一个类型为<code>A</code>的东西，并且有一个可用的<code>map</code>函数，你可以将某个函数从<code>A</code>传递到<code>B</code>以将其转换成相同类型的东西，但是在其中使用类型<code>B</code>，这就是一个函子。你可以在 Rust 中很多地方见到它，如在 <a href="https://doc.rust-lang.org/std/option/enum.Option.html#method.map">Option</a> 中，<a href="https://doc.rust-lang.org/std/result/enum.Result.html#method.map">Result</a> 中，<a href="https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map">Iterator</a> 甚至在 <a href="https://docs.rs/futures/0.1.26/futures/future/trait.Future.html#method.map">Future</a> 中，但它没有被明确命名。因为在 Rust 的类型系统中，你不能真正的将函子表示为泛化的东西，因为它缺乏更高级的类型，但那是另一回事了，所以我们只需关注这些函子，寻找<code>map</code>函数即可。</p>
-<h2 id=""><a class="header" href="#"></a></h2>
+<h2 id="time-for-a-trait"><a class="header" href="#time-for-a-trait">Time For A Trait</a></h2>
 <p>你可能已经注意到，我们不断重复解析器类型签名的格式：<code>Fn(&amp;str) -&gt; Result&lt;(&amp;str, Output), &amp;str&gt;</code>。你可能已经厌倦了像我写的那样完整的阅读它，所以我认为是时候引入一个 trait，让这些更具有可读性，还可以为解析器添加一些扩展性。</p>
 <p>但是首先，我们先为一直使用的返回值类型创建一个类型别名：</p>
 <pre><pre class="playground"><code class="language-rust">
@@ -472,7 +472,246 @@ where
 <span class="boring">}
 </span></code></pre></pre>
 <p>现在，我们可以不用一直输入那串冗长的类型，可以直接使用<code>ParseResult&lt;String&gt;</code>。我们可以在这里添加一个生命周期，因为类型的声明需要它，但是大多数时候 Rust 编译器可以帮你推断。通常，可以尝试不添加生命周期，并观察 rustc 是否报错，如果报错则添加生命周期。</p>
-<p>在此情况下，生命周期<code>'a</code>专门是指<code>input</code>的生命周期。</p>
+<p>在此例中，<code>'a</code>特指<code>input</code>的生命周期。</p>
+<p>现在，对于 trait，我们也需要在这里声明生命周期，并且当你使用该 trait 时，生命周期通常也是必须的。这是一个额外的输入，但它击败了以前的版本。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Parser&lt;'a, Output&gt; {
+    fn parse(&amp;self, input: &amp;'a str) -&gt; ParseResult&lt;'a, Output&gt;;
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>它目前只有一个方法：<code>parse()</code>方法，它看起来似曾相识：它和我们之前编写的解析器函数基本相同。</p>
+<p>为了让它更加简单，我们实际上可以为任何匹配解析器签名的函数实现这个 trait。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;'a, F, Output&gt; Parser&lt;'a, Output&gt; for F
+where
+    F: Fn(&amp;'a str) -&gt; ParseResult&lt;Output&gt;,
+{
+    fn parse(&amp;self, input: &amp;'a str) -&gt; ParseResult&lt;'a, Output&gt; {
+        self(input)
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>通过这种方式，我们不仅可以传递迄今为止已传递的相同函数作为解析器，并完全实现<code>Parser</code> trait，还可以使用其他类型作为解析器。</p>
+<p>但是，更重要的是，它把我们从必须一直输入这些函数签名的噩梦中解救了出来。让我们重写<code>map</code>函数，并看它是如何工作的。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn map&lt;'a, P, F, A, B&gt;(parser: P, map_fn: F) -&gt; impl Parser&lt;'a, B&gt;
+where
+    P: Parser&lt;'a, A&gt;,
+    F: Fn(A) -&gt; B,
+{
+    move |input|
+        parser.parse(input)
+            .map(|(next_input, result)| (next_input, map_fn(result)))
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>这里需要特别注意的一件事是：我们现在必须执行<code>parser.parse(input)</code>，而不是将解析器作为函数调用，因为我们不知道类型<code>P</code>是否是函数，我们只知道它实现了<code>Parser</code>，并且我们必须使用<code>Parser</code>提供的接口。但是函数体看起来完全一样，类型看起来也更加简洁。只是有一个新的额外噪音：生命周期<code>'a</code>，但总的来说是一个很大的改进。</p>
+<p>如果我们以相同的方式重新编写<code>pair</code>函数，会看起来更加简洁：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn pair&lt;'a, P1, P2, R1, R2&gt;(parser1: P1, parser2: P2) -&gt; impl Parser&lt;'a, (R1, R2)&gt;
+where
+    P1: Parser&lt;'a, R1&gt;,
+    P2: Parser&lt;'a, R2&gt;,
+{
+    move |input| match parser1.parse(input) {
+        Ok((next_input, result1)) =&gt; match parser2.parse(next_input) {
+            Ok((final_input, result2)) =&gt; Ok((final_input, (result1, result2))),
+            Err(err) =&gt; Err(err),
+        },
+        Err(err) =&gt; Err(err),
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>和之前一样，这里唯一的改变就是类型签名更加简洁，并且需要执行<code>parser.parse(input)</code>而不是<code>parse(input)</code>。</p>
+<p>实际上，我们还可以简化<code>pair</code>函数的主题，通过使用<code>map</code>：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn pair&lt;'a, P1, P2, R1, R2&gt;(parser1: P1, parser2: P2) -&gt; impl Parser&lt;'a, (R1, R2)&gt;
+where
+    P1: Parser&lt;'a, R1&gt;,
+    P2: Parser&lt;'a, R2&gt;,
+{
+    move |input| {
+        parser1.parse(input).and_then(|(next_input, result1)| {
+            parser2.parse(next_input)
+                .map(|(last_input, result2)| (last_input, (result1, result2)))
+        })
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p><code>Result</code>的<code>and_then</code>方法和<code>map</code>类似，不同之处在于<code>map</code>函数不会返回新值到<code>Result</code>内部，而是返回一个新的<code>Result</code>。上面的代码与先前使用<code>match</code>块的版本效果相同。稍后我们将回到<code>and_then</code>，但是现在，既然我们有一个干净简洁的<code>map</code>，我们可以真正实现<code>left</code>，<code>right</code>组合器。</p>
+<h2 id="left-and-right"><a class="header" href="#left-and-right">Left And Right</a></h2>
+<p>有了<code>pair</code>和<code>map</code>，我们可以非常简洁的编写<code>left</code>和<code>right</code>组合器：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn left&lt;'a, P1, P2, R1, R2&gt;(parser1: P1, parser2: P2) -&gt; impl Parser&lt;'a, R1&gt;
+where
+    P1: Parser&lt;'a, R1&gt;,
+    P2: Parser&lt;'a, R2&gt;,
+{
+    map(pair(parser1, parser2), |(left, _right)| left)
+}
+
+fn right&lt;'a, P1, P2, R1, R2&gt;(parser1: P1, parser2: P2) -&gt; impl Parser&lt;'a, R2&gt;
+where
+    P1: Parser&lt;'a, R1&gt;,
+    P2: Parser&lt;'a, R2&gt;,
+{
+    map(pair(parser1, parser2), |(_left, right)| right)
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>我们使用<code>pair</code>组合器将两个解析器组合成一个解析器，然后使用<code>map</code>组合器选择其结果元组中我们想要保留的部分。</p>
+<p>现在我们需要为元素标签的前两部分重写测试，使它更简洁一些，在此过程中，我们将获得了一些重要的新解析器组合器功能。</p>
+<p>不过，我们必须先更新我们的两个解析器以使用<code>Parser</code>和<code>ParseResult</code>。<code>match_literal</code>是更复杂的一个：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn match_literal&lt;'a&gt;(expected: &amp;'static str) -&gt; impl Parser&lt;'a, ()&gt; {
+    move |input: &amp;'a str| match input.get(0..expected.len()) {
+        Some(next) if next == expected =&gt; Ok((&amp;input[expected.len()..], ())),
+        _ =&gt; Err(input),
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>除了改变返回值类型之外，我们还必须确保闭包的输入类型是<code>&amp;'a str</code>，否则 rustc 会报错。</p>
+<p>对于<code>identifier</code>，只需更改返回值类型即可，编译器会自动为你推断生命周期。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn identifier(input: &amp;str) -&gt; ParseResult&lt;String&gt; {}
+<span class="boring">}
+</span></code></pre></pre>
+<p>接下来进行测试，可以看见在结果中没有那个笨拙 (ungainly) 的<code>()</code>。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn right_combinator() {
+    let tag_opener = right(match_literal(&quot;&lt;&quot;), identifier);
+    assert_eq!(
+        Ok((&quot;/&gt;&quot;, &quot;my-first-element&quot;.to_string())),
+        tag_opener.parse(&quot;&lt;my-first-element/&gt;&quot;)
+    );
+    assert_eq!(Err(&quot;oops&quot;), tag_opener.parse(&quot;oops&quot;));
+    assert_eq!(Err(&quot;!oops&quot;), tag_opener.parse(&quot;&lt;!oops&quot;));
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="one-or-more"><a class="header" href="#one-or-more">One Or More</a></h2>
+<p>让我们继续解析元素标签。我们已经解析了<code>&lt;</code>和标志符。然后呢？应该是我们的第一个属性对。</p>
+<p>实际上这些属性对是可选的。我们需要找到一种方式来处理这种可选的标记。</p>
+<p>等等，实际上在我们得到第一个可选属性对之前我们必须处理一些事情：空格。</p>
+<p>在元素名称的末尾以及第一个属性名称(如果存在的话)的开头之间，存在一个空格。我们需要处理这个空格。</p>
+<p>甚至更糟的是，我们需要处理一个或多个空格，因为<code>&lt;element      attribute=&quot;value&quot;/&gt;</code>也是一个合法的语法，即使它的空格很多。所以这似乎是我们考虑是否可以编写一个组合器来表示一个或多个解析器想法的好时机。</p>
+<p>我们在<code>identifier</code>解析器中已经处理过这个问题，但是一切都是在那里手动完成的。毫不奇怪，总体思路的代码并没有什么不同。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn one_or_more&lt;'a, P, A&gt;(parser: P) -&gt; impl Parser&lt;'a, Vec&lt;A&gt;&gt;
+where
+    P: Parser&lt;'a, A&gt;,
+{
+    move |mut input| {
+        let mut result = Vec::new();
+
+        if let Ok((next_input, first_item)) = parser.parse(input) {
+            input = next_input;
+            result.push(first_item);
+        } else {
+            return Err(input);
+        }
+
+        while let Ok((next_input, next_item)) = parser.parse(input) {
+            input = next_input;
+            result.push(next_item);
+        }
+
+        Ok((input, result))
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>首先，我们构建的解析器返回值类型是<code>A</code>，组合解析器的返回值类型是<code>Vec&lt;A&gt;</code> - 任意数量的<code>A</code>。</p>
+<p>这个代码看起来确实和<code>identifier</code>很像。首先，我们解析第一个元素，如果不存在，则返回一个错误。然后我们尽可能多的解析元素，直到解析失败，此时我们返回包含收集元素的向量。</p>
+<p>将上述代码修改为支持解析零次或多次的解析器也很简单，只需删除前部分<code>if</code>判断即可：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn zero_or_more&lt;'a, P, A&gt;(parser: P) -&gt; impl Parser&lt;'a, Vec&lt;A&gt;&gt;
+where
+    P: Parser&lt;'a, A&gt;,
+{
+    move |mut input| {
+        let mut result = Vec::new();
+
+        while let Ok((next_input, next_item)) = parser.parse(input) {
+            input = next_input;
+            result.push(next_item);
+        }
+
+        Ok((input, result))
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>让我们编写测试用例以验证这两个解析器的功能符合预期。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn one_or_more_combinator() {
+    let parser = one_or_more(match_literal(&quot;ha&quot;));
+    assert_eq!(Ok((&quot;&quot;, vec![(), (), ()])), parser.parse(&quot;hahaha&quot;));
+    assert_eq!(Err(&quot;ahah&quot;), parser.parse(&quot;ahah&quot;));
+    assert_eq!(Err(&quot;&quot;), parser.parse(&quot;&quot;));
+}
+
+#[test]
+fn zero_or_more_combinator() {
+    let parser = zero_or_more(match_literal(&quot;ha&quot;));
+    assert_eq!(Ok((&quot;&quot;, vec![(), (), ()])), parser.parse(&quot;hahaha&quot;));
+    assert_eq!(Ok((&quot;ahah&quot;, vec![])), parser.parse(&quot;ahah&quot;));
+    assert_eq!(Ok((&quot;&quot;, vec![])), parser.parse(&quot;&quot;));
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>请注意两者的不同之处：对于<code>one_or_more</code>，解析空字符串时会返回错误，因为它需要找到至少一个满足其子解析器的输入，但是对于<code>zero_or_more</code>，一个空字符串只是意味着没有满足条件的输入，它并不是一个错误。</p>
+<p>鉴于此，可以考虑将这两个方法进行泛化，因为一个是另一个的副本，只是移除了一部分功能。用<code>zero_or_more</code>来表示<code>one_or_more</code>可能会很诱人 (tempt)。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn one_or_more&lt;'a, P, A&gt;(parser: P) -&gt; impl Parser&lt;'a, Vec&lt;A&gt;&gt;
+where
+    P: Parser&lt;'a, A&gt;,
+{
+    map(pair(parser, zero_or_more(parser)), |(head, mut tail)| {
+        tail.insert(0, head);
+        tail
+    })
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>在这里，我们遇到了 Rust 的一个问题，我甚至不是指<code>Vec</code>没有<code>cons</code>方法的问题，但我知道每个阅读那段代码的 Lisp 程序员都在思考这个问题：那就是所有权。</p>
+<p>我们拥有这个解析器，所以我们不能将其作为参数传递两次，编译器会试图对你大喊，因为你试图移动一个已经移动的值。那么我们可以让组合器代替引用吗？不，事实证明，我们还遇到另一整套借用检查器的问题 - 我们目前不会试图解决这些问题。并且因为这些解析器是函数，所以它们不会实现<code>Clone</code>，该 trait 本来可以帮我们节省一整天的时间，所以我们被困在一个约束中，我们不能在组合器中轻易地复用我们的解析器。</p>
+<p>不过，这不是一个大问题。它只是说明我们不能使用组合器来表达<code>one_or_more</code>，但事实证明，这两个通常是你需要的唯一组合器，它们往往会重用解析器，而且，如果你想变得非常花哨，除了解析器，你还可以编写一个带有<code>RangeBound</code>的组合器，并在一个范围内对其进行重复：<code>zero_or_more</code>使用<code>range(0..)</code>，<code>one_or_more</code>使用<code>range(1..)</code>，<code>five_or_six</code>使用<code>range(5..=6)</code>，依此类推。</p>
+<p>不过，让我们把它留给读者作为练习。现在我们只需使用<code>zero_or_more</code>和<code>one_or_more</code>即可。</p>
+<p>另一个练习可能是找到解决这些所有权问题的方法 - 也许可以通过将解析器包装在<code>Rc</code>中使其支持克隆？</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="用rust编写llvm的玩具编译器"><a class="header" href="#用rust编写llvm的玩具编译器">用Rust编写LLVM的玩具编译器</a></h1>
 <h4 id="a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a class="header" href="#a-hrefhttpsblogulysseioposta-toy-front-end-for-llvm-written-in-rust原文a"><a href="https://blog.ulysse.io/post/a-toy-front-end-for-llvm-written-in-rust/">原文</a></a></h4>
 </br>
