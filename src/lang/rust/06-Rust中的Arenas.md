@@ -62,7 +62,7 @@ scooter.age += 1;
 
 ### typed-arena
 
-[typed-arena](https://docs.rs/typed-arena/)是一个 `areana` 分配器，它只能存储单一类型的对象，但是就可以循环引用： 
+[typed-arena](https://docs.rs/typed-arena/)是一个 `areana` 分配器，它只能存储单一类型的对象，但是可以循环引用： 
 
 ```rust
 // Example from typed-arena docs
@@ -96,9 +96,9 @@ b.other.set(Some(a));
 
 实现带有 Entry 类型的 Arena 的关键是以下几种规则：
 
-- `Arena`和`Entry`都应具有生命周期参数：`Arena <'arena>`和`Entry <'arena>`
-- `Arena`方法都应将`Arena <'arena>`作为`＆'arena self`，即`self`的类型为`＆'arena Arena <'arena>`
-- `Entry`几乎应该始终以`＆'arena Entry <'arena>`的形式传递（为此创建别名非常有用）
+- `Arena`和`Entry`都应具有生命周期参数：`Arena<'arena>`和`Entry<'arena>`
+- `Arena`方法都应将`Arena<'arena>`作为`＆'arena self`，即`self`的类型为`＆'arena Arena<'arena>`
+- `Entry`几乎应该始终以`＆'arena Entry<'arena>`的形式传递（为此创建别名非常有用）
 - 使用内部可变性；`Arena`上的`＆mut self`将使所有代码停止编译。如果使用`unsafe`的可变性，请确保 `RefCell<Entry<'arena>>`  具有 [PhantomData](https://doc.rust-lang.org/std/marker/struct.PhantomData.html) 。
 
 从生命周期的角度来看基本上就是这样，剩下的全部就是确定所需的 API。掌握了以上规则，只要确保定义区域与所需的保证一起使用，就不必了解底层生命周期的状况。
@@ -109,7 +109,7 @@ b.other.set(Some(a));
 
 我的库 [elsa](https://docs.rs/elsa) 在其中一个示例中使用 100％ `safe` 的代码实现了一个 `arena` 。由于 `elsa :: FrozenVec` 要求其内容位于间接引用之后，因此该 `arena` 无法节省分配，并且它不是通用的，但这是一种合理的方式来说明生命周期的工作方式，而无需陷入 使用 `unsafe` 带来的麻烦之中。
 
-该示例实现了 `Person <'arena>` 类型的 `Arena` ，`Arena <'arena>` 。目标是实现某种可能有环的有向社交图。
+该示例实现了 `Person<'arena>` 类型的 `Arena` ，`Arena<'arena>` 。目标是实现某种可能有环的有向社交图。
 
 ```rust
 use elsa::FrozenVec;
@@ -134,7 +134,7 @@ struct Person<'arena> {
 type PersonRef<'arena> = &'arena Person<'arena>;
 ```
 
-这个生命周期 `arena`  其实是 “arena本身的生命周期”。 从这开始事情就变得奇怪起来了：通常，如果一个有生命周期参数，则调用者可以选择其中的内容。 不必只是说“这是对象本身的生命周期”，调用者通常可以根据需要实例化 `arena <'static>` 或为某个 `'a` 实例化 `Arena <'a>` 。 但是在这里，我们声明 “`'arena` 是 `arena` 自身的生命周期”； 很明显，一定有东西不太对。
+这个生命周期 `arena`  其实是 “arena本身的生命周期”。 从这开始事情就变得奇怪起来了：通常，如果一个有生命周期参数，则调用者可以选择其中的内容。 不必只是说“这是对象本身的生命周期”，调用者通常可以根据需要实例化 `arena<'static>` 或为某个 `'a` 实例化 `Arena <'a>` 。 但是在这里，我们声明 “`'arena` 是 `arena` 自身的生命周期”；很明显，一定有东西不太对。
 
 这是我们实际实现的地方：
 
@@ -171,7 +171,7 @@ impl<'arena> Arena<'arena> {
 }
 ```
 
-注意 `add_person中的&'arena self`。
+注意 `add_person` 中的 `&'arena self`。
 
 此处的很好的实现了,“如果A 关注了 B，然后B又关注A” 这种通常需要分开处理的情况，但这仅是示例。
 
@@ -221,7 +221,7 @@ error[E0597]: `arena` does not live long enough
    | - `arena` dropped here while still borrowed
 ```
 
-`add_person` 方法以某种方式强制将 `Arena` 的 `arena` 参数设置为自己的生命周期，从而对其进行约束（并且无法用类型注释将其强制约束为其他任何值）。 这是与 `add_person` 的`＆'arena` 自签名（即 self 是 `＆'arena Arena <'self>` ）的巧妙互动，以及`'Arena in Arena <'arena>` 是[不变的生命周期](https://doc.rust-lang.org/nomicon/subtyping.html#variance)。
+`add_person` 方法以某种方式强制将 `Arena` 的 `arena` 参数设置为自己的生命周期，从而对其进行约束（并且无法用类型注释将其强制约束为其他任何值）。 这是与 `add_person` 的`＆'arena` 自签名（即 self 是 `＆'arena Arena<'self>` ）的巧妙互动，以及`'Arena in Arena<'arena>` 是[不变的生命周期](https://doc.rust-lang.org/nomicon/subtyping.html#variance)。
 
 通常，在 Rust 程序中，生命周期具有"伸缩性"。 以下代码可以通过编译：
 
@@ -246,7 +246,7 @@ take_strings(lives_forever, &*short_lived);
 
 事实是，这种伸缩性并非对所用的生命周期都一样！[nomicon chapter on subtyping and variance](https://doc.rust-lang.org/nomicon/subtyping.html) 一章详细说明了为什么会这样，但一般的经验法则是，大多数生命周期都是“紧缩的” (更专业的说法是 `协变的` )，就像上面的`&a str` 中的一样，但是如果涉及某种形式的可变性，它们是不可变的，也称为“不变式”。如果使用的是函数类型，则具有 `弹性的` 生命周期 (即抗变的)，但是这种情况很少见。
 
-我们的 `Arena <'arena>` 使用内部可变性（通过 `FrozenVec`）使' `arena`不变。 让我们再次看一下两行代码。当编译器看到下面代码的第一行时，便会构建 `arena`，我们将其生命周期称为“ a”。此时 Arena 类型是 `Arena <'？>` ，其中的'？由表示形式表示，但生命周期不受限制。
+我们的 `Arena<'arena>` 使用内部可变性（通过 `FrozenVec`）使' `arena`不变。 让我们再次看一下两行代码。当编译器看到下面代码的第一行时，便会构建 `arena`，我们将其生命周期称为“ a”。此时 Arena 类型是 `Arena<'？>` ，其中的'？由表示形式表示，但生命周期不受限制。
 
 ```rust
 let arena = Arena::new(); 
@@ -268,13 +268,13 @@ let lonely = Arena::add_person(ref_to_arena, "lonely", vec![]);
 
 - Arena方法都应将Arena <'arena>接收为＆'arena自身，即其自身类型为＆'arena Arena <'arena> 我们遵循这条规则；
 
-`add_person` 的签名是 `fn add_person(&'arena self)`。这意味着 `ref_to_arena` 的生存期必须与 `&'arena Arena <'arena>` 模式匹配。目前，它的生命周期是`&'a Arena <'?>`，表示`'?`强制与'a相同，即 `arena` 变量本身的生存期。如果生命周期是可变的，则编译器可以压缩其他生存期来适配它，但它是不变的，并且不受限制的生存期被强制转变成一个确切的生命周期。
+`add_person` 的签名是 `fn add_person(&'arena self)`。这意味着 `ref_to_arena` 的生存期必须与 `&'arena Arena<'arena>` 模式匹配。目前，它的生命周期是`&'a Arena<'?>`，表示`'?`强制与'a相同，即 `arena` 变量本身的生存期。如果生命周期是可变的，则编译器可以压缩其他生存期来适配它，但它是不变的，并且不受限制的生存期被强制转变成一个确切的生命周期。
 
-通过这个巧妙的技巧，我们可以强制编译器将 `Arena <'arena>` 的生存期参数设置为其实例的生存期。 
+通过这个巧妙的技巧，我们可以强制编译器将 `Arena<'arena>` 的生存期参数设置为其实例的生存期。 
 
-在此之后，其余的工作就非常简单了。 `Arena <'arena>` 拥有类型为 `Person <'arena>`的元素，也就是说：“`Person` 被允许引用具有 `'arena` 生命周期的元素, 例如 `Arena`“。
+在此之后，其余的工作就非常简单了。 `Arena<'arena>` 拥有类型为 `Person<'arena>`的元素，也就是说：“`Person` 被允许引用具有 `'arena` 生命周期的元素, 例如 `Arena`“。
 
-`type PersonRef <'arena> =&'arena Person <'arena>`是引用在 `Arena` 中并允许从其中引用对象 `Person` 的引用的便捷缩写。
+`type PersonRef<'arena> = &'arena Person<'arena>`是引用在 `Arena` 中并允许从其中引用对象 `Person` 的引用的便捷缩写。
 
 ### 析构器如何工作
 
