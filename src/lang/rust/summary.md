@@ -20,6 +20,7 @@
 - [「转」Rust 中常见的有关生命周期的误解](18-Rust中常见的有关生命周期的误解.md)
 - [生命周期型变示例](19-生命周期型变示例.md)
 - [Rust 如何实现线程安全](20-rust如何实现线程安全.md)
+- [无需 fork Clippy 就可以编写 Rust lint](22-无需fork_Clippy就可以编写Rust_lints.md)
 
 ---
 

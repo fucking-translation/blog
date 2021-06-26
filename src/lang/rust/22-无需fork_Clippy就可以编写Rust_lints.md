@@ -1,5 +1,7 @@
 # 无需 fork Clippy 就可以编写 Rust lints
 
+![dylint](./img/dylint.jpeg)
+
 [原文](https://www.trailofbits.com/post/write-rust-lints-without-forking-clippy)
 
 本文主要介绍 [Dylint](https://github.com/trailofbits/dylint)，它是一个可以从动态库中加载 Rust lints 规则的工具。Dylint 可以让开发人员轻松维护自己的个人 lint 集合。
@@ -57,8 +59,111 @@ Dylint 按需即时 (on-the-fly) 构建驱动程序来处理此类情况。换�
 
 你是否知道 Clippy 包含 lint，其唯一目的是对 Clippy 的代码进行 lint？[这是真的](https://github.com/rust-lang/rust-clippy/blob/master/clippy_lints/src/utils/internal_lints.rs)。Clippy 包含用于检查的 lint，例如：每个 lint 都有一个关联的 **LintPass**，它使用某些 Clippy 封装函数而不是它们自己封装的函数，并且每个 lint 都有一个非默认的描述。将这些 lint 应用于 Clippy 以外的代码是没有意义的。但是没有规定所有 lint 都必须是通用的，Clippy 就利用了这一点。
 
+Dylint 包含 lint 的主要目的是对 Dylint 的代码进行 lint。例如：在开发 Dylint 时，我们发现自己编写了如下代码：
+
+```rust
+let rustup_toolchain = std::env::var("RUSTUP_TOOLCHAIN")?;
 ...
+std::env::remove_var("RUSTUP_TOOLCHAIN");
+```
+
+这么做不是很好。为什么？因为我们对字符串字面量进行 fat-fingered 只是时间问题。
+
+```rust
+std::env::remove_var("RUSTUP_TOOLCHIAN"); // Oops
+```
+
+更好的方法是使用常量而不是字符串字面量，就如下代码所示：
+
+```rust
+const RUSTUP_TOOLCHAIN: &str = "RUSTUP_TOOLCHAIN";
+...
+std::env::remove_var(RUSTUP_TOOLCHAIN);
+```
+
+因此当使用 Dylint 时，我们编写了一个 lint 来检查这种不适当的做法并提出适当的建议。我们将该 lint 应用到 Dylint 源码。lint 称其为 [env_literal](https://github.com/trailofbits/dylint/tree/master/examples/env_literal)，其当前的核心实现如下：
+
+```rust
+impl<'tcx> LateLintPass<'tcx> for EnvLiteral {
+    fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &Expr<'_>) {
+        if_chain! {
+            if let ExprKind::Call(callee, args) = expr.kind;
+            if is_expr_path_def_path(cx, callee, &REMOVE_VAR)
+            || is_expr_path_def_path(cx, callee, &SET_VAR)
+            || is_expr_path_def_path(cx, callee, &VAR);
+            if !args.is_empty();
+            if let ExprKind::Lit(lit) = &args[0].kind;
+            if let LitKind::Str(symbol, _) = lit.node;
+            let ident = symbol.to_ident_string();
+            if is_upper_snake_case(&ident);
+            then {
+            span_lint_and_help(
+                cx,
+                ENV_LITERAL,
+                args[0].span,
+                "referring to an environment variable with a string literal is error prone",
+                None,
+                &format!("define a constant `{}` and use that instead", ident),
+            );
+            }
+        }
+    }
+}
+```
+
+以下是它可以产生的警告示例：
+
+```console
+warning: referring to an environment variable with a string literal is error prone
+--> src/main.rs:2:27
+|
+2 |     let _ = std::env::var("RUSTFLAGS");
+|                           ^^^^^^^^^^^
+|
+= note: `#[warn(env_literal)]` on by default
+= help: define a constant `RUSTFLAGS` and use that instead
+```
 
 回顾之前所说的，编译器以及 **clippy_utils** 都没有为它的 API 提供稳定性保证，因此 **env_literal** 的未来版本可能看起来有点不同。(实际上，当本文还在撰写的过程中，**clippy_utils**  某个 API 的变更就已经导致 **env_literal** 某个实现发生改变!)。当前版本的 **env_literal** 总是可以在 Dylint 仓库中的 [examples](https://github.com/trailofbits/dylint/tree/master/examples) 目录下找到。
 
 但是 Clippy “自我 lint” 的方式与 Dylint 略有不同。Clippy 的内部 lint 被编译成启用了特定功能的 Clippy 版本。但是对于 Dylint，**env_literal** lint 被编译成了一个动态库。因此，**env_literal** 不是 Dylint 的一部分。它本质上是输入。
+
+为什么这很重要？因为你可以为你的项目编写自定义 lint 并使用 Dylint 来运行它们，就像 Dylint 运行自己的 lint 一样。在 Dylint 仓库中 Dylint 运行的 lint 来源没有任何重要意义。Dylint 可以很轻易的在你的仓库中运行该仓库的 lint。
+
+最重要的是 (The bottom line is this)：如果你发现不喜欢自己编写的代码，并且可以使用 lint 检测该代码，Dylint 可以帮助你清除该代码并防止重新引入。
+
+### 开始 linting
+
+使用以下命令安装 Dylint：
+
+```console
+cargo install cargo-dylint
+```
+
+我们还推荐安装 [dylint-link](https://github.com/trailofbits/dylint/tree/master/dylint-link) 来处理超链接：
+
+```console
+cargo install dylint-link
+```
+
+编写 Dylint 库的最简单的方式是 fork [dylint-template](https://github.com/trailofbits/dylint-template) 仓库。该仓库直接生成了一个可加载的库。你可以按如下方法进行验证：
+
+```console
+git clone https://github.com/trailofbits/dylint-template
+cd dylint-template
+cargo build
+cargo dylint fill_me_in --list
+```
+
+你只需实现 [LateLintPass](https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint/trait.LateLintPass.html) 特征并容纳要求填写的符号即可。
+
+以下资源对你编写 lint 将很有帮助：
+
+- [添加一个新的 lint](https://github.com/rust-lang/rust-clippy/blob/master/doc/adding_lints.md) (针对 Clippy 但依然很有用)
+- [编写 lint 的常用工具](https://github.com/rust-lang/rust-clippy/blob/master/doc/common_tools_writing_lints.md)
+- [rustc_hir 文档](https://doc.rust-lang.org/stable/nightly-rustc/rustc_hir/index.html)
+
+也可以考虑使用上面提到的 [clippy_utils](https://github.com/rust-lang/rust-clippy/tree/master/clippy_utils)。它包含许多底层任务的功能，如查找符号和打印诊断信息，可以让编写 lint 变得更加容易。
+
+我们十分感谢 Clippy 作者将 **clippy_utils** 开放在 Rust
+ 社区。我们也十分感谢 [Philipp Krones](https://github.com/flip1995) 在本文的早期版本中提供了有用的建议。

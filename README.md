@@ -18,6 +18,7 @@
 | [在 Android 中运行 Rust](./src/lang/rust/17-在Android中运行Rust.md)||
 | [生命周期型变示例](./src/lang/rust/19-生命周期型变示例.md)||
 | [Rust 如何实现线程安全](./src/lang/rust/20-rust如何实现线程安全.md)||
+| [无需 fork Clippy 就可以编写 Rust lint](22-无需fork_Clippy就可以编写Rust_lints.md) ||
 
 ## service mesh
 

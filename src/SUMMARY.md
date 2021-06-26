@@ -21,6 +21,8 @@
     - [「转」Rust 中常见的有关生命周期的误解](./lang/rust/18-Rust中常见的有关生命周期的误解.md)
     - [生命周期型变示例](./lang/rust/19-生命周期型变示例.md)
     - [Rust 如何实现线程安全](./lang/rust/20-rust如何实现线程安全.md)
+    - [无需 fork Clippy 就可以编写 Rust lint](./lang/rust/22-无需fork_Clippy就可以编写Rust_lints.md)
+
 
     - [标准库](./lang/rust/std/20-std-pin.md)
         - [std::pin](./lang/rust/std/20-std-pin.md)
