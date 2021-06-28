@@ -1,0 +1,483 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>使用 Mio 编写底层 TCP 服务器 - Blog Translation</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../../favicon.svg">
+                        <link rel="shortcut icon" href="../../favicon.png">
+                <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+                <link rel="stylesheet" href="../../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../../highlight.css">
+        <link rel="stylesheet" href="../../tomorrow-night.css">
+        <link rel="stylesheet" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+                <link rel="stylesheet" href="../../theme/ferris.css">
+                <link rel="stylesheet" href="../../theme/2018-edition.css">
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../lang/rust/summary.html"><strong aria-hidden="true">1.</strong> Rust</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../../lang/rust/01-用Rust学习解析器组合器.html"><strong aria-hidden="true">1.1.</strong> 用 Rust 学习解析器组合器</a></li><li class="chapter-item "><a href="../../lang/rust/02-用Rust编写LLVM的玩具前端.html"><strong aria-hidden="true">1.2.</strong> 用 Rust 编写 LLVM 的玩具前端</a></li><li class="chapter-item "><a href="../../lang/rust/03-使用nom解析url.html"><strong aria-hidden="true">1.3.</strong> 使用 nom 解析 url</a></li><li class="chapter-item "><a href="../../lang/rust/04-Rust中异步编程实用介绍.html"><strong aria-hidden="true">1.4.</strong> Rust 中异步编程实用介绍</a></li><li class="chapter-item "><a href="../../lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.html"><strong aria-hidden="true">1.5.</strong> tokio 内幕-自底向上理解 Rust 的异步 IO 框架</a></li><li class="chapter-item "><a href="../../lang/rust/06-Rust中的Arenas.html"><strong aria-hidden="true">1.6.</strong> 「转」Rust 中的 Arenas</a></li><li class="chapter-item "><a href="../../lang/rust/07-Rust异步IO:从mio到coroutine.html"><strong aria-hidden="true">1.7.</strong> 「转」Rust 异步 IO: 从 mio 到 coroutine</a></li><li class="chapter-item "><a href="../../lang/rust/08-图解Rust所有权与生命周期.html"><strong aria-hidden="true">1.8.</strong> 「转」图解 Rust 所有权与生命周期</a></li><li class="chapter-item "><a href="../../lang/rust/09-Rust异步执行器.html"><strong aria-hidden="true">1.9.</strong> Rust 异步执行器</a></li><li class="chapter-item "><a href="../../lang/rust/10-Rust标准库特征指南.html"><strong aria-hidden="true">1.10.</strong> 「转」Rust 标准库特征指南</a></li><li class="chapter-item "><a href="../../lang/rust/11-Rust中的宏:带有示例的教程.html"><strong aria-hidden="true">1.11.</strong> Rust中的宏: 带有示例的教程</a></li><li class="chapter-item "><a href="../../lang/rust/12-libp2p教程:使用Rust构建p2p应用.html"><strong aria-hidden="true">1.12.</strong> libp2p 教程: 使用 Rust 构建 p2p 应用</a></li><li class="chapter-item "><a href="../../lang/rust/13-Rust的Pin与Unpin.html"><strong aria-hidden="true">1.13.</strong> 「转」Rust 的 Pin 与 Unpin</a></li><li class="chapter-item "><a href="../../lang/rust/14-使用GDB调试Rust应用.html"><strong aria-hidden="true">1.14.</strong> 使用 GDB 调试 Rust 中的应用</a></li><li class="chapter-item "><a href="../../lang/rust/15-解释Rust中的原子性.html"><strong aria-hidden="true">1.15.</strong> 解释 Rust 中的原子性</a></li><li class="chapter-item "><a href="../../lang/rust/16-Rust和TUI:在Rust中构建命令行界面.html"><strong aria-hidden="true">1.16.</strong> Rust 和 TUI：在 Rust 中构建命令行界面</a></li><li class="chapter-item "><a href="../../lang/rust/17-在Android中运行Rust.html"><strong aria-hidden="true">1.17.</strong> 在 Android 中运行 Rust</a></li><li class="chapter-item "><a href="../../lang/rust/18-Rust中常见的有关生命周期的误解.html"><strong aria-hidden="true">1.18.</strong> 「转」Rust 中常见的有关生命周期的误解</a></li><li class="chapter-item "><a href="../../lang/rust/19-生命周期型变示例.html"><strong aria-hidden="true">1.19.</strong> 生命周期型变示例</a></li><li class="chapter-item "><a href="../../lang/rust/20-rust如何实现线程安全.html"><strong aria-hidden="true">1.20.</strong> Rust 如何实现线程安全</a></li><li class="chapter-item "><a href="../../lang/rust/22-无需fork_Clippy就可以编写Rust_lints.html"><strong aria-hidden="true">1.21.</strong> 无需 fork Clippy 就可以编写 Rust lint</a></li><li class="chapter-item expanded "><a href="../../lang/rust/23-使用Mio编写底层TCP服务器.html" class="active"><strong aria-hidden="true">1.22.</strong> 使用 Mio 编写底层 TCP 服务器</a></li><li class="chapter-item "><a href="../../lang/rust/std/20-std-pin.html"><strong aria-hidden="true">1.23.</strong> 标准库</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../../lang/rust/std/20-std-pin.html"><strong aria-hidden="true">1.23.1.</strong> std::pin</a></li><li class="chapter-item "><a href="../../lang/rust/std/21-std-condvar.html"><strong aria-hidden="true">1.23.2.</strong> std::sync::Condvar</a></li></ol></li></ol></li><li class="chapter-item "><a href="../../架构/ServiceMesh/summary.html"><strong aria-hidden="true">2.</strong> Service Mesh</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../../架构/ServiceMesh/01-ServiceMesh.html"><strong aria-hidden="true">2.1.</strong> 模式：Service Mesh</a></li><li class="chapter-item "><a href="../../架构/ServiceMesh/02-xDS与gRPC协议.html"><strong aria-hidden="true">2.2.</strong> xDS 与 gRPC 协议</a></li></ol></li><li class="chapter-item "><a href="../../oci/summary.html"><strong aria-hidden="true">3.</strong> Open Container Initiative</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../../oci/01-oci-spec-overview.html"><strong aria-hidden="true">3.1.</strong> OCI 规范概述</a></li></ol></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Blog Translation</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        <a href="https://github.com/fucking-translation/blog" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                                                
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="使用-mio-编写底层-tcp-服务器"><a class="header" href="#使用-mio-编写底层-tcp-服务器">使用 Mio 编写底层 TCP 服务器</a></h1>
+<p><a href="https://sergey-melnychuk.github.io/2019/08/01/rust-mio-tcp-server/">原文</a></p>
+<p>是时候认识 (acquainted) 一下 <a href="https://github.com/tokio-rs/mio">Metal IO</a> 了，它是在 epoll/kqueue 之上用 Rust 编写的跨平台抽象。</p>
+<p>在本文中，我们将会展示并解释如何编写一个单线程异步 TCP 服务器，用它模拟 HTTP 协议，然后使用<code>ab/wrk</code>对其进行 benchmark。结果将会令人印象深刻。</p>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p>我使用的是<code>mio = &quot;0.6&quot;</code>。</p>
+<p>首先，需要 TCP listener。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let address = &quot;0.0.0.0:8080&quot;;
+let listener = TcpListener::bind(&amp;address.parse().unwrap()).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
+<p>然后创建<code>Poll</code>对象并将 listener 注册到<code>Token(0)</code>中用于可读事件 (readable events)，由 edge (而不是 level) 激活。更多内容请参阅 <a href="https://en.wikipedia.org/wiki/Epoll#Triggering_modes">edge vs level</a>。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let poll = Poll::new().unwrap();
+poll.register(
+    &amp;listener, 
+    Token(0),
+    Ready::readable(),
+    PollOpt::edge()).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
+<p>下一步我们要做的就是根据给定的容量创建<code>Events</code>对象以及主循环(本例中是无限循环)。在循环中，事件被一一轮询并处理。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut events = Events::with_capacity(1024);
+loop {
+    poll.poll(&amp;mut events, None).unwrap();
+    for event in &amp;events {
+        // handle the event
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="accepting-connections-and-dropping-them"><a class="header" href="#accepting-connections-and-dropping-them">Accepting connections (and dropping them)</a></h2>
+<p>事件可以是以下其中一种：</p>
+<ul>
+<li>listener 上的可读事件意味着有要准备接入的连接。</li>
+<li>已连接的 socket 上的事件</li>
+<li>readable - socket 有数据可以读取</li>
+<li>writable - socket 已经写数据就绪</li>
+</ul>
+<p>listener 以及 socket 事件可以被 token 区分，对于 listener token 它总是 0，因为它已在<code>Poll</code>中注册。</p>
+<p>以下代码是最简单的事件处理方式，在循环中接受所有的传入连接，并且对于每个连接 - 只需删除 socket。它将会关闭连接。在你的服务中<a href="https://en.wikipedia.org/wiki/Discard_Protocol">抛弃协议</a>。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// handle the event
+match event.token() {
+    Token(0) =&gt; {
+        loop {
+            match listener.accept() {
+                Ok((socket, address)) =&gt; {
+                    // What to do with the connection?
+                    // One option is to simply drop it!
+                    println!(&quot;Got connection from {}&quot;, address);
+                },
+                Err(ref e) if e.kind() == io::ErrorKind::WouldBlock =&gt;
+                    // No more connections ready to be accepted 
+                    break,
+                Err(e) =&gt; 
+                    panic!(&quot;Unexpected error: {}&quot;, e)
+            }
+        }
+    },
+    _ =&gt; () // Ignore all other tokens
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>listener 的<code>.accept()</code>方法返回<code>std::io::Result&lt;(TcpStream, SocketAddr)&gt;</code>(见 <a href="https://docs.rs/mio/0.5.1/mio/tcp/struct.TcpListener.html#method.accept">accept</a>)，因此我需要匹配并处理成功的响应或者错误。这里有一个特定的错误类型 <a href="https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.WouldBlock">io::ErrorKind::WouldBlock</a>，它表示“我将等待(阻塞)以取得任何进展”。这是非阻塞 (non-blocking) 行为的本质 - 关键是不要阻塞(而是返回相应的错误)！遇到此类错误时，意味着此时没有更多的传入连接等待接入，因此循环中断，并处理下一个事件。</p>
+<p>现在如果我运行服务器并尝试和它建立连接，我可以看到正在抛弃协议！是不是很神奇？</p>
+<pre><code class="language-console">$ nc 127.0.0.1 8080
+$ 
+</code></pre>
+<h2 id="registering-connections-for-events"><a class="header" href="#registering-connections-for-events">Registering connections for events</a></h2>
+<p>接着说下一个事件。为了发生下一个事件，首先必须使用<code>Poll</code>注册 token-socket 对。在底层 (under the hook)，<code>Poll</code>将会跟踪哪一个 token 对应哪一个 socket，但是客户端代码只能访问 token。这意味着如果服务器打算与客户端进行实际通信(我很确信大多数服务器都这样做)，就必须以某种方式存储 token-socket 对。在本例中，我使用了简单的<code>HashMap&lt;Token, TcpStream&gt;</code>，但是使用 <a href="https://docs.rs/slab/0.4.2/slab/">slab</a> 可能会更加高效。</p>
+<p>token 只是<code>usize</code>的一个封装器，因此简单的计数器就足以提供递增的 token 序列。一旦使用相应的 token 注册了 socket，它就会被插入到<code>HashMap</code>中。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut counter: usize = 0;
+let mut sockets: HashMap&lt;Token, TcpStream&gt; = HashMap::new();
+
+// handle the event
+match event.token() {
+    Token(0) =&gt; {
+        loop {
+            match listener.accept() {
+                Ok((socket, _)) =&gt; {
+                    counter += 1;
+                    let token = Token(counter);
+
+                    // Register for readable events
+                    poll.register(&amp;socket, token
+                        Ready::readable(),
+                        PollOpt::edge()).unwrap();
+
+                    sockets.insert(token, socket);                    
+                },
+                Err(ref e) if e.kind() == io::ErrorKind::WouldBlock =&gt;
+                    // No more connections ready to be accepted 
+                    break,
+                Err(e) =&gt; 
+                    panic!(&quot;Unexpected error: {}&quot;, e)
+            }
+        }
+    },
+    token if event.readiness().is_readable() =&gt; {
+        // Socket associated with token is ready for reading data from it
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="reading-data-from-client"><a class="header" href="#reading-data-from-client">Reading data from client</a></h2>
+<p>当给定 token 发生可读事件时，意味着数据在相应的 socket 中读就绪。我将只使用字节数组作为读取数据的缓冲区。</p>
+<p>在循环中执行读取操作，直到返回已知的<code>WouldBlock</code>错误。每次调用<code>read</code>将返回(如果成功的话)实际读取的字节数，当读取的字节数为 0 时 - <a href="https://doc.rust-lang.org/nightly/std/io/trait.Read.html#tymethod.read">意味着</a>客户端已经断开连接，此后保持 socket (或继续循环读取)没有意义。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Fixed size buffer for reading/writing to/from sockets
+let mut buffer = [0 as u8; 1024];
+...
+token if event.readiness().is_readable() =&gt; {
+    loop {
+        let read = sockets.get_mut(token).unwrap().read(&amp;mut buffer);
+        match read {
+            Ok(0) =&gt; {
+                // Successful read of zero bytes means connection is closed
+                sockets.remove(token);
+                break;
+            },
+            Ok(len) =&gt; {
+                // Now do something with &amp;buffer[0..len]
+                println!(&quot;Read {} bytes for token {}&quot;, len, token.0);
+            },
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock =&gt; break,
+            Err(e) =&gt; panic!(&quot;Unexpected error: {}&quot;, e)
+        }
+    }
+}
+...
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="writing-data-to-the-client"><a class="header" href="#writing-data-to-the-client">Writing data to the client</a></h2>
+<p>对于接收可写事件的 token，它必须先在<code>Poll</code>中注册。<code>oneshot</code>选项对于安排可写事件可能很有用，该选项确保感兴趣的 (interest) 事件只被触发一次。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>poll.register(&amp;socket, token
+    Ready::writable(),
+    PollOpt::edge() | PollOpt::oneshot()).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
+<p>向客户端 socket 写入数据与之类似，也是通过缓冲区完成的，但是不需要显式循环，因为已经有一个<a href="https://doc.rust-lang.org/std/io/trait.Write.html#method.write_all">方法</a>在执行循环：<code>write_all()</code>。</p>
+<p>如果我想让协议返回接收到的字节数，我将需要写入的实际字节数(<code>HashMap</code>将会做这件事)，在发生可读事件时计算字节数，然后安排一次可写事件，以及何时发生可写事件 - 然后发送响应并断开连接。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut response: HashMap&lt;Token, usize&gt; = HashMap::new();
+...
+token if event.readiness().is_readable() =&gt; {
+    let mut bytes_read: usize = 0;
+    loop {
+        ... // sum up number of bytes received
+    }
+    response.insert(token, bytes_read);
+    // re-register for one-shot writable event
+}
+...
+token if event.readiness().is_writable() =&gt; {
+    let n_bytes = response[&amp;token];
+    let message = format!(&quot;Received {} bytes\n&quot;, n_bytes);
+    sockets.get_mut(&amp;token).unwrap().write_all(message.as_bytes()).unwrap();
+    response.remove(&amp;token);
+    sockets.remove(&amp;token); // Drop the connection
+},
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="what-happens-between-reading-and-writing-data"><a class="header" href="#what-happens-between-reading-and-writing-data">What happens between reading and writing data?</a></h2>
+<p>此时我已经从 socket 上读取了数据，并且将数据写入 socket 中。但是写入事件永远也不会发生，因为没有为可写事件注册 token！</p>
+<p>我应该什么时候为可写事件注册 token？好吧，当它有东西要写入的时候(进行注册)！听起来很简单，不是吗？在实践中，这意味着要真正实现一些协议了。</p>
+<h2 id="how-do-i-implement-a-protocol"><a class="header" href="#how-do-i-implement-a-protocol">How do I implement a protocol?</a></h2>
+<p>我只想发回文本(或 JSON)，而 <a href="https://ru.wikipedia.org/wiki/Transmission_Control_Protocol">TCP</a> 是一种<a href="https://en.wikipedia.org/wiki/Communication_protocol">协议</a>，一种传输级的传输控制协议。TCP 关心接收方以发送方发送的确切顺序来接收确切数量的字节！所以在传输级别，我必须处理两个字节流：一个从客户端到服务端，另一个直接返回。</p>
+<p>与服务器打交道时应用层协议会很有用(如 HTTP)。应用层协议可以定义实体，如<code>request</code> - 服务器从客户端接收，以及<code>response</code> - 客户端从服务器接收回来。</p>
+<p>值得一提的是，正确实现 HTTP 并不像听起来那么容易。但是已经有现成的 HTTP 库可供使用(如 <a href="https://github.com/hyperium/hyper">hyper</a>)。在这里，我不会为如何实现 HTTP 而烦恼，我要做的是让我的服务器表现的好像它真的理解 GET 请求，但总会用包含 6 个字节的响应来应答这样的请求：<code>b&quot;hello \n&quot;</code>。</p>
+<h2 id="mocking-http"><a class="header" href="#mocking-http">Mocking HTTP</a></h2>
+<p>对于本文而言，mock HTTP 已经绰绰有余。我将把 HTTP 请求头与请求体(如果有的话)用 4 个字节<code>b&quot;\r\n\r\n&quot;</code>进行分割。因此，如果我跟踪当前客户端发送的内容，并且在任何时候那里都有 4 个字节，我就可以使用预定义的 HTTP 响应进行应答：</p>
+<pre><code class="language-plain">HTTP/1.1 200 OK
+Content-Type: text/html
+Connection: keep-alive
+Content-Length: 6
+
+hello
+</code></pre>
+<p><code>HashMap</code>就已经足够用于跟踪所有接收到的字节。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut requests: HashMap&lt;Token, Vec&lt;u8&gt;&gt; = HashMap::new();
+<span class="boring">}
+</span></code></pre></pre>
+<p>一旦读取结束，就需要检查请求是否已就绪：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn is_double_crnl(window: &amp;[u8]) -&gt; bool {  /* trivial */ }
+
+let ready = requests.get(&amp;token).unwrap()
+    .windows(4)
+    .find(|window| is_double_crnl(*window))
+    .is_some();
+<span class="boring">}
+</span></code></pre></pre>
+<p>如果已就绪，则可以安排一些数据写入！</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>if ready {
+    let socket = sockets.get(&amp;token).unwrap();
+    poll.reregister(
+        socket,
+        token,
+        Ready::writable(),
+        PollOpt::edge() | PollOpt::oneshot()).unwrap();
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>写入完成之后，重要的是要保持连接打开，并重新注册 socket 以再次读取。</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>poll.reregister(
+    sockets.get(&amp;token).unwrap(),
+    token,
+    Ready::readable(),
+    PollOpt::edge()).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
+<p>服务器已就绪！</p>
+<pre><code class="language-console">$ curl localhost:8080
+hello
+</code></pre>
+<p>好戏开始了 - 让我们看看这个单线程服务器表现如何。我将会使用常用的工具：<code>ab</code>和<code>wrk</code>。</p>
+<ul>
+<li><code>ab</code>需要使用<code>-k</code>选项以使用<code>keep-alive</code>并重用已有连接。</li>
+<li><code>wrk2</code>实际与<code>wrk</code>用法相同，因此需要<code>--rate</code>参数。</li>
+<li><code>ab/wrk</code>运行在不同的 VM 上而不是在服务器上(但是在相同的 region 中)。</li>
+</ul>
+<p>以下是我在某个云提供商的实例<code>n1-standard-8 (8 vCPUs, 30 GB memory)</code>上尝试对服务器进行 benchmark 时得到的数字：</p>
+<pre><code class="language-console">$ ab -n 1000000 -c 128 -k http://instance-1:8080/
+&lt;snip&gt;
+Requests per second:    105838.76 [#/sec] (mean)
+Transfer rate:          9095.52 [Kbytes/sec] received
+</code></pre>
+<pre><code class="language-console">$ wrk -d 60s -t 8 -c 128 --rate 150k http://instance-1:8080/
+&lt;snip&gt;
+Requests/sec: 120596.75
+Transfer/sec: 10.12MB
+</code></pre>
+<p>对于单线程来说，105k 与 120k 的 rps 不算太差。</p>
+<p>当然，这次可以当作是作弊，但只要涉及真实网络(即使在同一区域内)，这就是负载下的真实服务器，这可能(或多或少)是使用单线程完成此网络速度的重要底线。</p>
+<p>完成可运行的代码地址是：<a href="https://github.com/sergey-melnychuk/mio-tcp-server">github</a>，每一个 pull-request 由一个逻辑章节组成：</p>
+<ul>
+<li>初始化项目：<a href="https://github.com/sergey-melnychuk/mio-tcp-server/pull/1">PR#1</a></li>
+<li>accept &amp; discard: <a href="https://github.com/sergey-melnychuk/mio-tcp-server/pull/2">PR#2</a></li>
+<li>read from socket：<a href="https://github.com/sergey-melnychuk/mio-tcp-server/pull/3">PR#3</a></li>
+<li>writing to socket：<a href="https://github.com/sergey-melnychuk/mio-tcp-server/pull/4">PR#4</a></li>
+<li>mocking HTTP：<a href="https://github.com/sergey-melnychuk/mio-tcp-server/pull/5">PR#5</a></li>
+</ul>
+<h2 id="where-to-go-from-here"><a class="header" href="#where-to-go-from-here">Where to go from here</a></h2>
+<p>扩展到多线程：从<a href="https://blog.cloudflare.com/the-sad-state-of-linux-socket-balancing/">这里</a>开始。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../../lang/rust/22-无需fork_Clippy就可以编写Rust_lints.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../../lang/rust/std/20-std-pin.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../../lang/rust/22-无需fork_Clippy就可以编写Rust_lints.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../../lang/rust/std/20-std-pin.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+                <script src="../../ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../editor.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../mode-rust.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../theme-dawn.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../theme-tomorrow_night.js" type="text/javascript" charset="utf-8"></script>
+        
+                <script src="../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+                <script type="text/javascript" src="../../theme/ferris.js"></script>
+        
+        
+    </body>
+</html>
