@@ -11,7 +11,7 @@
 | [Tokio 内幕-自底向上理解 Rust 的 IO 框架](./src/lang/rust/05-tokio内幕-自底向上理解Rust的异步IO框架.md)| [从 mio 到 coroutine](https://hexilee.me/2018/12/17/rust-async-io/)|
 | [Rust 异步执行器](./src/lang/rust/09-Rust异步执行器.md)|  [Rust mio 库源码情景分析](https://blog.zongwu233.com/rust-mio-source-scenario-analysis/)|
 | [Rust 中的宏：带有示例的教程](./src/lang/rust/11-Rust中的宏:带有示例的教程.md)| [Rust的 Pin 与 Unpin](https://folyd.com/blog/rust-pin-unpin/)|
-| [libp2p 教程：使用 Rust 构建 p2p 应用](./src/lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)||
+| [libp2p 教程：使用 Rust 构建 p2p 应用](./src/lang/rust/12-libp2p教程:使用Rust构建p2p应用.md)| [Unsafe Rust 的取舍](https://github.com/RustMagazine/rust_magazine_2021/blob/main/src/chapter_3/Unsafe_Rust_How_and_when_not_to_use_it.md)|
 | [使用 GDB 调试 Rust 中的应用](./src/lang/rust/14-使用GDB调试Rust应用.md)||
 | [解释 Rust 中的原子性](./src/lang/rust/15-解释Rust中的原子性.md)||
 | [Rust 和 TUI：在 Rust 中构建命令行界面](./src/lang/rust/16-Rust和TUI:在Rust中构建命令行界面.md)||
