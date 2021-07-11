@@ -17,7 +17,7 @@
 
 ## 关于`unsafe Rust`代码的几个误解
 
-在解释如何以及何时使用`unsafe Rust`（或不使用）之前，我想先说明一些关于 Rust 中不安全代码的常见误解。
+在解释如何以及何时使用`unsafe Rust`(或不使用)之前，我想先说明一些关于 Rust 中不安全代码的常见误解。
 
 ### 误解1：所有 Rust 代码都不安全
 
@@ -29,7 +29,7 @@
 
 顺便说一句，不变量是一种条件，它不会被某一类型的所有方法或模块的所有函数改变。
 
-从统计上讲，在 Crates.io 上发现的 Rust 代码中，只有不到1%是不安全的代码-这可能不到现有代码的50%，但仍然应该是一个足够有代表性的样本-而且许多项目里没有任何不安全的代码行。
+从统计上讲，在 crates.io 上发现的 Rust 代码中，只有不到 1% 是不安全的代码-这可能不到现有代码的50%，但仍然应该是一个足够有代表性的样本-而且许多项目里没有任何不安全的代码行。
 
 ### 误解2：它依赖于标准库代码，其中包含许多不安全因素
 
@@ -116,13 +116,13 @@
 
 只是因为使用 `unsafe` 的代码有时可以更快，并不意味着一定要这样做。合理的评估情况, 在保持原有速度或者更快的时候, 就应该继续使用 `safe` 版本的代码。
 
-例如，在尝试加快 [Benchmark Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) 条目之一作为练习时，我想通过使用数组而不是 `Vec` 来减少内存分配，这需要一些不安全的代码来处理未初始化的数据。但是，事实证明改用数组的版本要比基于 `Vec` 的版本慢，因为这个我就没继续下去了。克里夫·比佛尔（ Cliff L. Biffle ）在 [Benchmark Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) 一书中也谈到了类似的经历。 使用 `unsafe` 不仅会让编译器减少对代码的安全性的保证，也减少了要做的检查,因此实际上可能会禁用某些优化以避免破坏代码。因此，在切换到 `unsafe` 之前，请务必先进行评估，进尽量保持  `safe` 的代码。
+例如，在尝试加快 [Benchmark Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) 条目之一作为练习时，我想通过使用数组而不是 `Vec` 来减少内存分配，这需要一些不安全的代码来处理未初始化的数据。但是，事实证明改用数组的版本要比基于 `Vec` 的版本慢，因为这个我就没继续下去了。克里夫·比佛尔( Cliff L. Biffle )在 [Benchmark Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) 一书中也谈到了类似的经历。 使用 `unsafe` 不仅会让编译器减少对代码的安全性的保证，也减少了要做的检查,因此实际上可能会禁用某些优化以避免破坏代码。因此，在切换到 `unsafe` 之前，请务必先进行评估，进尽量保持  `safe` 的代码。
 
 好的，让我们开始吧！
 
 ### 处理未初始化的内存
 
-当 Rust 版本更新到1.0.0时，标准库有一个 `unsafe` 函数来获取未初始化的内存: `std::mem::uninitialized` (还有 `std::mem::zeroed`（），但是两者之间的唯一区别是 后者将返回的内存区域用0初始化)。
+当 Rust 版本更新到1.0.0时，标准库有一个 `unsafe` 函数来获取未初始化的内存: `std::mem::uninitialized` (还有 `std::mem::zeroed`()，但是两者之间的唯一区别是 后者将返回的内存区域用0初始化)。
 
 人们普遍认为这是个坏主意，现在该函数已经处于废弃 (`deprecated`) 状态，建议使用`std::mem::MaybeUnit` 类型代替。 未初始化的麻烦的原因是，该值可能会在恐慌 (`panic`)或在之前返回时隐式删除。 例如：
 
@@ -132,11 +132,11 @@ this_function_may_panic();
 mem::forget(x);
 ````
 
-如果 `this_function_may_panic` 函数实际上 `panic` 了，则x会在我们调用 `forget` 之前就被 `drop` 。但是，删除未初始化的值是未定义的行为，并且由于删除通常是隐式的，因此很难避免这种情况。因此， `MaybeUninit` 被设计为能够处理潜在的未初始化数据。该类型永远不会自动 `drop` （如 `std::mem::ManuallyDrop` ），编译器知道该类型可能未初始化，并且具有许多函数来正确处理未初始化的数据。
+如果 `this_function_may_panic` 函数实际上 `panic` 了，则x会在我们调用 `forget` 之前就被 `drop` 。但是，删除未初始化的值是未定义的行为，并且由于删除通常是隐式的，因此很难避免这种情况。因此， `MaybeUninit` 被设计为能够处理潜在的未初始化数据。该类型永远不会自动 `drop` (如 `std::mem::ManuallyDrop` )，编译器知道该类型可能未初始化，并且具有许多函数来正确处理未初始化的数据。
 
-让我们回顾一下。我们可能不会调用 `std::ptr::read` 去读未初始化内存。我们甚至不能引用它（ `&` 或者 `&mut` ），因为引用规则要求引用的值必须是引用类型的有效实例，而未初始化的数据不是这种情况(除了使用 `MaybeUninit<_>` ，因为这显然不需要初始化）。
+让我们回顾一下。我们可能不会调用 `std::ptr::read` 去读未初始化内存。我们甚至不能引用它( `&` 或者 `&mut` )，因为引用规则要求引用的值必须是引用类型的有效实例，而未初始化的数据不是这种情况(除了使用 `MaybeUninit<_>` ，因为这显然不需要初始化)。
 
-因此，我们也不应该 `drop`，因为这会创建一个可变的引用（注意，`fn drop(&mut self))` 。我们可以将其转换为其他允许储存未初始化数据的类型( 创建一个未初始化的数组还是最简洁的方法)或用 `std :: ptr :: write`  到从  `as_mut_ptr()` 方法获得的指针，又或者使用 `MaybeUninit` 等等。请注意，即使类型未初始化，我们也可以分配给 `MaybeUninit` ，因为类型不会 `drop` 。
+因此，我们也不应该 `drop`，因为这会创建一个可变的引用(注意，`fn drop(&mut self))` 。我们可以将其转换为其他允许储存未初始化数据的类型( 创建一个未初始化的数组还是最简洁的方法)或用 `std :: ptr :: write`  到从  `as_mut_ptr()` 方法获得的指针，又或者使用 `MaybeUninit` 等等。请注意，即使类型未初始化，我们也可以分配给 `MaybeUninit` ，因为类型不会 `drop` 。
 
 举例来说，假设我们要使用一个函数创建一个值数组。数组的没有实现 `Copy` 或没有const 的 `initializer` ，或者 [LLVM](https://en.wikipedia.org/wiki/LLVM)  由于某种原因无法优化 `double` 。这种时候就用 `unsafe` ：
 
@@ -303,9 +303,9 @@ mod simd {
 
 假如你有非常庞大的 C 代码库，并希望将其移至 Rust，不用多说，这是一项艰巨的任务。你可以先使用外部函数接口来重写代码库的一小部分，然后逐个模块进行重写，直到整个程序都用 Rust 编写，然后你就可以扔掉C了(😀)(顺带一说 [librsvg](https://people.gnome.org/~federico/blog/a-rust-api-for-librsvg.html) 就是这样做的)。或者在 C ++ 中使用 Rust。
 
-无论如何，你都得在安全的，充满温暖的 Rust 世界与艰难而又无情的世界之间架起一座桥梁。既然外面的世界很危险，显然你得用 `unsafe` 与之交互。 首先，请确保你拥有正确的接口，以免你在调试时踩坑。 [bindgen](https://github.com/rust-lang/rust-bindgen)（用于从 Rust 访问 C ）和[cbindgen](https://github.com/eqrion/cbindgen/)（用于从 C 访问 Rust）的工具箱就显得非常有用。 如果你从 C ( 使用C接口的C++ ) 访问 Rust，请注意对象的生命周期，并将Rust对象的生存期保留在Rust代码中-也就是说，让Rust删除它们; 而对于 C 的指针，就让 C 处理它们。众所周知，Rust 有非常特殊的管理生命周期的方法，记住你的需求。
+无论如何，你都得在安全的，充满温暖的 Rust 世界与艰难而又无情的世界之间架起一座桥梁。既然外面的世界很危险，显然你得用 `unsafe` 与之交互。 首先，请确保你拥有正确的接口，以免你在调试时踩坑。 [bindgen](https://github.com/rust-lang/rust-bindgen)(用于从 Rust 访问 C )和[cbindgen](https://github.com/eqrion/cbindgen/)(用于从 C 访问 Rust)的工具箱就显得非常有用。 如果你从 C ( 使用C接口的C++ ) 访问 Rust，请注意对象的生命周期，并将Rust对象的生存期保留在Rust代码中-也就是说，让Rust删除它们; 而对于 C 的指针，就让 C 处理它们。众所周知，Rust 有非常特殊的管理生命周期的方法，记住你的需求。
 
-另一方面，如果将 C（(或是C++ 使用了 `extern` ) 包装在Rust中，则会发现 C 库通常还需要考虑数据的生命周期。一旦有了绑定，就尝试考虑类型的生命周期的问题。 unofficial patterns book 有这样一章 [instructive chapter](https://rust-unofficial.github.io/patterns/patterns/ffi-intro.html)  。
+另一方面，如果将 C((或是C++ 使用了 `extern` ) 包装在Rust中，则会发现 C 库通常还需要考虑数据的生命周期。一旦有了绑定，就尝试考虑类型的生命周期的问题。 unofficial patterns book 有这样一章 [instructive chapter](https://rust-unofficial.github.io/patterns/patterns/ffi-intro.html)  。
 
 如果与 C++ 交互，需要使用 [cxx](https://docs.rs/cxx) 。但是，请注意，与通常的 `bindings generators` 不同，`cxx` 不会用 `unsafe` 标记你的函数 ！我在这里的看法是，绑定机制部分是在 Rust 中构建的，一部分是在 C++ 中构建的，它是否是 `safe` 的，这取决于你审查 C++ 的代码。你可能仍然希望将结果接口包装在一个友好的接口中，并且不会以不安全的方式被滥用。
 
@@ -333,10 +333,10 @@ Rust的官方 lints (静态分析工具) 中有很多对编写 `unsafe`  有帮�
 
 > 译者注: 这个地方的 Fuzzer 是安全测试里面常用的模糊测试工具, 常见的就是上文提到的AFL 。而这种随机生成的测试样例被用于保证代码覆盖率, 每当遇到 crash (崩溃的样例) 并会记录下, 提示此处可能有漏洞。
 
-为了检测未初始化内存的使用，[libdiffuzz](https://github.com/Shnatsel/libdiffuzz)是一个侵入式内存分配器，它将使用不同的值来初始化每个内存分配。通过运行两次代码并比较结果，可以确定未初始化内存的哪一部分是造成了问题。更不错的是，`memory sanitizer` 是每天更新的（[tracking lssue](https://github.com/rust-lang/rust/issues/39699)列出了各种`memory sanitizer`及其在各个平台上的支持），会监测每一次对未初始化内存的读取，哪怕没有造成任何问题。
+为了检测未初始化内存的使用，[libdiffuzz](https://github.com/Shnatsel/libdiffuzz)是一个侵入式内存分配器，它将使用不同的值来初始化每个内存分配。通过运行两次代码并比较结果，可以确定未初始化内存的哪一部分是造成了问题。更不错的是，`memory sanitizer` 是每天更新的([tracking lssue](https://github.com/rust-lang/rust/issues/39699)列出了各种`memory sanitizer`及其在各个平台上的支持)，会监测每一次对未初始化内存的读取，哪怕没有造成任何问题。
 
 尽管从统计学上讲， `Fuzzer` 比普通的属性测试更有可能找到代码路径，但不能保证他们会在任何时间后找到特定的代码路径。比如说我曾经遇到的标记化函数的 `bug`，就是由我在互联网上的一个随机文档中发现的一个 `unicode` 宽的空格触发的，当在运行了数十亿个测试案例的模糊测试一周后也并未发现。Rust fuzz 在 [trophy case](https://github.com/rust-fuzz/trophy-case) 上展示了不少没被 Fuzzing 到的 `bug`。如果你找到一个同样的 `bug` ，请添加它。
 
 > 译者注: Fuzzer 不保证100%的代码覆盖率, 因为种子是随机的
 
- [rutenspitz](https://github.com/jakubadamw/rutenspitz) 是一个过程宏，非常适合对状态代码（例如数据结构）进行模型测试。模型测试意味着您拥有一个 “模型” ，即一个简单但缓慢的版本，可以对要确保的行为进行建模，然后使用它来测试不安全的实现。然后它将生成一系列操作，以测试相等关系是否成立。如果你遵循了我的上述建议，则应该已经有一个安全的实施方案可以进行测试。
+ [rutenspitz](https://github.com/jakubadamw/rutenspitz) 是一个过程宏，非常适合对状态代码(例如数据结构)进行模型测试。模型测试意味着您拥有一个 “模型” ，即一个简单但缓慢的版本，可以对要确保的行为进行建模，然后使用它来测试不安全的实现。然后它将生成一系列操作，以测试相等关系是否成立。如果你遵循了我的上述建议，则应该已经有一个安全的实施方案可以进行测试。
