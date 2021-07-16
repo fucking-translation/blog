@@ -148,7 +148,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="rust-异步执行器"><a class="header" href="#rust-异步执行器">Rust 异步执行器</a></h1>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="rust-异步执行器"><a class="header" href="#rust-异步执行器">Rust 异步执行器</a></h1>
 <p><a href="https://jblog.andbit.net/2019/11/10/rust-async-execution/">原文</a></p>
 <p>作为从事大量并发工作(尤其是在 <a href="https://fanout.io/">Fanout</a> 的网络工作)的老牌 C/C++ 程序员，<a href="https://www.rust-lang.org/">Rust</a> 编程语言及其最近的<a href="https://blog.rust-lang.org/2019/11/07/Async-await-stable.html">异步</a>功能引起了我的兴趣 (intrigued)。</p>
 <p>像 C/C++ 一样，Rust 没有运行时。有趣的是，即使引入了异步也同样如此。使用<code>async</code>和<code>await</code>关键字可以并发的运行代码。你需要使用自己的运行时(如：Tokio 或 async-std) 与语言的核心元素进行交互。</p>

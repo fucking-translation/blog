@@ -148,7 +148,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="rust-中异步编程实用介绍"><a class="header" href="#rust-中异步编程实用介绍">Rust 中异步编程实用介绍</a></h1>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="rust-中异步编程实用介绍"><a class="header" href="#rust-中异步编程实用介绍">Rust 中异步编程实用介绍</a></h1>
 <p><a href="http://jamesmcm.github.io/blog/2020/05/06/a-practical-introduction-to-async-programming-in-rust/">原文</a></p>
 <blockquote>
 <p>在本文中，我们将探讨一个使用 Tokio 运行时在 Rust 中进行异步编程的简短示例，展示了不同的执行场景。这篇文章主要是针对异步编程的初学者的。</p>
@@ -280,8 +281,7 @@ fn task(label: &amp;str, now: std::time::Instant) -&gt; Result&lt;(), Box&lt;dyn
 }
 </code></pre></pre>
 <p>运行这段代码：</p>
-<pre><code class="language-console">$ cargo run --release --bin server
-$ cargo run --release --bin client_synchronous
+<pre><code class="language-console">&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.7777700000000001em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.02778em;&quot;&gt;r&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.03588em;&quot;&gt;g&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.02778em;&quot;&gt;or&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;u&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mbin&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.77777em;vertical-align:-0.08333em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.01968em;&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;se&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mbin&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.77777em;vertical-align:-0.08333em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.02778em;&quot;&gt;ser&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.03588em;&quot;&gt;v&lt;/span&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right:0.02778em;&quot;&gt;er&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; cargo run --release --bin client_synchronous
 </code></pre>
 <pre><code class="language-console">OS Thread ThreadId(1) - task1 started: 578ns
 OS Thread ThreadId(1) - task1 written: 2.000346788s
@@ -361,7 +361,7 @@ async fn task(label: &amp;str, now: std::time::Instant) -&gt; Result&lt;(), Box&
 }
 </code></pre></pre>
 <p>运行这段代码，产生的输出和之前一样：</p>
-<pre><code class="language-console">$ cargo run --release --bin client_async
+<pre><code class="language-console"> cargo run --release --bin client_async
 </code></pre>
 <pre><code class="language-console">OS Thread ThreadId(1) - task1 started: 333ns
 OS Thread ThreadId(1) - task1 written: 2.001476012s
