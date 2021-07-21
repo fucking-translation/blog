@@ -17,7 +17,7 @@ Rust 支持多种[类型强制转换](https://doc.rust-lang.org/reference/type-c
 
 Rust 支持多种隐式的类型强转，尽管它们的定义都是非正式的，但是仍然需要进行一定程度的标准化。事实上，这些转换的长期规范预计将成为最终标准化过程的一部分，因为它们对于理解 Rust 的类型系统至关重要。
 
-> **INFO 2**，在标准化编程语言中  
->
->
+> **INFO 2**，标准化编程语言
+> 由于缺乏规范，Rust 不如 C/C++ 值得信赖的批评定期出现，在这里我要解释一下：首先，Rust 确实没有像 C/C++ 那样的规范(由国际标准组织发布和管理)，但这并不意味着 Rust 完全没有标准。
+> Rust 有一个 [reference](https://doc.rust-lang.org/reference/introduction.html)，它编纂 (codify) 了该语言的大部分预期语义。它还具有管理语言变化的 [RFC 流程](https://github.com/rust-lang/rfcs)，以及监督 (oversee) 语言发展的团队。这些团队包括不安全代码指南工作组 (Unsafe Code Guidelines Working Group)，旨在更好的指定影响 unsafe Rust 代码的语义，要求和保证。该小组开发了`miri`，这是 Rust 中的 MIR (Mid-Level Internal Representation) 语言的解释器。
 >
