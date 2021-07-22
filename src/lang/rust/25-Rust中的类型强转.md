@@ -19,5 +19,6 @@ Rust 支持多种隐式的类型强转，尽管它们的定义都是非正式的
 
 > **INFO 2**，标准化编程语言
 > 由于缺乏规范，Rust 不如 C/C++ 值得信赖的批评定期出现，在这里我要解释一下：首先，Rust 确实没有像 C/C++ 那样的规范(由国际标准组织发布和管理)，但这并不意味着 Rust 完全没有标准。
-> Rust 有一个 [reference](https://doc.rust-lang.org/reference/introduction.html)，它编纂 (codify) 了该语言的大部分预期语义。它还具有管理语言变化的 [RFC 流程](https://github.com/rust-lang/rfcs)，以及监督 (oversee) 语言发展的团队。这些团队包括不安全代码指南工作组 (Unsafe Code Guidelines Working Group)，旨在更好的指定影响 unsafe Rust 代码的语义，要求和保证。该小组开发了`miri`，这是 Rust 中的 MIR (Mid-Level Internal Representation) 语言的解释器。
->
+> Rust 有一个 [reference](https://doc.rust-lang.org/reference/introduction.html)，它编纂 (codify) 了该语言的大部分预期语义。它还具有管理语言变化的 [RFC 流程](https://github.com/rust-lang/rfcs)，以及监督 (oversee) 语言发展的团队。这些团队包括不安全代码指南工作组 (Unsafe Code Guidelines Working Group)，旨在更好的指定影响 unsafe Rust 代码的语义，要求和保证。该小组开发了`miri`，这是 Rust 中的 MIR (Mid-Level Internal Representation) 语言的解释器，它可以自动验证 MIR 代码是否与 Rust 语义中的“stacked borrows”模型(由 UCG WG 提出)一致。主要的 Rust 编译器也经过彻底测试，包括实验特性变更和新编译器版本的自动回归测试。  
+> rustc 有一个可用的替代实现 - [mrustc](https://github.com/thepowersgang/mrustc)，尽管它通常不供最终用户使用。在实现支持 Rust 的 GNU 编译器集合方面还有更新的工作，称为“[rust-gcc](https://rust-gcc.github.io/)”。  
+> [Ferrocene](https://ferrous-systems.com/blog/sealed-rust-the-pitch/) 一直在致力于获得 Rust 认证以用于关键的安全领域，包括航空电子(avionic) 和自动化行业。它由 Ferrous Systems (一家 Rust 咨询公司) 维护，其团队中包括主要的语言和社区贡献者。  
