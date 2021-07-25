@@ -17,8 +17,195 @@ Rust 支持多种[类型强制转换](https://doc.rust-lang.org/reference/type-c
 
 Rust 支持多种隐式的类型强转，尽管它们的定义都是非正式的，但是仍然需要进行一定程度的标准化。事实上，这些转换的长期规范预计将成为最终标准化过程的一部分，因为它们对于理解 Rust 的类型系统至关重要。
 
-> **INFO 2**，标准化编程语言
+> **INFO 2**，标准化编程语言  
 > 由于缺乏规范，Rust 不如 C/C++ 值得信赖的批评定期出现，在这里我要解释一下：首先，Rust 确实没有像 C/C++ 那样的规范(由国际标准组织发布和管理)，但这并不意味着 Rust 完全没有标准。
 > Rust 有一个 [reference](https://doc.rust-lang.org/reference/introduction.html)，它编纂 (codify) 了该语言的大部分预期语义。它还具有管理语言变化的 [RFC 流程](https://github.com/rust-lang/rfcs)，以及监督 (oversee) 语言发展的团队。这些团队包括不安全代码指南工作组 (Unsafe Code Guidelines Working Group)，旨在更好的指定影响 unsafe Rust 代码的语义，要求和保证。该小组开发了`miri`，这是 Rust 中的 MIR (Mid-Level Internal Representation) 语言的解释器，它可以自动验证 MIR 代码是否与 Rust 语义中的“stacked borrows”模型(由 UCG WG 提出)一致。主要的 Rust 编译器也经过彻底测试，包括实验特性变更和新编译器版本的自动回归测试。  
 > rustc 有一个可用的替代实现 - [mrustc](https://github.com/thepowersgang/mrustc)，尽管它通常不供最终用户使用。在实现支持 Rust 的 GNU 编译器集合方面还有更新的工作，称为“[rust-gcc](https://rust-gcc.github.io/)”。  
-> [Ferrocene](https://ferrous-systems.com/blog/sealed-rust-the-pitch/) 一直在致力于获得 Rust 认证以用于关键的安全领域，包括航空电子(avionic) 和自动化行业。它由 Ferrous Systems (一家 Rust 咨询公司) 维护，其团队中包括主要的语言和社区贡献者。  
+> [Ferrocene](https://ferrous-systems.com/blog/sealed-rust-the-pitch/) 一直在致力于获得 Rust 认证以用于关键的安全领域，包括航空电子(avionic) 和自动化行业。它由 Ferrous Systems (一家 Rust 咨询公司) 维护，其团队中包括主要的语言和社区贡献者。 
+> 最终，正式指定的挑战以及证明 Rust 的保证已经在学术中得到解决，多个项目构建了模型，包括 Patina，Oxide，RustBelt，KRust 和 K-Rust。这些工作在 Alexa White 的硕士学位论文 [Towards a Complete Formal Semantics of Rust](https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3804&context=theses) 中得到了研究和扩展，该论文是理解这些不同科研工作的一个很好的切入点。  
+> 所有这些虽然不是标准，但是提高了 Rust 的水平，使其可以达到它所保证的能力。主 Rust 编译器中存在[可靠性漏洞](https://github.com/rust-lang/rust/labels/I-unsound)，这些漏洞会随着时间的推移被跟踪解决。如 [RFC 1122](https://github.com/rust-lang/rfcs/blob/master/text/1122-language-semver.md#soundness-changes) 所述，Rust 稳定性策略为修复可靠性漏洞的破坏性更改留下了一个例外。  
+> 还值得注意的是，C 语言在 1972 年引入，而 C 语言标准的第一个正式非草案版本在 1989 年问世 (ANSI X3.159-1989 “编程语言 - C,” 现已撤回)。C++ 于 1985 年推出，其标准的第一个非草案版本于 1998 年发布 (ISO/IEC 14882:1998 “编程语言 — C++”)。  
+> Rust 第一个公开版本是在 2010 年发布的，它在 2015 年 5 月 15 日对早期版本的语言进行了重大更改后，发布了 1.0 版本。从 1.0 发布之日算起，已经过去了 6 年。标准化需要时间，耐心是一种美德。
+
+## 引用降级强转
+
+引用降级强转是一种非常常见的强转操作，它可以将`&mut T`强转为`&T`。显然，这种强转总是安全的，因为不可变引用会受到更多的限制。它还允许借用检查器接受一些你可能认为不会编译或正常工作的代码。
+
+一个引用降级强转的例子如下所示：
+
+```rust
+struct RefHolder<'a> {
+    x: &'a i64,
+}
+
+impl<'a> RefHolder<'a> {
+    fn new(x: &'a i64) -> RefHolder<'a> {
+        RefHolder { x }
+    }
+}
+
+fn print_num(y: &i64) {
+    println!("y: {}", y);
+}
+
+fn main() {
+    // Create `x`
+    let mut x = 10;
+
+    // Make sure `y` is `&mut i64`.
+    let y = &mut x;
+
+    // Package the downgraded reference into a struct.
+    let z = RefHolder::new(y);
+    
+    // Print `y` downgrading it to an `&i64`.
+    print_num(y);
+    
+    // Use the `z` reference again.
+    println!("z.x: {}", z.x);
+}
+```
+
+在该例中，我们可以看到`print_num`函数只需要`&i64`，但它传入了一个`&mut i64`。它可以正常运行是因为引用降级强转成了一个不可变引用。这也解决了给可变借用起别名的问题。`RefHolder`类型的构造函数也会发生同样的情况。
+
+请注意该强转发生的次数。这里有一个类似的无法编译的例子。
+
+```rust
+struct RefHolder<'a> {
+    x: &'a i64,
+}
+
+impl<'a> RefHolder<'a> {
+    fn new(x: &'a i64) -> RefHolder<'a> {
+        RefHolder { x }
+    }
+}
+
+fn print_num(y: &i64) {
+    println!("y: {}", y);
+}
+
+fn main() {
+    // Create `x`
+    let mut x = 10;
+
+    // Make sure `y` is `&mut i64`.
+    let y = &mut x;
+
+    // Package the downgraded reference into a struct.
+    //
+    //---------------------------------------------------
+    // NOTE: this is a _fresh_ reference now, instead of
+    //       being `y`.
+    //---------------------------------------------------
+    let z = RefHolder::new(&mut x);
+    
+    // Print `y` and update it, downgrading it
+    // to `&i64`.
+    print_num(y);
+    
+    // Use the `z` reference again.
+    println!("z.x: {}", z.x);
+}
+```
+
+在该例中，即使引用在函数签名中降级，借用检查器仍然观察到在同一作用域内(针对同一内存)创建了两个可变引用，这是不被允许的。
+
+> **ALERT 1** 引用降级往往不是你想要的  
+> 正如 pretzelhammer 的 [Common Rust Lifetime Misconceptions](https://github.com/pretzelhammer/rust-blog/blob/master/posts/common-rust-lifetime-misconceptions.md) 所述，引用降级通常是不可取的，并且可能会造成意料之外的后果。
+
+## Deref 强转
+
+下一种强转是 Rust 人体工程学 (ergonomics) 的基石 (cornerstone)。“Deref 强转”是由两个特征的实现产生的强转：`Deref`和`DerefMut`。这些(特征)明确存在的目的是选择加入这种强转，让容器可以透明使用它们包含的类型(这些类型通常称为“智能指针”)。
+
+这类特征定义如下所示：
+
+```rust
+pub trait Deref {
+    type Target: ?Sized;
+
+    pub fn deref(&self) -> &Self::Target;
+}
+
+pub trait DerefMut: Deref {
+    pub fn deref_mut(&mut self) -> &mut Self::Target;
+}
+```
+
+第一个特征`Deref`定义了一个类型，可以提供对其他“目标”类型的引用。这个目标是一个关联类型，而不是一个类型参数，因为每个“智能指针”应该只能被一个其他类型取消引用。如果它被定义为`Deref<Target>`，则任何类型都可以提供尽可能多的实现，因为它们可以提供内部类型，然后编译器根据某种机制来选择正确的内部类型。Deref 强转的关键在于它们是隐式的，因此通常明确的类型注释会与 Deref 强转功能的好处相除冲突。
+
+`DerefMut`特征需要`Deref`作为超类，这既可以让其访问 Target 关联类型，也可以确保`Deref`和`DerefMut`的目标类型始终一致。否则，你可能会在可变上下文中启用对一种类型的强转，而在不可变上下文中启用对另一种类型的强转。这种级别的灵活性为 Deref 强转增加了更多的复杂性，但没有明显的好处，因此它不可用。
+
+这两个特征所需的方法`deref`和`deref_mut`，在实现这些特征的类型上调用方法时会被隐式调用。比如，在`Box<T>`上实现了`Deref<Target = T>`，因此可以透明地调用其包含类型的方法，这使得`Box<T>`比用户必须为每个操作显式访问其内容更符合人体工程学。
+
+> **ASIDE 2**，分配器类型  
+> 这里显式的`leak`函数签名包括`Box`的`A`类型参数，它是分配器 (allocator) 的类型。这是为了让 Rust 的容器对需要替代分配器的用例更友好，相对于更改整个程序的分配器，它可以做到更精细的控制。`leak`函数返回一个引用，其生命周期为`A: 'a`，它直观的表示分配器的生命周期至少与从中借用的数据一样长。否则，分配器可能会在它的引用仍然存在时被释放，从而导致悬垂引用，这回导致内存不安全。
+
+但是，如果包含类型也想定义方法，那么在该类型上存在 Deref 强转也会导致潜在的歧义。鉴于此，“智能指针”通常将它们的方法作为关联函数而不是方法。如`Box::leak`方法，它在值不释放的情况下其进行拆箱(因此最终的释放操作留给用户)，该关联方法的函数签名为`fn leak<'a>(b: Box<T, A>) -> &'a mut T where A: 'a`，因此它通过`Box::leak(my_boxed_type)`进行调用，而不是`my_boxed_type.leak()`。
+
+## 裸指针强转
+
+Rust 的裸指针可能会从`*mut T`强转为`*const T`。尽管通过取消引用来使用这些指针是 unsafe 的，并且受制于 Rust 对指针的[安全性要求](https://doc.rust-lang.org/reference/behavior-considered-undefined.html)(即访问永远不会悬垂或未对齐)，但是这些转换是 safe Rust 的一部分(即不是为在 unsafe 上下文中使用而保留的功能)。
+
+裸指针的强转示例如下所示：
+
+```rust
+#[derive(Debug)]
+struct PtrHandle {
+    ptr: *const i32,
+}
+
+fn main() {
+    let mut x = 5;
+    let ptr = &mut x as *mut i32;
+
+    // The coercion happens on this line, where
+    // a `*mut i32` is set as the value for a field
+    // with type `*const i32`, coercing to that type.
+    let handle = PtrHandle { ptr };
+
+    println!("{:?}", handle);
+}
+```
+
+> **INFO 3** 指针转换的安全性  
+> Rust 还允许将`*const T`通过`as`转换成`*mut T`。  
+> 虽然允许将`*const T`转换为`*mut T`似乎让人感到惊讶，但有时这种转换是必要的。例如，FFI 代码可能会从`Box::into_raw`中创建一个`*mut T`，但只想为 API 的 C 使用者提供一个`*const T`。因此 FFI 接口提供的等效删除函数需要将`*const T`作为参数，将其转换回`*mut T`以将其传递给`Box::from_raw`，从而使 Rust 在函数结束时对`Box`进行释放。  
+> 虽然指针出处 (provenance) 的细节意味着这种转换并不总是未定义的行为，但如果指针的原始出处不是可变的，则它可能是为定义的行为。换句话说，如果一个值以`*mut T`开头，它可以在将来用作`*mut T`，即使类型在此期间 (interim) 被转换为`*const T`。
+
+## 引用与裸指针强转
+
+你可以将`&T`转换为`*const T`，将`&mut T`转换为`*mut T`。尽管产生的裸指针只能在 unsafe 的代码块中取消引用，但是这些强转是 safe 的。
+
+和上一个例子类似，但是这一次是将引用转换成指针而不是改变指针类型的可变性。
+
+```rust
+// Notice that these coercions work when
+// generic types are present too.
+#[derive(Debug)]
+struct ConstHandle<T> {
+    ptr: *const T,
+}
+
+#[derive(Debug)]
+struct MutHandle<T> {
+    ptr: *mut T,
+}
+
+fn main() {
+    let mut x = 5;
+
+    let c_handle = ConstHandle {
+        // Coercing `&i32` into `*const i32`
+        ptr: &x,
+    };
+
+    let m_handle = MutHandle {
+        // Coercing `&mut x` into `*mut i32`
+        ptr: &mut x,
+    };
+
+    println!("{:?}", c_handle);
+    println!("{:?}", m_handle);
+}
+```
