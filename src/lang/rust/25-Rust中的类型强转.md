@@ -209,3 +209,26 @@ fn main() {
     println!("{:?}", m_handle);
 }
 ```
+
+## 函数指针强转
+
+闭包是函数加上其执行上下文。这使得它们在许多情况下非常有用，但有时它们携带的这种额外状态会阻碍 (impede) 它们的使用，特别是没有实际的状态捕获时。在 Rust 中，除了编译时生成的无名闭包类型之外，还有函数指针类型表示没有上下文环境的函数。为了使闭包尽可能灵活，，当且仅当它们不从上下文中捕获任何变量时，闭包才会强制使用指针。
+
+一个函数指针的示例如下：
+
+```rust
+// This function takes in a function pointer, _not_ a generic type
+// which implements one of the function traits (`Fn`, `FnMut`, or
+// `FnOnce`).
+fn takes_func_ptr(f: fn(i32) -> i32) -> i32 {
+    f(5)
+}
+
+fn main() {
+    let my_func = |n| n + 2;
+
+    // The coercion happens here, and is possible because `my_func`
+    // doesn't capture any variables from its environment.
+    println!("{}", takes_func_ptr(my_func));
+}
+```
