@@ -253,4 +253,81 @@ fn main() {
 
 在 Rust 中，由于子类型只存在于生命周期中，并且生命周期表示数据存活的时间，这就意味着：
 
-- 协变类型允许比
+- 协变类型的生命周期允许比预期的更长(这些生命周期允许“缩短”，这样不会有问题是因为引用的使用时间总是少于它们的有效时间)。
+
+- 逆变类型的生命周期允许增长(就像要求使用`'static`而不是生命周期`'a`使带有引用类型的函数指针更加严格？)
+
+- 不变类型没有子类型关系，需要一个既不缩短也不增长的生命周期。
+
+也许一个带有子类型强转的逆变生命周期示例可以帮助理解：
+
+```rust
+struct FnHolder {
+    f: fn(&'static str) -> i32,
+}
+
+fn number_for_name<'a>(name: &'a str) -> i32 {
+    match name {
+        "Jim" => 32,
+        _ => 5,
+    }
+}
+
+fn main() {
+    // Voila! A subtype coercion! In this case coercing a
+    // lifetime in a contravariant context (the lifetime in
+    // the function pointer type parameter) from `'a` to `'static`.
+    //
+    // `'static` is longer than `'a`, which in this case is safe
+    // because it's always fine to make the function _less_ accepting.
+    //
+    // Once it's been assigned into the `FnHolder` type, it'll only
+    // accept string literals (which have a `'static` lifetime).
+    let holder = FnHolder { f: number_for_name };
+    
+    // The extra parentheses are part of the syntax for calling
+    // functions as fields, to disambiguate between this and
+    // calling a method on the `FnHolder` type.
+    println!("{}", (holder.f)("Jim"));
+}
+```
+
+## never 强转
+
+Rust 类型系统中有一个特殊的类型 - never 类型(写作`!`)。此类型可以强转为其他所有类型，通常表示非终止 (non-termination)。例如，`unimplemented!`，`unreachable!`和`todo!`宏都返回`!`类型。`!`类型强转可以使用这些宏类型检查，如果它们在运行时中执行，则`!`被实现为当前线程有保证的 panic。退出当前进程的`std::process::exit`函数返回`!`也是出于相同的原因。
+
+never 类型强转让程序可以使用 panic 或 exit 通过类型检查。
+
+```rust
+// Turn off some warnings about unreachable code.
+#![allow(unreachable_code)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
+struct Value {
+    x: bool,
+    y: String,
+}
+
+fn never() -> ! {
+    // `loop`s without some way to exit
+    // like this have the `!` type, because
+    // the expression (and, in this case,
+    // the containing function) will never
+    // terminate / return.
+    loop {}
+}
+
+fn main() {
+    let x = never();
+    
+    let v = Value {
+        x: todo!("uhhh I haven't gotten to this"),
+        y: unimplemented!("oh, not this either"),
+    };
+    
+    // This program compiles because `never`,
+    // `todo!`, and `unimplemented!` all return
+    // the `!` type, which coerces into any type.
+}
+```
