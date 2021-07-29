@@ -21,12 +21,18 @@ Rust 支持多种隐式的类型强转，尽管它们的定义都是非正式的
 
 > **INFO 2**，标准化编程语言  
 > 由于缺乏规范，Rust 不如 C/C++ 值得信赖的批评定期出现，在这里我要解释一下：首先，Rust 确实没有像 C/C++ 那样的规范(由国际标准组织发布和管理)，但这并不意味着 Rust 完全没有标准。
+>
 > Rust 有一个 [reference](https://doc.rust-lang.org/reference/introduction.html)，它编纂 (codify) 了该语言的大部分预期语义。它还具有管理语言变化的 [RFC 流程](https://github.com/rust-lang/rfcs)，以及监督 (oversee) 语言发展的团队。这些团队包括不安全代码指南工作组 (Unsafe Code Guidelines Working Group)，旨在更好的指定影响 unsafe Rust 代码的语义，要求和保证。该小组开发了`miri`，这是 Rust 中的 MIR (Mid-Level Internal Representation) 语言的解释器，它可以自动验证 MIR 代码是否与 Rust 语义中的“stacked borrows”模型(由 UCG WG 提出)一致。主要的 Rust 编译器也经过彻底测试，包括实验特性变更和新编译器版本的自动回归测试。  
-> rustc 有一个可用的替代实现 - [mrustc](https://github.com/thepowersgang/mrustc)，尽管它通常不供最终用户使用。在实现支持 Rust 的 GNU 编译器集合方面还有更新的工作，称为“[rust-gcc](https://rust-gcc.github.io/)”。  
+>
+> rustc 有一个可用的替代实现 - [mrustc](https://github.com/thepowersgang/mrustc)，尽管它通常不供最终用户使用。在实现支持 Rust 的 GNU 编译器集合方面还有更新的工作，称为“[rust-gcc](https://rust-gcc.github.io/)”。 
+> 
 > [Ferrocene](https://ferrous-systems.com/blog/sealed-rust-the-pitch/) 一直在致力于获得 Rust 认证以用于关键的安全领域，包括航空电子(avionic) 和自动化行业。它由 Ferrous Systems (一家 Rust 咨询公司) 维护，其团队中包括主要的语言和社区贡献者。 
+>
 > 最终，正式指定的挑战以及证明 Rust 的保证已经在学术中得到解决，多个项目构建了模型，包括 Patina，Oxide，RustBelt，KRust 和 K-Rust。这些工作在 Alexa White 的硕士学位论文 [Towards a Complete Formal Semantics of Rust](https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3804&context=theses) 中得到了研究和扩展，该论文是理解这些不同科研工作的一个很好的切入点。  
 > 所有这些虽然不是标准，但是提高了 Rust 的水平，使其可以达到它所保证的能力。主 Rust 编译器中存在[可靠性漏洞](https://github.com/rust-lang/rust/labels/I-unsound)，这些漏洞会随着时间的推移被跟踪解决。如 [RFC 1122](https://github.com/rust-lang/rfcs/blob/master/text/1122-language-semver.md#soundness-changes) 所述，Rust 稳定性策略为修复可靠性漏洞的破坏性更改留下了一个例外。  
+>
 > 还值得注意的是，C 语言在 1972 年引入，而 C 语言标准的第一个正式非草案版本在 1989 年问世 (ANSI X3.159-1989 “编程语言 - C,” 现已撤回)。C++ 于 1985 年推出，其标准的第一个非草案版本于 1998 年发布 (ISO/IEC 14882:1998 “编程语言 — C++”)。  
+>
 > Rust 第一个公开版本是在 2010 年发布的，它在 2015 年 5 月 15 日对早期版本的语言进行了重大更改后，发布了 1.0 版本。从 1.0 发布之日算起，已经过去了 6 年。标准化需要时间，耐心是一种美德。
 
 ### 引用降级强转
