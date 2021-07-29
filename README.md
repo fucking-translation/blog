@@ -20,6 +20,7 @@
 | [Rust 如何实现线程安全](./src/lang/rust/20-rust如何实现线程安全.md)||
 | [无需 fork Clippy 就可以编写 Rust lint](./src/lang/rust/22-无需fork_Clippy就可以编写Rust_lints.md) ||
 | [使用 Mio 编写底层 TCP 服务器](./src/lang/rust/23-使用Mio编写底层TCP服务器.md)||
+| [Rust 中的类型强制转换](./src/lang/rust/25-Rust中的类型强转.md)||
 
 ## service mesh
 

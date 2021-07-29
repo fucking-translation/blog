@@ -23,6 +23,7 @@
 - [无需 fork Clippy 就可以编写 Rust lint](22-无需fork_Clippy就可以编写Rust_lints.md)
 - [使用 Mio 编写底层 TCP 服务器](23-使用Mio编写底层TCP服务器.md)
 - [「转」Unsafe Rust 的取舍](24-UnsafeRust的取舍.md)
+- [Rust 中的类型强制转换](25-Rust中的类型强转.md)
 
 ---
 
